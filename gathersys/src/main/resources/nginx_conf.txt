@@ -1,0 +1,122 @@
+
+worker_processes  4;
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    log_format  v0.0 '$msg_id\t1.0\t$msg_site\tngx_log\tjson\t'
+                    '{'
+                    '"0":"$request_method"'
+                    ',"1":"$request_uri"'
+                    ',"2":"$content_type"'
+                    ',"3":"$msg_remote_ip"'
+                    ',"4":$msg_receive_time'
+                    ',"5":"$request_body"'
+                    '}'
+                    ;
+
+    log_format  v1.0  '"msgId":"$msg_id"'
+                    ',"msgVersion":"1.0"'
+                    ',"msgSite":"$msg_site"'
+                    ',"msgSource":"ngx_log"'
+                    ',"msgFormat":"json"'
+                    ',"msgBody":{'
+                    '"method":"$request_method"'
+                    ',"url":"$request_uri"'
+                    ',"contentType":"$content_type"'
+                    ',"realIP":"$msg_remote_ip"'
+                    ',"receiveTime":$msg_receive_time'
+                    ',"body":"$request_body"'
+                    '}'
+                    ;
+
+
+    log_format  main  '$msg_id $server_addr $remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for" "$request_body"';
+
+    lua_shared_dict sharedDict 1m;
+	init_by_lua_file 'conf/nginx_init.lua';
+
+
+    server {
+        listen       80;
+        server_name  localhost;
+
+        access_log  logs/access.log  main;
+
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+
+		set $msg_id "";
+        set $msg_site "";
+        set $msg_remote_ip "";
+        set $msg_receive_time 0;
+
+        location /medusalog {
+			access_log off;
+
+            lua_socket_connect_timeout 3s;
+            lua_socket_send_timeout 3s;
+            lua_socket_read_timeout 3s;
+            lua_socket_pool_size 100;
+            lua_socket_keepalive_timeout 60s;
+            lua_socket_buffer_size 8k;
+
+            content_by_lua '
+                ngx.req.read_body();
+                if ngx.var.request_method == "POST" then
+                    arry = {method = ngx.HTTP_POST, body = ngx.var.request_body}
+                else
+                    arry = {method = ngx.HTTP_GET}
+                end
+
+                local res0,res1 = ngx.location.capture_multi({
+                    {"/medusalog_v0",arry},
+                    {"/medusalog_v1",arry},
+                })
+
+                if res1.status ~= ngx.HTTP_OK then
+                    ngx.log(ngx.ERR,"medusalog_v1 err:"..res1.body)
+                end
+
+				ngx.status=res0.status
+                ngx.say(res0.body)
+
+            ';
+        }
+
+        location /medusalog_v0 {
+            log_subrequest on;
+            access_log  logs/medusalog.log  v0.0;
+			content_by_lua '
+                ngx.req.read_body();
+                ngx.say(0)
+            ';
+        }
+
+        location /medusalog_v1 {
+            log_subrequest on;
+            access_log  logs/medusalog_v1.log  v1.0;
+            content_by_lua '
+                ngx.req.read_body();
+                local checked=checkMsgMd5(false);
+                if(checked) then
+                    buildMsgInfo()
+                    ngx.say(ngx.var.msg_id)
+                else
+                    ngx.log(ngx.ERR,"invalid body"..ngx.req.get_body_data())
+                    ngx.status=404
+                end
+            ';
+        }
+    }
+}
