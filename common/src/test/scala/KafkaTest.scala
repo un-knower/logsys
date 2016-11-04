@@ -1,5 +1,4 @@
 import java.util
-import java.util.Properties
 import java.util.concurrent.{LinkedBlockingQueue, Executors, Future, TimeUnit}
 
 import cn.whaley.bi.logsys.common.{ConfManager, KafkaUtil}
@@ -7,15 +6,12 @@ import kafka.api.OffsetRequest
 import kafka.consumer.KafkaStream
 import kafka.message.MessageAndMetadata
 
-import org.apache.kafka.clients.consumer.{KafkaConsumer}
 import org.apache.kafka.clients.producer.{ProducerRecord, RecordMetadata, KafkaProducer}
 
 import org.junit.Test
 
-import collection.JavaConversions._
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.util.Random
+
 
 
 /**
@@ -252,7 +248,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
         val latestOffset = util.getLatestOffset(topic)
         println(latestOffset)
 
-        val datas = util.getLatestMessage(topic, 10, 8)
+        val datas = util.getLatestMessage(topic, 10)
 
         datas.foreach(item => {
             val partiton = item._1
