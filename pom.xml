@@ -13,8 +13,7 @@
         <module>forest</module>
         <module>distribution</module>
         <module>common</module>
-        <module>backupper-front</module>
-        <module>backupper-combinner</module>
+        <module>backupper</module>
         <module>gathersys</module>
     </modules>
 

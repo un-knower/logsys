@@ -9,10 +9,13 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>backupper-front</artifactId>
+    <artifactId>backupper</artifactId>
     <packaging>pom</packaging>
 
-
+    <modules>
+        <module>combinner</module>
+        <module>front</module>
+    </modules>
 
 
 </project>
