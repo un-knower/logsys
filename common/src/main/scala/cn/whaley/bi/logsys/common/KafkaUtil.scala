@@ -20,6 +20,10 @@ import scala.language.implicitConversions
 
 /**
  * Created by fj on 16/10/30.
+ *
+ * kafka工具类，提供分区元数据读取、offset操作、末端数据读取等功能
+ * 目前实现是基于在0.8.2.2客户端库
+ *
  */
 class KafkaUtil(host: String, port: Int, clientId: String = ConsumerMetadataRequest.DefaultClientId) {
     val soTimeout = 5000

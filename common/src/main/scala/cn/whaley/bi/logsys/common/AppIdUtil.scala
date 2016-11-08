@@ -4,9 +4,10 @@ package cn.whaley.bi.logsys.common
 /**
  * Created by fj on 16/11/2.
  *
- * AppId实用类
+ * AppId实用类,根据组织代码、产品代码、应用代码，按照一定的hash算法，产生一个32位长度的字符串
+ *
  * @param orgCodeNoise 作为噪音与组织代码一起参与哈希计算
- * @param productCodeNoise 作为噪音与产品线代码一起参与哈希计算
+ * @param productCodeNoise 作为噪音与产品代码一起参与哈希计算
  * @param appCodeNoise 作为噪音与应用代码一起参与哈希计算
  */
 class AppIdUtil(orgCodeNoise: String, productCodeNoise: String, appCodeNoise: String) {
@@ -17,7 +18,7 @@ class AppIdUtil(orgCodeNoise: String, productCodeNoise: String, appCodeNoise: St
     /**
      * 产生一个32位字节长度appId
      * @param orgCode 组织代码
-     * @param productCode 产品线代码（最多8位）
+     * @param productCode 产品代码（最多8位）
      * @param appCode 应用代码(最大8位）
      * @return
      */
@@ -37,7 +38,7 @@ class AppIdUtil(orgCodeNoise: String, productCodeNoise: String, appCodeNoise: St
     }
 
     /**
-     * 产品线代码的8位长度哈希字符串
+     * 产品代码的8位长度哈希字符串
      * @param productCode
      * @return
      */

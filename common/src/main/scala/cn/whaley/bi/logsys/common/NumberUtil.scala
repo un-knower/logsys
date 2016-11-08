@@ -2,6 +2,8 @@ package cn.whaley.bi.logsys.common
 
 /**
  * Created by fj on 16/11/8.
+ *
+ * 数字操作实用类，提供整形数到字节间的转换操作
  */
 class NumberUtil {
 
@@ -12,8 +14,7 @@ object NumberUtil {
     /**
      * int整数转换为4字节的byte数组
      *
-     * @param i
-     * 整数
+     * @param i  整数
      * @return byte数组
      */
     def intToByte4(i: Int): Array[Byte] = {
@@ -28,8 +29,7 @@ object NumberUtil {
     /**
      * long整数转换为8字节的byte数组
      *
-     * @param lo
-     * long整数
+     * @param lo long整数
      * @return byte数组
      */
     def longToByte8(lo: Long): Array[Byte] = {
@@ -44,8 +44,7 @@ object NumberUtil {
     /**
      * short整数转换为2字节的byte数组
      *
-     * @param s
-     * short整数
+     * @param s short整数
      * @return byte数组
      */
     def unsignedShortToByte2(s: Int): Array[Byte] = {
@@ -58,8 +57,7 @@ object NumberUtil {
     /**
      * byte数组转换为无符号short整数
      *
-     * @param bytes
-     * byte数组
+     * @param bytes  byte数组
      * @return short整数
      */
     def byte2ToUnsignedShort(bytes: Array[Byte]): Int = {
@@ -69,10 +67,8 @@ object NumberUtil {
     /**
      * byte数组转换为无符号short整数
      *
-     * @param bytes
-     * byte数组
-     * @param off
-     * 开始位置
+     * @param bytes byte数组
+     * @param off 开始位置
      * @return short整数
      */
     def byte2ToUnsignedShort(bytes: Array[Byte], off: Int): Int = {
@@ -84,10 +80,8 @@ object NumberUtil {
     /**
      * byte数组转换为int整数
      *
-     * @param bytes
-     * byte数组
-     * @param off
-     * 开始位置
+     * @param bytes byte数组
+     * @param off 开始位置
      * @return int整数
      */
     def byte4ToInt(bytes: Array[Byte], off: Int): Int = {

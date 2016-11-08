@@ -4,7 +4,7 @@ import java.security.MessageDigest
 
 /**
  * Created by fj on 16/11/2.
- * 签名实用类
+ * 签名实用类，包括MD5、Base64等编码和签名算法
  */
 class DigestUtil {
 

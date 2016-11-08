@@ -8,7 +8,8 @@ import scala.collection.mutable.ArrayBuffer
 
 
 /**
- * Id生成器,该类是线程安全的
+ * Id生成器,按照分布式算法产生全局唯一的字符串，该类是线程安全的
+ *
  * @param seed 种子值
  */
 class IdGenerator(seed: Int) {
