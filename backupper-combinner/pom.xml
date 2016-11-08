@@ -20,7 +20,7 @@
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.hadoop</groupId>
-                    <artifactId>zookeeper</artifactId>
+                    <artifactId>hadoop-common</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -72,7 +72,7 @@
                 </dependency>
             </dependencies>
             <build>
-                <finalName>medusa-${project.version}</finalName>
+                <finalName>${project.artifactId}-${project.version}</finalName>
                 <resources>
                     <resource>
                         <directory>src/main/resources</directory>

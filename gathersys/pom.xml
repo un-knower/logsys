@@ -12,6 +12,9 @@
     <artifactId>gathersys</artifactId>
 
     <packaging>pom</packaging>
+    <modules>
+        <module>actionlog</module>
+    </modules>
 
     <dependencies>
 
