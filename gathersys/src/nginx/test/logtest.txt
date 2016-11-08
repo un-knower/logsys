@@ -1,0 +1,109 @@
+mkdir -p /workspace/openrestry/nginx/logs/boikgpokn78sb95kbqei6cc9
+mkdir -p /workspace/openrestry/nginx/logs/boikgpokn78sb95kjhfrendo
+mkdir -p /workspace/openrestry/nginx/logs/boikgpokn78sb95kjtihcg26
+mkdir -p /workspace/openrestry/nginx/logs/boikgpokn78sb95kkls3bhmt
+mkdir -p /workspace/openrestry/nginx/logs/boikgpokn78sb95ktmsc1bnk
+
+rm boikgpokn78sb95k*/*.log
+
+doPostTestWithSign()
+{
+  url=$1
+  c=$2
+  n=$3
+  ab -c $c -n $n -p /Users/fj/workspace/whaley/projects/WhaleyLogSys/gathersys/src/nginx/test/data.json \
+   -H "Content-Type:application/json" \
+   -H "log-sign-method:md5" \
+   -H "log-sign-version:1.0" \
+   -H "log-sign-ts:123456" \
+   -H "log-sign-value:8acb3e287c4e193763c6ab10ae7f3277" \
+   $url
+}
+
+doPostTest()
+{
+  url=$1
+  c=$2
+  n=$3
+  ab -c $c -n $n -p /Users/fj/workspace/whaley/projects/WhaleyLogSys/gathersys/src/nginx/test/data.json \
+   -H "Content-Type:application/json" \
+   $url
+}
+
+doGetTest()
+{
+  url=$1
+  c=$2
+  n=$3
+  ab -c $c -n $n  \
+   "$url?a=sdfsfsfd&b=sdfasdfasdfasdfadfadfadfasc&c=sdfsdfasdfasdf"
+}
+
+#medusa
+doPostTestWithSign  http://log.moretv.com.cn:8081/activity 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/medusalog 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/moretv/userdurationlog 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/uploadlog 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/uploadplaylog 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/mtvkidslog 1 1
+doPostTest  http://log.moretv.com.cn:8081/activity 1 1
+doPostTest  http://log.moretv.com.cn:8081/medusalog 1 1
+doPostTest  http://log.moretv.com.cn:8081/moretv/userdurationlog 1 1
+doPostTest  http://log.moretv.com.cn:8081/uploadlog 1 1
+doPostTest  http://log.moretv.com.cn:8081/uploadplaylog 1 1
+doPostTest  http://log.moretv.com.cn:8081/mtvkidslog 1 1
+doGetTest  http://log.moretv.com.cn:8081/activity 1 1
+doGetTest  http://log.moretv.com.cn:8081/medusalog 1 1
+doGetTest  http://log.moretv.com.cn:8081/moretv/userdurationlog 1 1
+doGetTest  http://log.moretv.com.cn:8081/uploadlog 1 1
+doGetTest  http://log.moretv.com.cn:8081/uploadplaylog 1 1
+doGetTest  http://log.moretv.com.cn:8081/mtvkidslog 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnkklf477ap 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnkklf477ap 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnkklf477ap 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnken8tuboa 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnkbe9pbhgu 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnkfipphckl 1 1
+doGetTest  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnkklf477ap 1 1
+doGetTest  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnkklf477ap 1 1
+doGetTest  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnkklf477ap 1 1
+doGetTest  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnken8tuboa 1 1
+doGetTest  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnkbe9pbhgu 1 1
+doGetTest  http://log.moretv.com.cn:8081/log/boikgpokn78sb95ktmsc1bnkfipphckl 1 1
+
+
+#crawler
+doPostTestWithSign  http://crawlerlog.aginomoto.com:8081/price 1 1
+doPostTestWithSign  http://crawlerlog.aginomoto.com:8081/cis 1 1
+doPostTest  http://crawlerlog.aginomoto.com:8081/price 1 1
+doPostTest  http://crawlerlog.aginomoto.com:8081/cis 1 1
+doGetTest  http://crawlerlog.aginomoto.com:8081/price 1 1
+doGetTest  http://crawlerlog.aginomoto.com:8081/cis 1 1
+doPostTestWithSign  http://crawlerlog.aginomoto.com:8081/log/boikgpokn78sb95kkls3bhmtjqosocdj 1 1
+doPostTestWithSign  http://crawlerlog.aginomoto.com:8081/log/boikgpokn78sb95kkls3bhmtichjhhm8 1 1
+doGetTest  http://crawlerlog.aginomoto.com:8081/log/boikgpokn78sb95kkls3bhmtjqosocdj 1 1
+doGetTest  http://crawlerlog.aginomoto.com:8081/log/boikgpokn78sb95kkls3bhmtichjhhm8 1 1
+
+#mobilehelper
+doPostTestWithSign  http://log.moretv.com.cn:8081/mobilehelperlog 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/mobilelog 1 1
+doPostTest  http://log.moretv.com.cn:8081/mobilehelperlog 1 1
+doPostTest  http://log.moretv.com.cn:8081/mobilelog 1 1
+doGetTest  http://log.moretv.com.cn:8081/mobilehelperlog 1 1
+doGetTest  http://log.moretv.com.cn:8081/mobilelog 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/log/boikgpokn78sb95kjtihcg268dc5mlsr 1 1
+doGetTest  http://log.moretv.com.cn:8081/log/boikgpokn78sb95kjtihcg268dc5mlsr 1 1
+
+#whaleytv
+doPostTestWithSign  http://applog.aginomoto.com:8081/ 1 1
+doPostTest  http://applog.aginomoto.com:8081/ 1 1
+doGetTest  http://applog.aginomoto.com:8081/ 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/log/boikgpokn78sb95kjhfrendo8dc5mlsr 1 1
+doGetTest  http://log.moretv.com.cn:8081/log/boikgpokn78sb95kjhfrendo8dc5mlsr 1 1
+
+#whaleyvr
+doPostTestWithSign  http://vrlog.aginomoto.com:8081/vrapplog 1 1
+doPostTest  http://vrlog.aginomoto.com:8081/vrapplog 1 1
+doGetTest  http://vrlog.aginomoto.com:8081/vrapplog 1 1
+doPostTestWithSign  http://log.moretv.com.cn:8081/log/boikgpokn78sb95kbqei6cc98dc5mlsr 1 1
+doGetTest  http://log.moretv.com.cn:8081/log/boikgpokn78sb95kbqei6cc98dc5mlsr 1 1
