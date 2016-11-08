@@ -24,35 +24,12 @@ class IdGenerator(seed: Int) {
      * @return
      */
     def nextId(): String = {
-        val prefix = this.getNextPrefix()
-        val seq = this.getNextSeqStr()
-        s"${prefix}${seq}"
-    }
 
-    /**
-     * 获取下一个Id值的前缀值
-     * @return
-     */
-    def getNextPrefix(): String = {
-        val currSec = System.currentTimeMillis()  //当前系统时间戳
+        val currSec = System.currentTimeMillis() //当前系统时间戳
         val ipAddress = IdGenerator.localNetworkAddress.getAddress //IP地址
         val processId = IdGenerator.currProcessId //进程号
 
-        val part0 = IdGenerator.fixLeftLen("%X".format(currSec), '0', 12)
-        val part1 = (IdGenerator.fixLeftLen("%X".format(ipAddress(0)), '0', 2)
-            + IdGenerator.fixLeftLen("%X".format(ipAddress(1)), '0', 2)
-            + IdGenerator.fixLeftLen("%X".format(ipAddress(2)), '0', 2)
-            + IdGenerator.fixLeftLen("%X".format(ipAddress(3)), '0', 2)
-            )
-        val part2 = IdGenerator.fixLeftLen("%X".format(processId), '0', 4)
-        s"${part0}${part1}${part2}"
-    }
-
-    /**
-     * 获取下一个Id值的序列值
-     * @return
-     */
-    def getNextSeqStr(): String = {
+        //下一个序列值，最大为Int.MaxValue,达到最大值后，重新从0开始编号
         val seq = atomicSeq.getAndIncrement()
         val nextValue = if (seq <= Int.MaxValue) {
             seq.toInt
@@ -65,7 +42,16 @@ class IdGenerator(seed: Int) {
             }
             atomicSeq.getAndIncrement().toInt
         }
-        IdGenerator.fixLeftLen("%X".format(nextValue), '0', 8)
+
+        //18字节的Base64编码（24个字符）
+        val bytes = new ArrayBuffer[Byte]()
+        bytes.append(NumberUtil.longToByte8(currSec): _*)
+        bytes.append(ipAddress: _*)
+        bytes.append(NumberUtil.unsignedShortToByte2(processId): _*)
+        bytes.append(NumberUtil.intToByte4(nextValue): _*)
+
+        DigestUtil.getBase64Str(bytes.toArray)
+
     }
 }
 
@@ -81,9 +67,9 @@ object IdGenerator {
      * 获取当前进程ID
      * @return
      */
-    lazy val currProcessId: Int = {
-        val name: String = ManagementFactory.getRuntimeMXBean.getName
-        val pid: Integer = name.substring(0, name.indexOf("@")).toInt
+    lazy val currProcessId: Short = {
+        val name = ManagementFactory.getRuntimeMXBean.getName
+        val pid = name.substring(0, name.indexOf("@")).toShort
         pid
     }
 
