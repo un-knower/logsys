@@ -1,6 +1,5 @@
 package cn.whaley.bi.logsys.common
 
-import java.security.MessageDigest
 
 /**
  * Created by fj on 16/11/2.
