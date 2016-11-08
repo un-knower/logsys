@@ -67,7 +67,7 @@ object DigestUtil {
      * @param b
      * @return
      */
-    def Bytes2HexString(b: Array[Byte]): String = {
+    def bytes2HexString(b: Array[Byte]): String = {
         val buff = new Array[Byte](2 * b.length);
         for (i <- 0 to b.length - 1) {
             buff(2 * i) = hex((b(i) >> 4) & 0x0f);
