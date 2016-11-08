@@ -6,32 +6,32 @@ import java.security.MessageDigest
  * Created by fj on 16/11/2.
  *
  * AppId实用类
- * @param orgIdNoise 作为噪音与公司组织ID一起参与哈希计算
+ * @param orgCodeNoise 作为噪音与组织代码一起参与哈希计算
  * @param productCodeNoise 作为噪音与产品线代码一起参与哈希计算
  * @param appCodeNoise 作为噪音与应用代码一起参与哈希计算
  */
-class AppIdUtil(orgIdNoise: String, productCodeNoise: String, appCodeNoise: String) {
+class AppIdUtil(orgCodeNoise: String, productCodeNoise: String, appCodeNoise: String) {
     def this() = {
         this("", "", "")
     }
 
     /**
      * 产生一个32位字节长度appId
-     * @param orgId 公司组织ID
+     * @param orgCode 组织代码
      * @param productCode 产品线代码（最多8位）
      * @param appCode 应用代码(最大8位）
      * @return
      */
-    def createAppId(orgId: String, productCode: String, appCode: String): String = {
-        s"${hashCodeForOrgId(orgId)}${hashCodeForProductCode(productCode)}${hashCodeForAppCode(appCode)}"
+    def createAppId(orgCode: String, productCode: String, appCode: String): String = {
+        s"${hashCodeForOrgId(orgCode)}${hashCodeForProductCode(productCode)}${hashCodeForAppCode(appCode)}"
     }
 
     /**
-     * 公司组织ID的16位长度哈希字符串
+     * 组织代码的16位长度哈希字符串
      * @param orgId
      */
     private def hashCodeForOrgId(orgId: String): String = {
-        val md532 = DigestUtil.getMD5Str32(orgId + orgIdNoise)
+        val md532 = DigestUtil.getMD5Str32(orgId + orgCodeNoise)
         val part1 = AppIdUtil.hashCode16To8(md532.substring(0, 16))
         val part2 = AppIdUtil.hashCode16To8(md532.substring(16, 32))
         part1 + part2
