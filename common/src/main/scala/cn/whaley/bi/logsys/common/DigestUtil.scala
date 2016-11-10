@@ -39,7 +39,7 @@ object DigestUtil {
     def getMD5Str32(bytes: Array[Byte]): String = {
         val digest = MessageDigest.getInstance("md5");
         val md5 = digest.digest(bytes)
-        val md5Str32 = Bytes2HexString(md5)
+        val md5Str32 = bytes2HexString(md5)
         md5Str32
     }
 

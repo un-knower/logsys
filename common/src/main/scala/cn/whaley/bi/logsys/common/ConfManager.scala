@@ -75,6 +75,15 @@ class ConfManager(props: Properties, resources: Seq[String], classLoader: ClassL
     }
 
     /**
+     * 设置配置值
+     * @param confKey
+     * @param value
+     */
+    def putConf(confKey: String, value: String): Unit = {
+        conf.set(s"${confKey}", value)
+    }
+
+    /**
      * 获取所有以prefix为前缀的配置
      * @param prefix
      * @return
