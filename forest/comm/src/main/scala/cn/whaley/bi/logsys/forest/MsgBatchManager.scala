@@ -40,6 +40,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         batchSize = confManager.getConfOrElseValue(this.name, "batchSize", defaultBatchSize.toString).toInt
         recoverSourceOffsetFromSink = confManager.getConfOrElseValue(this.name, "recoverSourceOffsetFromSink", "1").toInt
 
+
     }
 
     /**

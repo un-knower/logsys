@@ -1,6 +1,8 @@
 import com.alibaba.fastjson.{JSONArray, JSON, JSONObject}
 import org.junit.Test
 
+import scalaj.http.{Http, HttpRequest}
+
 /**
  * Created by fj on 16/11/16.
  */
@@ -18,6 +20,25 @@ class otherTest {
         })
     }
 
+
+    @Test
+    def testProduceNginxData: Unit = {
+        val stream = this.getClass.getClassLoader.getResourceAsStream("logcenter-tv.log")
+        val source = scala.io.Source.fromInputStream(stream)
+        val lines = source.getLines().toArray
+        var count = 0
+        for(i <- 0 to 10) {
+            lines.foreach(item => {
+                val request: HttpRequest = Http("http://logupload.aginomoto.com:8180/")
+                val res = request.postData(item.getBytes).header("content-type", "application/json").asString
+                count = count + 1
+                println(s"${count}:${res}")
+
+                //if (count > 10) return
+            })
+        }
+
+    }
 
 
 }

@@ -5,8 +5,12 @@
         <value>${prop.kafka.bootstrap.servers}</value>
     </property>
     <property>
-        <name>kafka-producer.acks</name>
+        <name>kafka-producer.request.required.acks</name>
         <value>1</value>
+    </property>
+    <property>
+        <name>kafka-producer.producer.type</name>
+        <value>sync</value>
     </property>
     <property>
         <name>kafka-producer.compression.type</name>
