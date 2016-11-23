@@ -1,9 +1,10 @@
 import java.nio.charset.Charset
 
-import cn.whaley.bi.logsys.common.{KafkaUtil, ConfManager}
+import cn.whaley.bi.logsys.common.{ConfManager, KafkaUtil}
 import cn.whaley.bi.logsys.forest.MsgBatchManager
 import cn.whaley.bi.logsys.forest.Traits.LogTrait
 import org.junit.Test
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 

@@ -1,5 +1,5 @@
 import cn.whaley.bi.logsys.forest.Traits.LogTrait
-import cn.whaley.bi.logsys.forest.{MsgProcExecutor, MainObj}
+import cn.whaley.bi.logsys.forest.{MainObj, MsgProcExecutor}
 import org.junit.Test
 
 /**
