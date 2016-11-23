@@ -2,18 +2,20 @@ package cn.whaley.bi.logsys.common
 
 import java.util
 import java.util.Arrays
-import java.util.concurrent.LinkedBlockingQueue
 
+import kafka.admin.TopicCommand.TopicCommandOptions
 import kafka.api.{FetchRequestBuilder, ConsumerMetadataRequest, OffsetRequest, PartitionOffsetRequestInfo}
-import kafka.common.{ErrorMapping, OffsetAndMetadata, TopicAndPartition}
-import kafka.consumer.KafkaStream
+import kafka.common.{BrokerNotAvailableException, OffsetAndMetadata, TopicAndPartition}
+import kafka.consumer.{Whitelist}
 import kafka.javaapi._
 import kafka.javaapi.consumer.SimpleConsumer
-import kafka.message.{MessageAndOffset, MessageAndMetadata}
+import kafka.message.{MessageAndOffset}
 import kafka.network.BlockingChannel
+import kafka.utils.{ZkUtils}
+import org.I0Itec.zkclient.ZkClient
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable
+import scala.collection.{immutable, Seq, mutable}
 import scala.collection.mutable.ArrayBuffer
 import scala.language.implicitConversions
 
@@ -25,10 +27,10 @@ import scala.language.implicitConversions
  * 目前实现是基于在0.8.2.2客户端库
  *
  */
-class KafkaUtil(host: String, port: Int, clientId: String = ConsumerMetadataRequest.DefaultClientId) {
+class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMetadataRequest.DefaultClientId) {
     val soTimeout = 5000
     val bufferSize = 4096000
-    val simpleConsumer: SimpleConsumer = new SimpleConsumer(host, port, soTimeout, bufferSize, clientId)
+    val simpleConsumer: SimpleConsumer = new SimpleConsumer(brokeHost, brokePort, soTimeout, bufferSize, clientId)
 
     /**
      * 获取指定topic的某个时间点之前的有效offset集合
@@ -122,8 +124,10 @@ class KafkaUtil(host: String, port: Int, clientId: String = ConsumerMetadataRequ
 
             val offsetMap = new util.HashMap[TopicAndPartition, OffsetAndMetadata]
             val tp = new TopicAndPartition(topic, metadata.partitionId)
-            val offset = offsets.get(metadata.partitionId).get
-            offsetMap.put(tp, new OffsetAndMetadata(offset))
+            if (offsets.get(metadata.partitionId).isDefined) {
+                val offset = offsets.get(metadata.partitionId).get
+                offsetMap.put(tp, new OffsetAndMetadata(offset))
+            }
             val offsetCommitRequest = new kafka.javaapi.OffsetCommitRequest(groupId, offsetMap, corId, clientId, version)
             corId = corId + 1
 
@@ -156,9 +160,10 @@ class KafkaUtil(host: String, port: Int, clientId: String = ConsumerMetadataRequ
      * @param topic
      * @param beforeOffset 从topic最末端往前读取的消息数量
      * @param msgAvgSize 消息体平均大小, 合理调整大小，在读取次数和每次读取的字节数之间平衡
+     * @param maxFetchSize 最多读取的数据大小，默认50M
      * @return （partition,MessageAndOffset集合）
      */
-    def getLatestMessage(topic: String, beforeOffset: Int, msgAvgSize: Int = 1024 * 1024): Map[Int, Array[kafka.message.MessageAndOffset]] = {
+    def getLatestMessage(topic: String, beforeOffset: Int, msgAvgSize: Int = 2048, maxFetchSize: Int = 1024 * 1024 * 50): Map[Int, Array[kafka.message.MessageAndOffset]] = {
         val latestOffset = this.getLatestOffset(topic)
         val earliestOffset = this.getEarliestOffset(topic);
         val targetOffsets = latestOffset.map(item => (item._1, item._2 - beforeOffset))
@@ -167,7 +172,7 @@ class KafkaUtil(host: String, port: Int, clientId: String = ConsumerMetadataRequ
         targetOffsets.map(item => {
             val partition = item._1
             val earliest = earliestOffset.get(partition).get
-            val lastest = latestOffset.get(partition).get
+            val latest = latestOffset.get(partition).get
             //确保fromOffset是一个有效值
             val fromOffset = if (item._2 < earliest) {
                 earliest
@@ -175,13 +180,14 @@ class KafkaUtil(host: String, port: Int, clientId: String = ConsumerMetadataRequ
                 item._2
             }
 
-            val fetchSize: Int = ((lastest - fromOffset) * msgAvgSize).toInt
+            val v: Long = (latest - fromOffset) * msgAvgSize
+            val fetchSize: Int = if (v > maxFetchSize) maxFetchSize else v.toInt
 
             val messages =
                 if (fetchSize > 0) {
                     val buf = new ArrayBuffer[MessageAndOffset]()
                     var nextOffset = fromOffset
-                    while (nextOffset < lastest) {
+                    while (nextOffset < latest) {
                         val req = new FetchRequestBuilder()
                             .clientId(clientId)
                             .addFetch(topic, partition, nextOffset, fetchSize * sizeFactor)
@@ -199,7 +205,7 @@ class KafkaUtil(host: String, port: Int, clientId: String = ConsumerMetadataRequ
                         } else {
                             fetched.foreach(item => {
                                 nextOffset = item.nextOffset
-                                if (item.offset >= fromOffset && item.offset <= lastest) {
+                                if (item.offset >= fromOffset && item.offset <= latest) {
                                     buf.append(item)
                                 }
                             })
@@ -273,4 +279,58 @@ class KafkaUtil(host: String, port: Int, clientId: String = ConsumerMetadataRequ
 
 object KafkaUtil {
     private val emptyMessageAndOffsets = new ArrayBuffer[kafka.message.MessageAndOffset]().toArray
+
+    /**
+     * 获取kafka集群topic列表
+     * @param zkServers
+     * @return
+     */
+    def getTopics(zkServers: String): Seq[String] = {
+        val opts = new TopicCommandOptions(Array("list"))
+        val zkClient = new ZkClient(zkServers)
+        val allTopics = ZkUtils.getAllTopics(zkClient).sorted
+        if (opts.options.has(opts.topicOpt)) {
+            val topicsSpec = opts.options.valueOf(opts.topicOpt)
+            val topicsFilter = new Whitelist(topicsSpec)
+            allTopics.filter(topicsFilter.isTopicAllowed(_, excludeInternalTopics = false))
+        } else
+            allTopics
+    }
+
+    //从zookeeper连接构建KafkaUtil
+    def apply(zkServers: String, brokerId: Int = 0): KafkaUtil = {
+        val brokerInfo = getBrokerInfo(zkServers, brokerId)
+        new KafkaUtil(brokerInfo._1, brokerInfo._2)
+    }
+
+    //获取特定broker节点的主机信息
+    def getBrokerInfo(zkServers: String, brokerId: Int = 0): (String, Int) = {
+        val zkClient = new ZkClient(zkServers, 30000, 30000, kafka.utils.ZKStringSerializer)
+        //val brokerId = ZkUtils.getLeaderForPartition(zkClient, topic, partitionId).get
+        getBrokerInfo(zkClient, brokerId).get
+    }
+
+    private def getBrokerInfo(zkClient: ZkClient, bid: Int): Option[(String, Int)] = {
+        try {
+            ZkUtils.readDataMaybeNull(zkClient, ZkUtils.BrokerIdsPath + "/" + bid)._1 match {
+                case Some(brokerInfoString) =>
+                    kafka.utils.Json.parseFull(brokerInfoString) match {
+                        case Some(m) =>
+                            val brokerInfo = m.asInstanceOf[Map[String, Any]]
+                            val host = brokerInfo.get("host").get.asInstanceOf[String]
+                            val port = brokerInfo.get("port").get.asInstanceOf[Int]
+                            Some((host, port))
+                        case None =>
+                            throw new BrokerNotAvailableException("Broker id %d does not exist".format(bid))
+                    }
+                case None =>
+                    throw new BrokerNotAvailableException("Broker id %d does not exist".format(bid))
+            }
+        } catch {
+            case t: Throwable =>
+                println("Could not parse broker info due to " + t.getCause)
+                None
+        }
+    }
+
 }

@@ -1,3 +1,4 @@
+import java.io.FileOutputStream
 import java.util.Properties
 
 import cn.whaley.bi.logsys.common.ConfManager
@@ -22,6 +23,8 @@ class ConfManagerTest extends LogTrait {
         props.put("value.serializer2","org.apache.kafka.common.serialization.ByteArraySerializer2")
         val confManager2 = new ConfManager(props,res)
         LOG.info("producerMap:{}", confManager2.getAllConf("kafka-producer", true))
+
+        confManager.writeXml(new FileOutputStream("/tmp/1.xml"))
 
     }
 

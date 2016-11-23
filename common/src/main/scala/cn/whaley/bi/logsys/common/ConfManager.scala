@@ -1,9 +1,11 @@
 package cn.whaley.bi.logsys.common
 
-import java.io.{FileInputStream}
+import java.io.{OutputStream, FileInputStream}
+import java.util
 import java.util.Properties
 
 import org.apache.hadoop.conf.Configuration
+import scala.collection.JavaConversions._
 
 /**
  * Created by fj on 16/10/30.
@@ -25,10 +27,19 @@ class ConfManager(props: Properties, resources: Seq[String], classLoader: ClassL
         this(ConfManager.EMPTY_PROP, resources, ConfManager.classLoader)
     }
 
+
     val conf = new Configuration(false)
 
     {
         addConfResource(resources: _*)
+    }
+
+    /**
+     * 将配置写入到外部流
+     * @param out
+     */
+    def writeXml(out: OutputStream): Unit = {
+        conf.writeXml(out)
     }
 
     /**
@@ -84,6 +95,29 @@ class ConfManager(props: Properties, resources: Seq[String], classLoader: ClassL
     }
 
     /**
+     * 设置配置值
+     * @param confs
+     */
+    def putAllConf(confs: Map[String, String]): Unit = {
+        confs.map(item => {
+            conf.set(item._1, item._2)
+        })
+    }
+
+    /**
+     * 设置配置值
+     * @param confs
+     */
+    def putAllConf(confs: Properties): Unit = {
+        val it = confs.propertyNames()
+        while (it.hasMoreElements) {
+            val curr = it.nextElement().asInstanceOf[String]
+            conf.set(curr, confs.getProperty(curr))
+        }
+    }
+
+
+    /**
      * 获取所有以prefix为前缀的配置
      * @param prefix
      * @return
@@ -101,9 +135,27 @@ class ConfManager(props: Properties, resources: Seq[String], classLoader: ClassL
                 } else {
                     next.getKey
                 }
-                val confValue = resolveConf(next.getValue)
+                val confValue = this.conf.get(next.getKey)
                 properties.put(confKey, confValue)
             }
+        }
+        properties
+    }
+
+    /**
+     * 获取所有配置
+     * @return
+     * key: 完整的配置key
+     * value: 配置值
+     */
+    def getAllConf(): Properties = {
+        val itr = conf.iterator()
+        val properties = new Properties()
+        while (itr.hasNext) {
+            val next = itr.next()
+            val confKey = next.getKey
+            val confValue = this.getConf(confKey)
+            properties.put(confKey, confValue)
         }
         properties
     }
@@ -114,7 +166,7 @@ class ConfManager(props: Properties, resources: Seq[String], classLoader: ClassL
      * @return
      */
     def getConf(confKey: String): String = {
-        var value = conf.get(confKey)
+        val value = conf.get(confKey)
         if (value == null || value.trim == "") {
             value
         } else {
@@ -151,6 +203,32 @@ class ConfManager(props: Properties, resources: Seq[String], classLoader: ClassL
             value = getConf(prefix, orConfKey)
         }
         value
+    }
+
+    /**
+     * 获取配置值,如果不存在则返回orConfValue的配置值
+     * @param prefix
+     * @param confKey
+     * @return
+     */
+    def getConfOrElseValue(prefix: String, confKey: String, orConfValue: String): String = {
+        var value = getConf(prefix, confKey)
+        if (value == null || value.trim.isEmpty) {
+            value = orConfValue
+        }
+        value
+    }
+
+    /**
+     * 从一个配置前缀派生出一个子配置管理器对象
+     * @param prefix
+     * @param removePrefix
+     */
+    def getSubConfManager(prefix: String, removePrefix: Boolean): ConfManager = {
+        val confManager = new ConfManager(Array(""))
+        val items = this.getAllConf(prefix, removePrefix)
+        confManager.putAllConf(items)
+        confManager
     }
 
     /**
@@ -196,7 +274,7 @@ object ConfManager {
         } else if (resPath.startsWith("file://")) {
             new FileInputStream(resPath.substring("file://".length))
         } else if (resPath.startsWith("/")) {
-            new FileInputStream("/")
+            new FileInputStream(resPath)
         } else {
             loader.getResourceAsStream(resPath)
         }

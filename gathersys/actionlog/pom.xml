@@ -12,5 +12,19 @@
     <artifactId>gathersys-actionlog</artifactId>
     <packaging>pom</packaging>
 
+    <dependencies>
+        <dependency>
+            <groupId>cn.whaley.bi.logsys</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scalaj</groupId>
+            <artifactId>scalaj-http_2.10</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+    </dependencies>
+
 
 </project>

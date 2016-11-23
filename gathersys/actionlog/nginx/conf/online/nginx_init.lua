@@ -9,7 +9,6 @@
 bit = require("bit")
 ffi = require("ffi")
 
-
 sharedDict = ngx.shared.sharedDict;
 
 --1.0版本md5签名key
@@ -53,11 +52,15 @@ function buildMsgInfo()
         msgRemoteIp = ngx.var.http_x_forwarded_for
     end
 
+    ngx.req.read_body(); 
+
     ngx.var.msg_id = createMsgId()
     ngx.var.msg_site = ngx.var.server_addr
     ngx.var.msg_remote_ip = msgRemoteIp
     ngx.var.msg_receive_time = ngx.now() * 1000
     ngx.var.msg_sign_flag = doMsgSign()
+    ngx.var.msg_req_body = getOrElse(ngx.req.get_body_data(),"")
+
 end
 
 --创建消息ID，16字节的base64编码，总长24位（8字节时间戳+4字节IP地址+2字节进程号+2字节TCP连接序列号+2字节TCP连接请求计数器）
@@ -82,8 +85,9 @@ function createMsgId()
     u64[9] = bit.bor(bit.lshift(u64[1], 56), bit.lshift(u64[2], 48), bit.lshift(u64[3], 40), bit.lshift(u64[4], 32), bit.lshift(u64[5], 16), u64[6])
     u64[10] = bit.lshift(u64[7], 48)
     local msgId = getMsgBase64Char(u64[8], u64[9], u64[10])
-    local str = bit.tohex(u64[8]) .. "|" .. bit.tohex(u64[9]) .. "|" .. bit.tohex(u64[10]) .. " -> " .. msgId
-    return str
+    return msgId
+    --local str = bit.tohex(u64[8]) .. "|" .. bit.tohex(u64[9]) .. "|" .. bit.tohex(u64[10]) .. " -> " .. msgId
+    --return str
 end
 
 
@@ -130,7 +134,6 @@ function doMsgSign()
     --目前只实现了md5签名算法
     return -1
 end
-
 
 --字符串分隔
 function split(s, delim)
@@ -219,4 +222,12 @@ function getMsgBase64Char(uint64_1, uint64_2, uint64_3)
             .. get6BitRangeChar(uint64_3, 5, 2)
 
     return str
+end
+
+
+function test()
+    ngx.req.read_body();
+    local reqBody = ngx.var.request_body;
+    local decoded = cjson.decode(reqBody)
+    return cjson.decode(decoded)
 end

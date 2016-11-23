@@ -16,10 +16,16 @@ class DigestUtilTest {
         val v3 = NumberUtil.unsignedShortToByte2(0x0001)
 
         val byteBuffer = new ArrayBuffer[Byte]()
-        byteBuffer.append(v1:_*)
-        byteBuffer.append(v2:_*)
-        byteBuffer.append(v3:_*)
+        byteBuffer.append(v1: _*)
+        byteBuffer.append(v2: _*)
+        byteBuffer.append(v3: _*)
 
         println(DigestUtil.getBase64Str(byteBuffer.toArray))
+    }
+
+    @Test
+    def testMd5: Unit = {
+        val md5 = DigestUtil.getMD5Str32("dsdsdsdsd")
+        println(md5)
     }
 }

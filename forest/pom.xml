@@ -13,7 +13,10 @@
     <packaging>pom</packaging>
     <modules>
         <module>actionlog</module>
+        <module>comm</module>
     </modules>
+
+
 
 
 

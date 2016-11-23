@@ -5,13 +5,14 @@ import cn.whaley.bi.logsys.common.{ConfManager, KafkaUtil}
 import kafka.api.OffsetRequest
 import kafka.consumer.KafkaStream
 import kafka.message.MessageAndMetadata
+import kafka.utils.ZkUtils
+import org.I0Itec.zkclient.ZkClient
 
 import org.apache.kafka.clients.producer.{ProducerRecord, RecordMetadata, KafkaProducer}
 
 import org.junit.Test
 
 import scala.collection.mutable.ArrayBuffer
-
 
 
 /**
@@ -39,6 +40,21 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
         conf.put("group.id", grpId)
         val consumerConf = new kafka.consumer.ConsumerConfig(conf)
         kafka.consumer.Consumer.createJavaConsumerConnector(consumerConf)
+    }
+
+    @Test
+    def testCreateKafkaUtil: Unit = {
+        val topic = "pre-boikgpokn78sb95kjhfrendo8dc5mlsr"
+        val zkServers = "localhost:2181"
+
+        println(KafkaUtil.getTopics(zkServers).mkString(","))
+
+        val util = KafkaUtil(zkServers)
+        var offset = util.getEarliestOffset("pre-boikgpokn78sb95kjhfrendo8dc5mlsr")
+        println(offset)
+
+        offset = util.getEarliestOffset("11")
+        println(offset)
     }
 
     @Test
@@ -115,7 +131,27 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
     }
 
     @Test
+    def testProducer2: Unit = {
+        val producer = getKafkaProducer[Array[Byte], Array[Byte]]
+
+        val topic = "pre-boikgpokn78sb95kjhfrendo8dc5mlsr"
+        val source = scala.io.Source.fromFile("/Users/fj/workspace/whaley/projects/WhaleyLogSys/forest/comm/src/test/resources/boikgpokn78sb95kjhfrendo8dc5mlsr.log")
+        val filelines = source.getLines().toArray
+
+        for (i <- 1 to filelines.length - 1) {
+            val key: Array[Byte] = i.toString.getBytes
+            val value: Array[Byte] = filelines(i).getBytes()
+            val record: ProducerRecord[Array[Byte], Array[Byte]] = new ProducerRecord[Array[Byte], Array[Byte]](topic, key, value)
+            val future: Future[RecordMetadata] = producer.send(record)
+            future.get()
+        }
+    }
+
+
+    @Test
     def testConsumer1: Unit = {
+
+
 
         val connector = getKafkaConsumerConnector()
         val map = new java.util.HashMap[String, Integer]

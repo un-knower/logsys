@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <property>
+        <name>GenericActionLogProcessor.support.appIds</name>
+        <value>
+            boikgpokn78sb95kbqei6cc98dc5mlsr
+            ,boikgpokn78sb95kjhfrendo8dc5mlsr
+            ,boikgpokn78sb95kjtihcg268dc5mlsr
+            ,boikgpokn78sb95ktmsc1bnk.*
+        </value>
+    </property>
+</configuration>
