@@ -162,11 +162,11 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
             this.setName(s"${topic}/${index}")
             var count = 0
             val it = stream.iterator
-            LOG.info(s"MsgConsumerThread[${this.getName}}] started")
+            LOG.info(s"MsgConsumerThread[${this.getName}] started")
             while (it.hasNext) {
                 count = count + 1
                 if (count % logPerMsgCount == 0) {
-                    LOG.info(s"MsgConsumerThread[${this.getName}}] msgCount: ${count}")
+                    LOG.info(s"MsgConsumerThread[${this.getName}] msgCount: ${count}")
                 }
                 queue.put(it.next())
             }
