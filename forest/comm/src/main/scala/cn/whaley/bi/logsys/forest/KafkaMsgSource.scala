@@ -10,7 +10,7 @@ import kafka.javaapi.consumer.ConsumerConnector
 import kafka.message.MessageAndMetadata
 import org.apache.kafka.clients.producer.{ProducerRecord, KafkaProducer}
 import scala.collection.JavaConversions._
-import scala.collection.immutable
+import scala.collection.{mutable, immutable}
 import scala.util.matching.Regex
 
 /**
@@ -22,12 +22,16 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
     type KafkaMessage = MessageAndMetadata[Array[Byte], Array[Byte]]
 
+    var confManager: ConfManager = null
+
 
     /**
      * 初始化方法
      * 如果初始化异常，则应该抛出异常
      */
     override def init(confManager: ConfManager): Unit = {
+
+        this.confManager = confManager
 
         topicRegexs = StringUtil.splitStr(confManager.getConf(this.name, "topics"), ",").map(item => item.r)
         queueCapacity = confManager.getConfOrElseValue(this.name, "queueCapacity", defaultQueueCapacity.toString).toInt
@@ -73,9 +77,11 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
      * 启动数据源读取线程
      */
     def start(): Unit = {
-        val map = new java.util.HashMap[String, Integer]()
-        topics.foreach(item => map.put(item, 3))
-        val streams = consumerConnector.createMessageStreams(map)
+        val topicCountMap = getSourceTopicCountMap(topics, confManager)
+
+        LOG.info("topicCountMap:{}",topicCountMap )
+
+        val streams = consumerConnector.createMessageStreams(topicCountMap)
 
         //特定topic的特定partition对应一个线程
         consumerThreads =
@@ -93,6 +99,49 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         consumerThreads.foreach(item => {
             item.start()
         })
+    }
+
+    /**
+     * 获取源topic及其线程数
+     * @return
+     */
+    def getSourceTopicCountMap(topics: Seq[String], confManager: ConfManager): java.util.HashMap[String, Integer] = {
+
+        val topicCountMap = new java.util.HashMap[String, Integer]()
+
+        val topicInfos = topics.map(topic => {
+            (topic, kafkaUtil.getPartitionMetadata(topic))
+        }).toMap
+
+        val confValue = confManager.getConfOrElseValue(this.name, "topicCount", "")
+
+        //默认情况下，每3个partition一个消费线程
+        if (confValue == null || confValue.trim.length == 0) {
+            topics.map(topic => {
+                val ps = Math.ceil(topicInfos.get(topic).get.size.toFloat / 3.0).toInt
+                topicCountMap.put(topic, ps)
+            })
+        } else {
+            val topicAndThreadsStr = StringUtil.splitStr(confValue, ",")
+            val map = new mutable.HashMap[String, Int]()
+            topics.foreach(topic => {
+                topicAndThreadsStr.map(str => {
+                    val strValues = str.split(":")
+                    var regStr = strValues(0)
+                    val count = strValues(1).toInt
+                    if (!regStr.startsWith("^")) regStr = "^" + regStr
+                    if (!regStr.endsWith("$")) regStr = regStr + "$"
+                    regStr.r.findFirstMatchIn(topic) match {
+                        case Some(m) => {
+                            topicCountMap.put(topic, count)
+                        }
+                        case None =>
+                    }
+                })
+            })
+        }
+
+        topicCountMap
     }
 
     /**

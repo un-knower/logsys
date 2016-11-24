@@ -181,7 +181,7 @@ class ConfManager(props: Properties, resources: Seq[String], classLoader: ClassL
      * @return
      */
     def getConf(prefix: String, confKey: String): String = {
-        var value = conf.get(s"${prefix}.${confKey}")
+        var value = if (prefix != null && prefix.trim.length > 0) conf.get(s"${prefix}.${confKey}") else confKey
         if (value == null || value.trim == "") {
             val parent = conf.get(s"${prefix}.parent")
             if (parent != null && parent.trim != "") {
