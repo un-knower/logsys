@@ -14,7 +14,7 @@
     <modules>
         <module>actionlog</module>
         <module>comm</module>
-        <module>dist</module>
+        <module>distribution</module>
     </modules>
 
 

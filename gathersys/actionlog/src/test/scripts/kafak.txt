@@ -1,5 +1,8 @@
 ./kafka-topics.sh --zookeeper localhost:2181 --delete --topic pre-boikgpokn78sb95kjhfrendo8dc5mlsr
-./kafka-topics.sh --zookeeper localhost:2181 --delete --topic post-boikgpokn78sb95kjhfrendo8dc5mlsr
 
-./kafka-topics.sh --zookeeper localhost:2181 --delete --topic pre-boikgpokn78sb95kjhfrendo8dc5mlsr1
+./kafka-topics.sh --zookeeper localhost:2181 --delete --topic pre-boikgpokn78sb95kjhfrendo8dc5mlsr
+
+./kafka-topics.sh --zookeeper 172.16.16.84:2182 --delete --topic post-boikgpokn78sb95kjhfrendo8dc5mlsr
+./kafka-topics.sh --zookeeper 172.16.16.84:2182 --delete --topic post-boikgpokn78sb95kjhfrendo
+
 

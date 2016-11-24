@@ -46,6 +46,17 @@
         <name>KafkaMsgSink.include</name>
         <value>kafka-producer.xml,kafka.properties</value>
     </property>
+    <property>
+        <name>KafkaMsgSource.topics</name>
+        <value>pre-boikgpokn.*</value>
+    </property>
+    <property>
+        <name>KafkaMsgSource.topicCount</name>
+        <value>
+            pre-boikgpokn.*:4
+            ,pre-boikgpokn78sb95kjhfrendo8dc5mlsr:2
+        </value>
+    </property>
     <!-- GenericProcessorChain -->
     <property>
         <name>GenericProcessorChain.class</name>

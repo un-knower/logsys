@@ -171,19 +171,23 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
             val monitor = new TaskMonitor()
 
             var callId = 0
+            var msgCount = 0
+            var lastTaskTime = System.currentTimeMillis()
 
             while (keepRunning) {
 
-                //从消息队列中获取一批数据，如果队列为空，则进行等待
+                //从消息队列中获取一批数据，如果队列为空，则进行等待,获取到数据后，等待100ms以累积数据
                 val list = new util.ArrayList[KafkaMessage]()
-                queue.drainTo(list, batchSize)
-                //如果队列为空，则等待队列不为空，并等待200ms以累积数据，如果发生中断，则退出整个处理循环
-                if (list.size() == 0) {
-                    LOG.info(s"queue[${topic}] is empty. take...")
+
+                if (queue.peek() == null) {
                     pIsWaiting = true
-                    var probeObj: KafkaMessage = null
+                    val ts = System.currentTimeMillis() - lastTaskTime
+                    lastTaskTime = System.currentTimeMillis()
+                    LOG.info(s"queue[${topic}] is empty.total ${msgCount} message processed. ts:${ts} .taking...")
                     try {
-                        probeObj = queue.take()
+                        val probeObj = queue.take()
+                        Thread.sleep(100)
+                        list.add(probeObj)
                     } catch {
                         case e: InterruptedException => {
                             runningLatch.countDown()
@@ -192,10 +196,9 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                         }
                     }
                     pIsWaiting = false
-                    Thread.sleep(100)
-                    list.add(probeObj)
                 }
                 queue.drainTo(list, batchSize)
+
 
                 callId = callId + 1
                 val callable = new ProcessCallable(callId, list)
@@ -256,6 +259,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                         val firstOffset = item._2.minBy(offset => offset._2)._2
                         (topicAndPartition, firstOffset, lastOffset)
                     })
+
+                msgCount = msgCount + list.size()
                 LOG.info(s"${topic}-done(${list.size()}):${monitor.checkDone()}:${offset}")
             }
 
@@ -281,6 +286,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                 val format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
                 format.format(new Date(ts))
             }
+
+            def getTaskFrom() = taskFrom
 
             /**
              * 检查单步
