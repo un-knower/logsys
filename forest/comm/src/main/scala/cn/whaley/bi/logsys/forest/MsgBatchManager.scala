@@ -37,8 +37,10 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         topicNameMapper = instanceFrom(confManager, topicNameMapperName).asInstanceOf[GenericTopicMapper]
 
 
-        batchSize = confManager.getConfOrElseValue(this.name, "batchSize", defaultBatchSize.toString).toInt
+        batchSize = confManager.getConfOrElseValue(this.name, "batchSize", "4000").toInt
+        callableSize= confManager.getConfOrElseValue(this.name, "callableSize", "2000").toInt
         recoverSourceOffsetFromSink = confManager.getConfOrElseValue(this.name, "recoverSourceOffsetFromSink", "1").toInt
+
 
 
     }
@@ -60,7 +62,11 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     val map = topicNameMapper.getTargetTopicMap(topic)
                     val partitionCount = if (metadatas.get(topic).isDefined) metadatas.get(topic).get.size else 0
                     if (map.isDefined && partitionCount > 0) {
-                        val msgCount = batchSize * partitionCount
+                        //理论上源topic的partition是均衡分布的，那么在目标topic中读取一批的处理数据，
+                        //就能恢复源topic每个partition的offset，设置为2倍，以保留一定的余量
+                        //如果源topic的partition数据不均衡，那么可能存在部分源topic的partition的offset信息不能恢复
+                        //这些partition的offset依然沿用kafka的自动offset管理的值
+                        val msgCount = (batchSize / partitionCount) * 2
                         val seq = map.get
                         val offset: Map[Int, Long] =
                             seq.flatMap(targetTopic => {
@@ -199,16 +205,27 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                 }
                 queue.drainTo(list, batchSize)
 
+                val listSize = list.size()
 
-                callId = callId + 1
-                val callable = new ProcessCallable(callId, list)
-                val future = procThreadPool.submit(callable)
+                //分批次提交消息处理任务
+                val callableCount = (listSize - 1) / callableSize + 1
+                val futures =
+                    for (i <- 0 to callableCount - 1) yield {
+                        callId = callId + 1
+                        val indexFrom = i * callableSize
+                        val indexTo = Math.min(listSize, (i + 1) * callableSize)
+                        val taskList = list.subList(indexFrom, indexTo)
+                        val callable = new ProcessCallable(callId, taskList)
+                        val future = procThreadPool.submit(callable)
+                        future
+                    }
 
-                LOG.info(s"${topic}-taskSubmit:${monitor.checkStep()}")
+                LOG.info(s"${topic}-taskSubmit(${callableCount},${callableSize}):${monitor.checkStep()}")
 
-                val procResults = future.get._2
+                //等待所有消息处理任务执行完毕
+                val procResults = futures.map(_.get).sortBy(_._1).flatMap(_._2)
 
-                LOG.info(s"${topic}-msgProcess:${monitor.checkStep()}")
+                LOG.info(s"${topic}-msgProcess(${procResults.size}}):${monitor.checkStep()}")
 
                 //错误处理
                 val errorDatas =
@@ -261,7 +278,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     })
 
                 msgCount = msgCount + list.size()
-                LOG.info(s"${topic}-done(${list.size()}):${monitor.checkDone()}:${offset}")
+                LOG.info(s"${topic}-done(${listSize}):${monitor.checkDone()}:${offset}")
             }
 
             runningLatch.countDown()
@@ -272,6 +289,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         override def toString: String = {
             s"BatchProcessThread[${this.getName}]"
         }
+
+        //private def
 
 
         /**
@@ -375,8 +394,9 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     private var msgSink: KafkaMsgSink = null
     private var processorChain: GenericProcessorChain = null
     private var topicNameMapper: GenericTopicMapper = null
-    private var batchSize: Int = defaultBatchSize
-    private val defaultBatchSize: Int = 1000
+    private var batchSize: Int = 4000
+    //每次消息处理过程调用所处理的消息数量
+    private var callableSize: Int = 2000
 
 
 }

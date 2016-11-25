@@ -158,15 +158,15 @@ class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMe
     /**
      * 从某个topic最后的开始，往前读取一定数量的消息
      * @param topic
-     * @param beforeOffset 从topic最末端往前读取的消息数量
+     * @param msgCount 从topic的每个partition最末端往前读取的消息数量
      * @param msgAvgSize 消息体平均大小, 合理调整大小，在读取次数和每次读取的字节数之间平衡
      * @param maxFetchSize 最多读取的数据大小，默认50M
      * @return （partition,MessageAndOffset集合）
      */
-    def getLatestMessage(topic: String, beforeOffset: Int, msgAvgSize: Int = 2048, maxFetchSize: Int = 1024 * 1024 * 50): Map[Int, Array[kafka.message.MessageAndOffset]] = {
+    def getLatestMessage(topic: String, msgCount: Int, msgAvgSize: Int = 2048, maxFetchSize: Int = 1024 * 1024 * 50): Map[Int, Array[kafka.message.MessageAndOffset]] = {
         val latestOffset = this.getLatestOffset(topic)
         val earliestOffset = this.getEarliestOffset(topic);
-        val targetOffsets = latestOffset.map(item => (item._1, item._2 - beforeOffset))
+        val targetOffsets = latestOffset.map(item => (item._1, item._2 - msgCount))
         var sizeFactor = 1
 
         targetOffsets.map(item => {

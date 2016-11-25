@@ -19,7 +19,7 @@ class MsgBatchManagerTest extends LogTrait {
     @Test
     def testBatch: Unit = {
 
-        resetOffset
+        //resetOffset
 
         val confManager = new ConfManager(Array("MsgBatchManager.xml"))
         val batchManager = new MsgBatchManager()
@@ -159,11 +159,7 @@ class MsgBatchManagerTest extends LogTrait {
                     val fromOffset = offsetInfo.get._2 + 1
                     if (fromOffset > offsetMap.getOrElse(partition, 0L)) {
                         val latestOffsetValue = latestOffset(partition)
-                        if (fromOffset > latestOffsetValue) {
-                            offsetMap.update(partition, latestOffsetValue)
-                        } else {
-                            offsetMap.update(partition, fromOffset)
-                        }
+                        offsetMap.put(partition, Math.max(fromOffset,latestOffsetValue))
                     }
                 }
                 println(strKey)

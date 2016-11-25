@@ -22,7 +22,11 @@
     </property>
     <property>
         <name>MsgBatchManager.batchSize</name>
-        <value>4000</value>
+        <value>10000</value>
+    </property>
+    <property>
+        <name>MsgBatchManager.callableSize</name>
+        <value>1000</value>
     </property>
     <!-- KafkaMsgSource -->
     <property>

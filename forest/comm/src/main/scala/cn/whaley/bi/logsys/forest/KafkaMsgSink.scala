@@ -64,9 +64,9 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
 
     /**
      * 从目标kafka集群中，获取某个源topic最后写入的offset信息
-     * @param sourceTopic
-     * @param targetTopic
-     * @param maxMsgCount
+     * @param sourceTopic 源topic
+     * @param targetTopic 目标topic
+     * @param maxMsgCount 目标topic的每个partition最多读取的消息数量
      * @return 源topic相关的offse信（partition，offset），如果没有则返回空Map对象
      */
     def getTopicLastOffset(sourceTopic: String, targetTopic: String, maxMsgCount: Int): Map[Int, Long] = {
