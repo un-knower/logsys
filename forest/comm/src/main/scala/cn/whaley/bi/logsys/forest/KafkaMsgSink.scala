@@ -40,10 +40,10 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
     }
 
     /**
-     * 批量发送数据到kafka，每一批次的最后进行一次同步确认
+     * 保存处理后的数据
      * @param datas
      */
-    def send(datas: Seq[(String, KafkaMessage, LogEntity)]): Unit = {
+    def saveProcMsg(datas: Seq[(String, KafkaMessage, LogEntity)]): Unit = {
         var future: Future[RecordMetadata] = null
         var count = 0
         datas.foreach(item => {
@@ -60,6 +60,21 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
         if (future != null) {
             future.get()
         }
+    }
+
+    /**
+     * 保存错误信息
+     * @param datas
+     */
+    def saveErrorMsg(datas: Seq[(String, KafkaMessage)]) = {
+        datas.foreach(item => {
+            val errorTopic: String = item._1
+            val message: KafkaMessage = item._2
+            val key: Array[Byte] = getKeyFromSource(message).getBytes()
+            val value: Array[Byte] = message.message()
+            val record = new ProducerRecord[Array[Byte], Array[Byte]](errorTopic, key, value)
+            kafkaProducer.send(record)
+        })
     }
 
     /**

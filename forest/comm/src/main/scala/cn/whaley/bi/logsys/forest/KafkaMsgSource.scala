@@ -8,9 +8,9 @@ import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
 import kafka.consumer.KafkaStream
 import kafka.javaapi.consumer.ConsumerConnector
 import kafka.message.MessageAndMetadata
-import org.apache.kafka.clients.producer.{ProducerRecord, KafkaProducer}
+import org.apache.kafka.clients.producer.{KafkaProducer}
 import scala.collection.JavaConversions._
-import scala.collection.{mutable, immutable}
+import scala.collection.{mutable}
 import scala.util.matching.Regex
 
 /**
@@ -38,6 +38,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         logPerMsgCount = confManager.getConfOrElseValue(this.name, "logPerMsgCount", "500").toInt
 
 
+
         //实例化kafka生产者
         val producerConf = confManager.getAllConf("kafka-producer", true)
         kafkaProducer = new KafkaProducer[Array[Byte], Array[Byte]](producerConf)
@@ -46,8 +47,17 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         val consumerConf = confManager.getAllConf("kafka-consumer", true)
         consumerConnector = kafka.consumer.Consumer.createJavaConsumerConnector(new kafka.consumer.ConsumerConfig(consumerConf))
 
-        //通过正则表达式过滤需要订阅的topic列表
         val zkServers = consumerConf.get("zookeeper.connect").toString
+
+
+        initDefaultOffset(confManager)
+
+        //kafkaUtil
+        groupId = consumerConf.getProperty("group.id")
+        kafkaUtil = KafkaUtil(zkServers)
+
+        //通过正则表达式过滤需要订阅的topic列表
+
         val allTopic = KafkaUtil.getTopics(zkServers)
         topics =
             allTopic.filter(topic => {
@@ -61,9 +71,12 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         require(topics.length > 0)
         LOG.info(s"topics:${topics.mkString}")
 
-        //kafkaUtil
-        groupId = consumerConf.getProperty("group.id")
-        kafkaUtil = KafkaUtil(zkServers)
+        //topic元数据信息
+        topicMetaInfos = topics.map(topic => {
+            (topic, kafkaUtil.getPartitionMetadata(topic))
+        }).toMap
+
+
 
         //初始化消息队列Map，每个topic对应一个队列
         msgQueueMap =
@@ -78,8 +91,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
      */
     def start(): Unit = {
         val topicCountMap = getSourceTopicCountMap(topics, confManager)
-
-        LOG.info("topicCountMap:{}",topicCountMap )
+        LOG.info("topicCountMap:{}", topicCountMap)
 
         val streams = consumerConnector.createMessageStreams(topicCountMap)
 
@@ -109,16 +121,13 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
         val topicCountMap = new java.util.HashMap[String, Integer]()
 
-        val topicInfos = topics.map(topic => {
-            (topic, kafkaUtil.getPartitionMetadata(topic))
-        }).toMap
 
         val confValue = confManager.getConfOrElseValue(this.name, "topicCount", "")
 
         //默认情况下，每3个partition一个消费线程
         if (confValue == null || confValue.trim.length == 0) {
             topics.map(topic => {
-                val ps = Math.ceil(topicInfos.get(topic).get.size.toFloat / 3.0).toInt
+                val ps = Math.ceil(topicMetaInfos.get(topic).get.size.toFloat / 3.0).toInt
                 topicCountMap.put(topic, ps)
             })
         } else {
@@ -157,31 +166,46 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
     }
 
     /**
-     * 获取当前数据源topic的元数据信息
+     * 获取默认偏移值，如果没有设置则返回空Map
+     * @param topic
      * @return
      */
-    def getTopicMetadatas(): immutable.Map[String, List[kafka.javaapi.PartitionMetadata]] = {
-        val metadatas =
-            topics.map(topic => {
-                (topic, kafkaUtil.getPartitionMetadata(topic))
-            }).toMap
-        metadatas
+    def getDefaultOffset(topic: String): Map[Int, Long] = {
+        if (topicMetaInfos.get(topic).isEmpty) {
+            return Map[Int, Long]()
+        }
+        val metaInfos = topicMetaInfos.get(topic).get
+        val map = metaInfos.flatMap(metaInfo => {
+            val partition = metaInfo.partitionId
+            val matched =
+                defaultOffset.map(item => {
+                    var regStr = item._1
+                    if (!regStr.startsWith("^")) regStr = "^" + regStr
+                    if (!regStr.endsWith("$")) regStr = regStr + "$"
+                    if (regStr.r.findFirstMatchIn(topic + "-" + partition).isDefined) {
+                        (0, item)
+                    } else if (regStr.r.findFirstMatchIn(topic).isDefined) {
+                        (1, item)
+                    } else {
+                        (-1, null)
+                    }
+                }).filter(_._1 >= 0).toArray.sortBy(_._1)
+            if (matched.size == 0) {
+                None
+            } else {
+                Array((partition, matched(0)._2._2))
+            }
+        }).toMap
+        map
     }
 
 
     /**
-     * 保存错误信息
-     * @param datas
+     * 获取当前数据源topic的元数据信息
+     * @return
      */
-    def saveErrorMsg(datas: Seq[(String, KafkaMessage)]) = {
-        datas.foreach(item => {
-            val errorTopic: String = item._1
-            val message: KafkaMessage = item._2
-            val key: Array[Byte] = message.key()
-            val value: Array[Byte] = message.message()
-            val record = new ProducerRecord[Array[Byte], Array[Byte]](errorTopic, key, value)
-            kafkaProducer.send(record)
-        })
+    def getTopicMetadatas(): Map[String, List[kafka.javaapi.PartitionMetadata]] = {
+        topicMetaInfos
     }
 
     /**
@@ -192,6 +216,19 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         msgQueueMap
     }
 
+    /**
+     * 初始化默认偏移，逗号分隔的配置项： ${topic正则表达式-partition}:${offset}
+     * @param confManager
+     */
+    private def initDefaultOffset(confManager: ConfManager): Unit = {
+        val defaultOffsetStr = StringUtil.splitStr(confManager.getConfOrElseValue(this.name, "defaultOffset", ""), ",")
+        defaultOffset =
+            defaultOffsetStr.map(item => {
+                val values = item.split(":")
+                (values(0), values(1).toLong)
+            }).toMap
+    }
+
 
     private val defaultQueueCapacity = 2000
     private var groupId: String = null
@@ -200,10 +237,12 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
     private var kafkaUtil: KafkaUtil = null
     private var topicRegexs: Seq[Regex] = null
     private var topics: Seq[String] = null
+    private var topicMetaInfos: Map[String, List[kafka.javaapi.PartitionMetadata]] = null
     private var queueCapacity: Int = defaultQueueCapacity
     private var msgQueueMap: Map[String, LinkedBlockingQueue[KafkaMessage]] = null
     private var consumerThreads: Seq[MsgConsumerThread] = null
     private var logPerMsgCount = 100
+    private var defaultOffset: Map[String, Long] = null
 
 
     class MsgConsumerThread(topic: String, index: Int, queue: LinkedBlockingQueue[KafkaMessage], stream: KafkaStream[Array[Byte], Array[Byte]]) extends Thread {

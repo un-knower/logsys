@@ -11,6 +11,7 @@ import cn.whaley.bi.logsys.forest.entity.{LogEntity}
 
 import kafka.message.MessageAndMetadata
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 
 /**
  * Created by fj on 16/10/30.
@@ -38,9 +39,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
 
         batchSize = confManager.getConfOrElseValue(this.name, "batchSize", "4000").toInt
-        callableSize= confManager.getConfOrElseValue(this.name, "callableSize", "2000").toInt
+        callableSize = confManager.getConfOrElseValue(this.name, "callableSize", "2000").toInt
         recoverSourceOffsetFromSink = confManager.getConfOrElseValue(this.name, "recoverSourceOffsetFromSink", "1").toInt
-
 
 
     }
@@ -52,42 +52,59 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
         val topicAndQueue = msgSource.getTopicAndQueueMap()
 
+        val offsetMap = new mutable.HashMap[String, Map[Int, Long]]()
+
+        //默认offset
+        topicAndQueue.foreach(item => {
+            val offset = msgSource.getDefaultOffset(item._1)
+            offsetMap.put(item._1, offset)
+        })
+
+        //从目标topic恢复offset
         if (recoverSourceOffsetFromSink == 1) {
             //获取topic的最后处理offset
             val metadatas = msgSource.getTopicMetadatas()
-            val offsetInfo =
-                topicAndQueue.map(item => {
-                    val topic = item._1
-                    //从所有目标topic中获取源topic的offset信息
-                    val map = topicNameMapper.getTargetTopicMap(topic)
-                    val partitionCount = if (metadatas.get(topic).isDefined) metadatas.get(topic).get.size else 0
-                    if (map.isDefined && partitionCount > 0) {
-                        //理论上源topic的partition是均衡分布的，那么在目标topic中读取一批的处理数据，
-                        //就能恢复源topic每个partition的offset，设置为2倍，以保留一定的余量
-                        //如果源topic的partition数据不均衡，那么可能存在部分源topic的partition的offset信息不能恢复
-                        //这些partition的offset依然沿用kafka的自动offset管理的值
-                        val msgCount = (batchSize / partitionCount) * 2
-                        val seq = map.get
-                        val offset: Map[Int, Long] =
-                            seq.flatMap(targetTopic => {
-                                msgSink.getTopicLastOffset(topic, targetTopic, msgCount)
-                            }).groupBy(arrItem => arrItem._1)
-                                .map(arrItem => {
-                                (arrItem._1, arrItem._2.maxBy(_._2)._2)
-                            })
-                        (topic, offset)
+            topicAndQueue.map(item => {
+                val topic = item._1
+                //从所有目标topic中获取源topic的offset信息
+                val map = topicNameMapper.getTargetTopicMap(topic)
+                val partitionCount = if (metadatas.get(topic).isDefined) metadatas.get(topic).get.size else 0
+                if (map.isDefined && partitionCount > 0) {
+                    //理论上源topic的partition是均衡分布的，那么在目标topic中读取一批的处理数据，
+                    //就能恢复源topic每个partition的offset，设置为2倍，以保留一定的余量
+                    //如果源topic的partition数据不均衡，那么可能存在部分源topic的partition的offset信息不能恢复
+                    //这些partition的offset依然沿用kafka的自动offset管理的值
+                    val msgCount = (batchSize / partitionCount) * 2
+                    val seq = map.get
+                    val offset: Map[Int, Long] =
+                        seq.flatMap(targetTopic => {
+                            msgSink.getTopicLastOffset(topic, targetTopic, msgCount)
+                        }).groupBy(arrItem => arrItem._1)
+                            .map(arrItem => {
+                            (arrItem._1, arrItem._2.maxBy(_._2)._2)
+                        })
+                    //合并默认offset
+                    val defaultOffset = offsetMap.get(topic)
+                    if (defaultOffset.isDefined) {
+                        val newMap = new mutable.HashMap[Int, Long]()
+                        newMap.putAll(defaultOffset.get)
+                        newMap.putAll(offset)
+                        offsetMap.put(topic, newMap.toMap)
                     } else {
-                        LOG.info(s"topic[${topic}] can not get offset,targetTopic:${map.getOrElse("" :: Nil).mkString(",")},sourcePartitionCount:${partitionCount}")
-                        (topic, Map[Int, Long]())
+                        offsetMap.put(topic, offset)
                     }
-                }).filter(item => item._2.size > 0)
+                } else {
+                    LOG.info(s"topic[${topic}] can not get offset,targetTopic:${map.getOrElse("" :: Nil).mkString(",")},sourcePartitionCount:${partitionCount}")
 
-            if (offsetInfo.size > 0) {
-                LOG.info(s"commitOffset:${offsetInfo}")
-                msgSource.commitOffset(offsetInfo)
-            } else {
-                LOG.info(s"commitOffset:None")
-            }
+                }
+            })
+        }
+
+        if (offsetMap.size > 0) {
+            LOG.info(s"commitOffset:${offsetMap}")
+            msgSource.commitOffset(offsetMap.toMap)
+        } else {
+            LOG.info(s"commitOffset:None")
         }
 
         msgSource.start()
@@ -228,7 +245,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                 LOG.info(s"${topic}-msgProcess(${procResults.size}}):${monitor.checkStep()}")
 
                 //错误处理
-                val errorDatas =
+                val errorResults =
                     procResults.filter(result => result._2.hasErr == true)
                         .flatMap(result => {
                         val message = result._1
@@ -241,13 +258,13 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                         })
                     })
 
-                if (errorDatas.length > 0) {
-                    msgSource.saveErrorMsg(errorDatas)
-                    LOG.info(s"${topic}-saveErr(${errorDatas.length}):${monitor.checkStep()}")
+                if (errorResults.length > 0) {
+                    msgSink.saveErrorMsg(errorResults)
+                    LOG.info(s"${topic}-saveErr(${errorResults.length}):${monitor.checkStep()}")
                 }
 
                 //发送处理成功的数据
-                val procDatas =
+                val okResults =
                     procResults.filter(result => result._2.hasErr == false)
                         .flatMap(result => {
                         val message = result._1
@@ -257,12 +274,12 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                             targetTopics.map(targetTopic => (targetTopic, message, item))
                         })
                     })
-                msgSink.send(procDatas)
+                msgSink.saveProcMsg(okResults)
 
                 //保存topic映射，以便后续从目标topic恢复源topic的offset
                 topicNameMapper.saveTargetTopicMap()
 
-                LOG.info(s"${topic}-sendSink(${procDatas.length}):${monitor.checkStep()}")
+                LOG.info(s"${topic}-sendSink(${okResults.length}):${monitor.checkStep()}")
 
                 //offset
                 val offset =

@@ -24,8 +24,15 @@ class GenericMsgDecoder extends MsgDecodeTrait with NameTrait {
             } else {
                 decodeStr
             }
-        val msg = new MsgEntity(JSON.parseObject(str))
-        new ProcessResult(this.name, ProcessResultCode.processed, "", Some(msg))
+        try {
+            val msg = new MsgEntity(JSON.parseObject(str))
+            new ProcessResult(this.name, ProcessResultCode.processed, "", Some(msg))
+        } catch {
+            case e: Throwable => {
+                new ProcessResult(this.name, ProcessResultCode.exception, "JSON解析异常", None, Some(e))
+            }
+        }
+
     }
 
     /**

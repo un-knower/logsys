@@ -6,10 +6,12 @@ pwd=`pwd`
 filepath=$pwd/logcenter-tv.log
 echo $filepath
 
+filepath=/Users/fj/workspace/whaley/projects/WhaleyLogSys/gathersys/actionlog/src/test/datas/logcenter-tv.log
+
 while read -r LINE
 do
     echo $LINE > /tmp/req.tmp
-    ab -c 1 -n 1 -H "Content-Type:application/json" -p /tmp/req.tmp http://logupload.aginomoto.com:8180/
+    ab -c 1 -n 1 -H "Content-Type:application/json" -p /tmp/req.tmp http://crawlerlog.aginomoto.com:8180/price
 done < $filepath
 
 
@@ -24,8 +26,17 @@ http://log.moretv.com.cn:8180/mtvkidslog
 http://log.moretv.com.cn:8180/mobilehelperlog
 http://log.moretv.com.cn:8180/mobilelog
 
+http://logupload.aginomoto.com:8180/
+
 http://vrlog.aginomoto.com:8180/vrapplog
 http://crawlerlog.aginomoto.com:8180/price
+
+
+while read -r LINE
+do
+    echo $LINE > /tmp/req.tmp
+    cat /tmp/req.tmp|grep
+done < $filepath
 
 
 

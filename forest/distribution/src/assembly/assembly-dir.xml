@@ -12,6 +12,10 @@
     <moduleSets>
         <moduleSet>
             <useAllReactorProjects>true</useAllReactorProjects>
+            <includes>
+                <include>cn.whaley.bi.logsys:forest-comm</include>
+                <include>cn.whaley.bi.logsys:forest-actionlog</include>
+            </includes>
             <binaries>
                 <outputDirectory>lib/</outputDirectory>
                 <unpack>false</unpack>
