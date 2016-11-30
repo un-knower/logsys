@@ -31,13 +31,19 @@ function doSubrequest(mainLocaition, subLocation)
         params = { method = ngx.HTTP_GET, copy_all_vars = true }
     end
 
+    --ngx.req.set_header("Content-Type", ngx.var.content_type);
+    --ngx.req.set_header("Accept", "application/json");
+
     local res0, res1 = ngx.location.capture_multi({
         { mainLocaition, params },
         { subLocation, params },
     })
 
     if res1.status ~= ngx.HTTP_OK then
-        ngx.log(ngx.ERR, subLocation .. " err:" .. res1.body)
+        ngx.log(ngx.ERR, subLocation .. " err[" .. res1.status .. "]: "
+        .. ngx.var.request_method .. " "
+        .. ngx.var.content_type .. " "
+        .. res1.body)
     end
 
     ngx.status = res0.status
@@ -52,7 +58,7 @@ function buildMsgInfo()
         msgRemoteIp = ngx.var.http_x_forwarded_for
     end
 
-    ngx.req.read_body(); 
+    ngx.req.read_body();
 
     ngx.var.msg_id = createMsgId()
     ngx.var.msg_site = ngx.var.server_addr

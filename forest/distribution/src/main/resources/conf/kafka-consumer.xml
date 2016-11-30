@@ -8,6 +8,12 @@
         <name>kafka-consumer.group.id</name>
         <value>forest</value>
     </property>
+    <!--
+    <property>
+        <name>kafka-consumer.bootstrap.broker.id</name>
+        <value>5</value>
+    </property>
+    -->
     <property>
         <name>kafka-consumer.enable.auto.commit</name>
         <value>true</value>

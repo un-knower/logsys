@@ -1,5 +1,6 @@
 package cn.whaley.bi.logsys.forest
 
+import java.net.Socket
 import java.nio.charset.Charset
 import java.util.concurrent.Future
 
@@ -137,14 +138,15 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
         val array = bootstrapServers.split(",")
         var util: KafkaUtil = null
         for (i <- 0 to array.length - 1 if util == null) {
+            val hostAndPort = array(i).split(":")
             try {
-                val hostAndPort = array(i).split(":")
-                //实例化util并做一次访问测试
+                //进行一次网络测试
+                new Socket(hostAndPort(0), hostAndPort(1).toInt)
                 util = new KafkaUtil(hostAndPort(0), hostAndPort(1).toInt)
-                util.getEarliestOffset("test")
-            } catch {
+            }
+            catch {
                 case e: Throwable => {
-                    LOG.error(s"broker is invalid:${array(i)}")
+                    LOG.error(s"broker is invalid:${array(i)},test failure:${e.getMessage},${e.getCause}")
                     util = null
                 }
             }

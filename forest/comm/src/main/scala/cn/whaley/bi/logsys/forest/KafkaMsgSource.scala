@@ -54,7 +54,8 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
         //kafkaUtil
         groupId = consumerConf.getProperty("group.id")
-        kafkaUtil = KafkaUtil(zkServers)
+        val brokerId = consumerConf.getOrDefault("bootstrap.broker.id", "0").toString.toInt
+        kafkaUtil = KafkaUtil(zkServers, brokerId)
 
         //通过正则表达式过滤需要订阅的topic列表
 

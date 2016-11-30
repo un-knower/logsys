@@ -69,7 +69,7 @@ class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMe
      */
     def getLatestOffset(topic: String): Map[Int, Long] = {
         val ret = getOffset(topic, OffsetRequest.LatestTime, 1)
-        ret.map(item => (item._1, item._2(0))).toMap
+        ret.filter(!_._2.isEmpty).map(item => (item._1, item._2(0)))
     }
 
     /**
@@ -79,7 +79,7 @@ class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMe
      */
     def getEarliestOffset(topic: String): Map[Int, Long] = {
         val ret = getOffset(topic, OffsetRequest.EarliestTime, 1)
-        ret.map(item => (item._1, item._2(0))).toMap
+        ret.filter(!_._2.isEmpty).map(item => (item._1, item._2(0)))
     }
 
     /**
@@ -304,10 +304,19 @@ object KafkaUtil {
     }
 
     //获取特定broker节点的主机信息
-    def getBrokerInfo(zkServers: String, brokerId: Int = 0): (String, Int) = {
+    def getBrokerInfo(zkServers: String, brokerId: Int = 0, maxBrokerId: Int = 100): (String, Int) = {
         val zkClient = new ZkClient(zkServers, 30000, 30000, kafka.utils.ZKStringSerializer)
         //val brokerId = ZkUtils.getLeaderForPartition(zkClient, topic, partitionId).get
-        getBrokerInfo(zkClient, brokerId).get
+        var info: Option[(String, Int)] = None
+        var id = brokerId
+        while (info.isEmpty && id <= maxBrokerId) {
+            info = getBrokerInfo(zkClient, id)
+            id = id + 1
+            if (info.isEmpty) {
+                println(s"try againg get broker host information. zkServers:$zkServers, brokerId:$id ")
+            }
+        }
+        info.get
     }
 
     private def getBrokerInfo(zkClient: ZkClient, bid: Int): Option[(String, Int)] = {
@@ -328,7 +337,7 @@ object KafkaUtil {
             }
         } catch {
             case t: Throwable =>
-                println("Could not parse broker info due to " + t.getCause)
+                println("Could not parse broker info due to " + t.getCause + "," + t.getMessage)
                 None
         }
     }
