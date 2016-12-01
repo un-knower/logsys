@@ -8,11 +8,9 @@ import cn.whaley.bi.logsys.common.{KafkaUtil, ConfManager}
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
 import cn.whaley.bi.logsys.forest.entity.LogEntity
 import kafka.message.MessageAndMetadata
-import kafka.serializer.StringDecoder
 import org.apache.kafka.clients.producer.{RecordMetadata, ProducerRecord, KafkaProducer}
 
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable 
 
 /**
  * Created by fj on 16/10/30.
