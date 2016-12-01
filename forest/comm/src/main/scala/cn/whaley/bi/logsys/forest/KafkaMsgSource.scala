@@ -115,6 +115,15 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
     }
 
     /**
+     * 停止全部数据源读取线程
+     */
+    def stop(): Unit = {
+        consumerThreads.foreach(item => {
+            item.stopProcess()
+        })
+    }
+
+    /**
      * 获取源topic及其线程数
      * @return
      */
@@ -247,17 +256,36 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
 
     class MsgConsumerThread(topic: String, index: Int, queue: LinkedBlockingQueue[KafkaMessage], stream: KafkaStream[Array[Byte], Array[Byte]]) extends Thread {
+
+        @volatile private var keepRunning: Boolean = true
+
+        def stopProcess(): Unit = {
+            keepRunning = false
+            this.interrupt()
+            LOG.info(s"MsgConsumerThread[${this.getName}] stopped")
+        }
+
         override def run(): Unit = {
             this.setName(s"${topic}/${index}")
             var count = 0
             val it = stream.iterator
+
             LOG.info(s"MsgConsumerThread[${this.getName}] started")
-            while (it.hasNext) {
-                count = count + 1
-                if (count % logPerMsgCount == 0) {
-                    LOG.info(s"MsgConsumerThread[${this.getName}] msgCount: ${count}")
+            while (keepRunning) {
+                if(it.hasNext()) {
+                    try {
+                        queue.put(it.next())
+                        count = count + 1
+                        if (count % logPerMsgCount == 0) {
+                            LOG.info(s"MsgConsumerThread[${this.getName}] msgCount: ${count}")
+                        }
+                    } catch {
+                        case e: InterruptedException => {
+                            LOG.info(s"${this.getName} is interrupted. keepRunning:${keepRunning}")
+                            return
+                        }
+                    }
                 }
-                queue.put(it.next())
             }
         }
 

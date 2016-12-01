@@ -126,10 +126,14 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
      * @param waiting 指示是否在处理线程完全停止后才返回
      */
     def shutdown(waiting: Boolean): Unit = {
+        //停止数据源读取操作
+        msgSource.stop()
+        //停止消息处理线程
         processThreads.foreach(item => {
             item.stopProcess(waiting)
             LOG.info(s"${item.getName} shutdown")
         })
+        //关闭消息处理线程池
         procThreadPool.shutdown()
         procThreadPool.awaitTermination(30, TimeUnit.SECONDS)
         processThreads = Array[BatchProcessThread]()
@@ -197,30 +201,37 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
             var msgCount = 0
             var lastTaskTime = System.currentTimeMillis()
 
-            while (keepRunning) {
+            while (keepRunning || (!keepRunning && queue.peek() != null)) {
 
                 //从消息队列中获取一批数据，如果队列为空，则进行等待,获取到数据后，等待100ms以累积数据
                 val list = new util.ArrayList[KafkaMessage]()
 
-                if (queue.peek() == null) {
-                    pIsWaiting = true
-                    val ts = System.currentTimeMillis() - lastTaskTime
-                    lastTaskTime = System.currentTimeMillis()
-                    LOG.info(s"queue[${topic}] is empty.total ${msgCount} message processed. ts:${ts} .taking...")
-                    try {
-                        val probeObj = queue.take()
-                        Thread.sleep(100)
-                        list.add(probeObj)
-                    } catch {
-                        case e: InterruptedException => {
-                            runningLatch.countDown()
-                            LOG.info(s"${this.getName} is interrupted. keepRunning:${keepRunning}")
-                            return
+                if (keepRunning) {
+                    if (queue.peek() == null) {
+                        pIsWaiting = true
+                        val ts = System.currentTimeMillis() - lastTaskTime
+                        lastTaskTime = System.currentTimeMillis()
+                        LOG.info(s"queue[${topic}] is empty.total ${msgCount} message processed. ts:${ts} .taking...")
+                        try {
+                            val probeObj = queue.take()
+                            Thread.sleep(100)
+                            list.add(probeObj)
+                        } catch {
+                            case e: InterruptedException => {
+                                runningLatch.countDown()
+                                LOG.info(s"${this.getName} is interrupted. keepRunning:${keepRunning}")
+                                return
+                            }
                         }
+                        pIsWaiting = false
                     }
-                    pIsWaiting = false
+                    val c = queue.drainTo(list, batchSize)
+                    LOG.info(s"take $c message.")
+                } else {
+                    //在停止之前处理队列中存量数据
+                    val c = queue.drainTo(list)
+                    LOG.info(s"take last $c message.")
                 }
-                queue.drainTo(list, batchSize)
 
                 val listSize = list.size()
 
