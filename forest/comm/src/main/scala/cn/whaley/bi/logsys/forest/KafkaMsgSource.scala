@@ -1,7 +1,7 @@
 package cn.whaley.bi.logsys.forest
 
 
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.{CountDownLatch, LinkedBlockingQueue}
 
 import cn.whaley.bi.logsys.common.{KafkaUtil, ConfManager}
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
@@ -108,9 +108,13 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
                 })
             }).toSeq
 
+        val latch = new CountDownLatch(consumerThreads.length)
         consumerThreads.foreach(item => {
             item.start()
+            LOG.info(s"MsgConsumerThread[${item.getName}] started.")
+            latch.countDown()
         })
+        latch.await()
     }
 
     /**
@@ -141,7 +145,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
                 val metaInfos = topicMetaInfos.get(topic)
                 LOG.info(s"metaInfos:${topic},${metaInfos.get.map(item => (item.partitionId, item.leader)).mkString(",")}")
                 val ps = topicMetaInfos.get(topic).get.size
-                topicCountMap.put(topic, 1)
+                topicCountMap.put(topic, ps)
             })
         } else {
             val topicAndThreadsStr = StringUtil.splitStr(confValue, ",")

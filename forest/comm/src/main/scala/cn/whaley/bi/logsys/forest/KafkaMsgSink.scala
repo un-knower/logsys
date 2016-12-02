@@ -93,7 +93,7 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
             msg._2.map(item => {
                 val strKey = decoder.decode(item.message.key.asReadOnlyBuffer()).toString
                 val offsetInfo = getOffsetInfoFromKey(strKey, sourceTopic)
-                LOG.info(s"key:${strKey},offsetInfo:${offsetInfo}")
+                //LOG.info(s"key:${strKey},offsetInfo:${offsetInfo}")
                 if (offsetInfo.isDefined) {
                     val partition = offsetInfo.get._1
                     val fromOffset = offsetInfo.get._2 + 1
@@ -102,11 +102,11 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
                     val latestOffsetValue = sourceLatestOffset.getOrElse(partition, 0L)
                     val value = Math.min(newValue, latestOffsetValue)
                     offsetMap.put(partition, value)
-                    LOG.info(s"update offsetMap:${partition},${value}")
+                    //LOG.info(s"update offsetMap:${partition},${value}")
                 }
             })
         })
-        LOG.info(s"getTopicLastOffset msgs1:${targetTopic};${maxMsgCount};${msgs.map(item => (item._1, item._2.length))};${sourceLatestOffset.mkString(",")};${offsetMap.mkString(",")}")
+        LOG.info(s"getTopicLastOffset msgs:${targetTopic};${maxMsgCount};${msgs.map(item => (item._1, item._2.length))};${sourceLatestOffset.mkString(",")};${offsetMap.mkString(",")}")
 
         offsetMap.toMap
     }
