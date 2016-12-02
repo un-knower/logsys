@@ -65,7 +65,7 @@ function buildMsgInfo()
     ngx.var.msg_remote_ip = msgRemoteIp
     ngx.var.msg_receive_time = ngx.now() * 1000
     ngx.var.msg_sign_flag = doMsgSign()
-    ngx.var.msg_req_body = getOrElse(ngx.req.get_body_data(),"")
+    ngx.var.msg_req_body = getOrElse(ngx.req.get_body_data(),"{}")
 
 end
 

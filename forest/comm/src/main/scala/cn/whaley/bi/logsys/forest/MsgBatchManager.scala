@@ -66,6 +66,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
             val metadatas = msgSource.getTopicMetadatas()
             topicAndQueue.map(item => {
                 val topic = item._1
+                val sourceLatestOffset = msgSource.getLatestOffset(topic)
                 //从所有目标topic中获取源topic的offset信息
                 val map = topicNameMapper.getTargetTopicMap(topic)
                 val partitionCount = if (metadatas.get(topic).isDefined) metadatas.get(topic).get.size else 0
@@ -78,11 +79,16 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     val seq = map.get
                     val offset: Map[Int, Long] =
                         seq.flatMap(targetTopic => {
-                            msgSink.getTopicLastOffset(topic, targetTopic, msgCount)
+                            val info = msgSink.getTopicLastOffset(topic, sourceLatestOffset, targetTopic, msgCount)
+                            LOG.info(s"getTopicLastOffset[${topic},${targetTopic},${msgCount}]:${info.mkString(",")}")
+                            info
                         }).groupBy(arrItem => arrItem._1)
                             .map(arrItem => {
                             (arrItem._1, arrItem._2.maxBy(_._2)._2)
                         })
+                    LOG.info(s"offsetInfo:[${seq.mkString(",")};${offset.mkString(",")}]")
+
+
                     //合并默认offset
                     val defaultOffset = offsetMap.get(topic)
                     if (defaultOffset.isDefined) {
@@ -111,14 +117,32 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         //等待1s，以便msgSource对消息队列进行初始填充
         Thread.sleep(1000)
 
+
+        //处理线程异常回调函数，如果返回false，则线程应该退出
+        val exF = (thread: BatchProcessThread, ex: Throwable) => {
+            LOG.error(s"${thread.getName},throw exception", ex)
+            //停止相应topic数据源线程的读取
+            msgSource.stop(thread.consumerTopic)
+            //错误计数，如果全部线程都出错，则shutdown
+            processThreadErr = processThreadErr + 1
+            if (processThreadErr >= processThreads.length) {
+                LOG.error("all thread throw exception.task exit...")
+                shutdown(false)
+            }
+            false
+        }
+
         //对每个topic启动一个处理线程
         processThreads =
             topicAndQueue.map(item => {
-                val thread = new BatchProcessThread(item._1, item._2)
+                val thread = new BatchProcessThread(item._1, item._2, exF)
                 thread
             }).toSeq
 
         processThreads.foreach(item => item.start())
+
+        processThreadErr = 0
+
     }
 
     /**
@@ -152,7 +176,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
      * @param topic
      * @param queue
      */
-    class BatchProcessThread(topic: String, queue: LinkedBlockingQueue[KafkaMessage]) extends Thread {
+    class BatchProcessThread(topic: String, queue: LinkedBlockingQueue[KafkaMessage], exF: (BatchProcessThread, Throwable) => Boolean) extends Thread {
 
         @volatile private var keepRunning: Boolean = true
         @volatile private var pIsWaiting = false
@@ -201,8 +225,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
             var msgCount = 0
             var lastTaskTime = System.currentTimeMillis()
 
-            while (keepRunning || (!keepRunning && queue.peek() != null)) {
-
+            val processFn = () => {
                 //从消息队列中获取一批数据，如果队列为空，则进行等待,获取到数据后，等待100ms以累积数据
                 val list = new util.ArrayList[KafkaMessage]()
 
@@ -251,9 +274,12 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                 LOG.info(s"${topic}-taskSubmit(${callableCount},${callableSize}):${monitor.checkStep()}")
 
                 //等待所有消息处理任务执行完毕
-                val procResults = futures.map(_.get).sortBy(_._1).flatMap(_._2)
+                val procResults = futures.map(future => {
+                    val r = future.get
+                    r
+                }).sortBy(_._1).flatMap(_._2)
 
-                LOG.info(s"${topic}-msgProcess(${procResults.size}}):${monitor.checkStep()}")
+                LOG.info(s"${topic}-msgProcess(${procResults.size}):${monitor.checkStep()}")
 
                 //错误处理
                 val errorResults =
@@ -309,10 +335,25 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                 LOG.info(s"${topic}-done(${listSize}):${monitor.checkDone()}:${offset}")
             }
 
+            while (keepRunning || (!keepRunning && queue.peek() != null)) {
+                try {
+                    processFn()
+                } catch {
+                    case e: Throwable => {
+                        val ret = exF(this, e)
+                        if (!ret) {
+                            LOG.info(s"${this.getName} throw exception. exit...")
+                            keepRunning = false
+                        }
+                    }
+                }
+            }
+
             runningLatch.countDown()
 
             LOG.info(s"${this.getName} exit")
         }
+
 
         override def toString: String = {
             s"BatchProcessThread[${this.getName}]"
@@ -381,8 +422,14 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         override def call(): (Int, Seq[(KafkaMessage, ProcessResult[Seq[LogEntity]])]) = {
             val result =
                 data.map(item => {
-                    val message = item.message()
-                    (item, processorChain.process(message))
+                    try {
+                        val message = item.message()
+                        (item, processorChain.process(message))
+                    } catch {
+                        case e: Throwable => {
+                            (item, new ProcessResult[Seq[LogEntity]](s"ProcessCallable[${item}]", ProcessResultCode.exception, "throw exception:" + e.getMessage, None, Some(e)))
+                        }
+                    }
                 })
             (id, result)
         }
@@ -414,8 +461,10 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
     //消息处理线程池
     private val procThreadPool = Executors.newCachedThreadPool()
-    //消费线程，每个topic一个线程
+    //处理线程，每个topic一个线程
     private var processThreads: Seq[BatchProcessThread] = null
+    //处理线程计数，如果所有处理线程均出错，则应该退出
+    private var processThreadErr: Int = 0
     //是否从消息目标系统中恢复消息源系统的offset
     private var recoverSourceOffsetFromSink: Int = 1
     private var msgSource: KafkaMsgSource = null

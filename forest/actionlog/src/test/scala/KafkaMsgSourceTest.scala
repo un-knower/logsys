@@ -5,7 +5,7 @@ import org.junit.Test
 /**
  * Created by fj on 16/11/17.
  */
-class KafkaMsgSourceTest extends LogTrait{
+class KafkaMsgSourceTest extends LogTrait {
 
     @Test
     def test: Unit = {
@@ -18,7 +18,7 @@ class KafkaMsgSourceTest extends LogTrait{
         val confManager = new ConfManager(Array("kafkaMsgSource.xml", "kafka-consumer.xml"))
         val topic = "pre-boikgpokn78sb95kjhfrendo8dc5mlsr"
         val groupId = confManager.getConf("kafka-consumer", "group.id")
-        val util = new KafkaUtil("localhost", 9092)
+        val util = new KafkaUtil(Array(("localhost", 9092)))
 
         var offsets = util.getFetchOffset(topic, groupId)
         val newOffsets =

@@ -47,7 +47,7 @@ class GenericActionLogCommProcessor extends LogProcessorTrait with LogTrait {
                 if (value == "") {
                     actionLog.put(item, 0L)
                 } else {
-                    actionLog.put(item, value.toString.toLong)
+                    actionLog.put(item, value.toString.toDouble.toInt)
                 }
             }
         })

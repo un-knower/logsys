@@ -24,7 +24,6 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
     var confManager: ConfManager = null
 
-
     /**
      * 初始化方法
      * 如果初始化异常，则应该抛出异常
@@ -54,8 +53,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
         //kafkaUtil
         groupId = consumerConf.getProperty("group.id")
-        val brokerId = consumerConf.getOrDefault("bootstrap.broker.id", "0").toString.toInt
-        kafkaUtil = KafkaUtil(zkServers, brokerId)
+        kafkaUtil = KafkaUtil(zkServers, groupId)
 
         //通过正则表达式过滤需要订阅的topic列表
 
@@ -103,6 +101,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
                 val streamList = streamItem._2
                 var index = 0
                 streamList.map(stream => {
+                    LOG.info(s"create MsgConsumerThread[${index}] for ${topic}")
                     val thread = new MsgConsumerThread(topic, index, msgQueueMap(topic), stream)
                     index = index + 1
                     thread
@@ -115,11 +114,13 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
     }
 
     /**
-     * 停止全部数据源读取线程
+     * 停止全部或特定数据源读取线程
      */
-    def stop(): Unit = {
+    def stop(topic: String = ""): Unit = {
         consumerThreads.foreach(item => {
-            item.stopProcess()
+            if (topic == "" || item.consumerTopic == topic) {
+                item.stopProcess()
+            }
         })
     }
 
@@ -134,11 +135,13 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
         val confValue = confManager.getConfOrElseValue(this.name, "topicCount", "")
 
-        //默认情况下，每3个partition一个消费线程
+        //默认情况下，每个partition一个消费线程
         if (confValue == null || confValue.trim.length == 0) {
             topics.map(topic => {
-                val ps = Math.ceil(topicMetaInfos.get(topic).get.size.toFloat / 3.0).toInt
-                topicCountMap.put(topic, ps)
+                val metaInfos = topicMetaInfos.get(topic)
+                LOG.info(s"metaInfos:${topic},${metaInfos.get.map(item => (item.partitionId, item.leader)).mkString(",")}")
+                val ps = topicMetaInfos.get(topic).get.size
+                topicCountMap.put(topic, 1)
             })
         } else {
             val topicAndThreadsStr = StringUtil.splitStr(confValue, ",")
@@ -171,7 +174,10 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         offsetInfo.map(item => {
             val topic = item._1
             val offset = item._2
-            kafkaUtil.setFetchOffset(topic, groupId, offset)
+            val ret = kafkaUtil.setFetchOffset(topic, groupId, offset)
+            LOG.info(s"set fetch offset:${topic},${groupId},${offset.mkString(",")},${ret}")
+            val currOffset = kafkaUtil.getFetchOffset(topic, groupId)
+            LOG.info(s"current offset:${topic},${currOffset}")
         })
     }
 
@@ -209,6 +215,14 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         map
     }
 
+    /**
+     * 获取最后偏移量
+     * @param topic
+     * @return
+     */
+    def getLatestOffset(topic: String): Map[Int, Long] = {
+        kafkaUtil.getLatestOffset(topic)
+    }
 
     /**
      * 获取当前数据源topic的元数据信息
@@ -259,6 +273,10 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
         @volatile private var keepRunning: Boolean = true
 
+        val consumerTopic = topic
+
+        this.setName(s"consumer-${topic}")
+
         def stopProcess(): Unit = {
             keepRunning = false
             this.interrupt()
@@ -272,7 +290,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
             LOG.info(s"MsgConsumerThread[${this.getName}] started")
             while (keepRunning) {
-                if(it.hasNext()) {
+                if (it.hasNext()) {
                     try {
                         queue.put(it.next())
                         count = count + 1
