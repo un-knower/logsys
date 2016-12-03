@@ -1,5 +1,6 @@
 package cn.whaley.bi.logsys.forest
 
+import java.net.Socket
 import java.nio.charset.Charset
 import java.util.concurrent.Future
 
@@ -7,11 +8,9 @@ import cn.whaley.bi.logsys.common.{KafkaUtil, ConfManager}
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
 import cn.whaley.bi.logsys.forest.entity.LogEntity
 import kafka.message.MessageAndMetadata
-import kafka.serializer.StringDecoder
 import org.apache.kafka.clients.producer.{RecordMetadata, ProducerRecord, KafkaProducer}
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 /**
  * Created by fj on 16/10/30.
@@ -40,10 +39,10 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
     }
 
     /**
-     * 批量发送数据到kafka，每一批次的最后进行一次同步确认
+     * 保存处理后的数据
      * @param datas
      */
-    def send(datas: Seq[(String, KafkaMessage, LogEntity)]): Unit = {
+    def saveProcMsg(datas: Seq[(String, KafkaMessage, LogEntity)]): Unit = {
         var future: Future[RecordMetadata] = null
         var count = 0
         datas.foreach(item => {
@@ -63,14 +62,29 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
     }
 
     /**
+     * 保存错误信息
+     * @param datas
+     */
+    def saveErrorMsg(datas: Seq[(String, KafkaMessage)]) = {
+        datas.foreach(item => {
+            val errorTopic: String = item._1
+            val message: KafkaMessage = item._2
+            val key: Array[Byte] = getKeyFromSource(message).getBytes()
+            val value: Array[Byte] = message.message()
+            val record = new ProducerRecord[Array[Byte], Array[Byte]](errorTopic, key, value)
+            kafkaProducer.send(record)
+        })
+    }
+
+    /**
      * 从目标kafka集群中，获取某个源topic最后写入的offset信息
      * @param sourceTopic 源topic
+     * @param sourceLatestOffset 源topic的最后偏移信息
      * @param targetTopic 目标topic
      * @param maxMsgCount 目标topic的每个partition最多读取的消息数量
      * @return 源topic相关的offse信（partition，offset），如果没有则返回空Map对象
      */
-    def getTopicLastOffset(sourceTopic: String, targetTopic: String, maxMsgCount: Int): Map[Int, Long] = {
-        val latestOffset = kafkaUtil.getLatestOffset(sourceTopic)
+    def getTopicLastOffset(sourceTopic: String, sourceLatestOffset: Map[Int, Long], targetTopic: String, maxMsgCount: Int): Map[Int, Long] = {
         val offsetMap = new mutable.HashMap[Int, Long]
         val msgs = kafkaUtil.getLatestMessage(targetTopic, maxMsgCount)
         val charset = Charset.forName("UTF-8")
@@ -79,20 +93,21 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
             msg._2.map(item => {
                 val strKey = decoder.decode(item.message.key.asReadOnlyBuffer()).toString
                 val offsetInfo = getOffsetInfoFromKey(strKey, sourceTopic)
+                //LOG.info(s"key:${strKey},offsetInfo:${offsetInfo}")
                 if (offsetInfo.isDefined) {
                     val partition = offsetInfo.get._1
                     val fromOffset = offsetInfo.get._2 + 1
-                    if (fromOffset > offsetMap.getOrElse(partition, 0L)) {
-                        val latestOffsetValue = latestOffset.getOrElse(partition, 0L)
-                        if (fromOffset > latestOffsetValue) {
-                            offsetMap.update(partition, latestOffsetValue)
-                        } else {
-                            offsetMap.update(partition, fromOffset)
-                        }
-                    }
+                    val oldValue = offsetMap.getOrElse(partition, 0L)
+                    val newValue = Math.max(fromOffset, oldValue)
+                    val latestOffsetValue = sourceLatestOffset.getOrElse(partition, 0L)
+                    val value = Math.min(newValue, latestOffsetValue)
+                    offsetMap.put(partition, value)
+                    //LOG.info(s"update offsetMap:${partition},${value}")
                 }
             })
         })
+        LOG.info(s"getTopicLastOffset msgs:${targetTopic};${maxMsgCount};${msgs.map(item => (item._1, item._2.length))};${sourceLatestOffset.mkString(",")};${offsetMap.mkString(",")}")
+
         offsetMap.toMap
     }
 
@@ -120,20 +135,23 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
 
     private def InitKafkaUtil() = {
         val array = bootstrapServers.split(",")
-        var util: KafkaUtil = null
-        for (i <- 0 to array.length - 1 if util == null) {
-            try {
+        val brokerList =
+            for (i <- 0 to array.length - 1) yield {
                 val hostAndPort = array(i).split(":")
-                //实例化util并做一次访问测试
-                util = new KafkaUtil(hostAndPort(0), hostAndPort(1).toInt)
-                util.getEarliestOffset("test")
-            } catch {
-                case e: Throwable => {
-                    LOG.error(s"broker is invalid:${array(i)}")
-                    util = null
+                try {
+                    //进行一次网络测试
+                    new Socket(hostAndPort(0), hostAndPort(1).toInt)
+                    Some((hostAndPort(0), hostAndPort(1).toInt))
+                }
+                catch {
+                    case e: Throwable => {
+                        LOG.error(s"broker is invalid:${array(i)},test failure:${e.getMessage},${e.getCause}")
+                        None
+                    }
                 }
             }
-        }
-        kafkaUtil = util
+        val list = brokerList.filter(_.isDefined).map(_.get)
+        require(!list.isEmpty)
+        kafkaUtil = new KafkaUtil(list)
     }
 }

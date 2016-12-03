@@ -1,7 +1,7 @@
 import java.util
 import java.util.concurrent.{LinkedBlockingQueue, Executors, Future, TimeUnit}
 
-import cn.whaley.bi.logsys.common.{ConfManager, KafkaUtil}
+import cn.whaley.bi.logsys.common.{KafkaUtil, ConfManager}
 import kafka.api.OffsetRequest
 import kafka.consumer.KafkaStream
 import kafka.message.MessageAndMetadata
@@ -25,6 +25,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
     val clientId = "test"
     val topic = "test2"
     val groupId = "test"
+    val zkServers = "localhost:2181"
 
     val confManager = new ConfManager("kafka-consumer.xml" :: "kafka-producer.xml" :: Nil)
 
@@ -45,9 +46,10 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
     @Test
     def testCreateKafkaUtil: Unit = {
         val topic = "pre-boikgpokn78sb95kjhfrendo8dc5mlsr"
-        val zkServers = "localhost:2181"
 
-        println(KafkaUtil.getTopics(zkServers).mkString(","))
+        val zkClient = new ZkClient(zkServers)
+        val topics = KafkaUtil.getTopics(zkClient)
+        println(topics.mkString(","))
 
         val util = KafkaUtil(zkServers)
         var offset = util.getEarliestOffset("pre-boikgpokn78sb95kjhfrendo8dc5mlsr")
@@ -152,7 +154,6 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
     def testConsumer1: Unit = {
 
 
-
         val connector = getKafkaConsumerConnector()
         val map = new java.util.HashMap[String, Integer]
         map.put(topic, 1)
@@ -199,7 +200,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
     @Test
     def testKafkaUtil_getOffset: Unit = {
 
-        val util = new KafkaUtil(kafkaBrokerHost, kafkaBrokerPort, "test")
+        val util = KafkaUtil(zkServers, "test")
         val earliestOffset = util.getEarliestOffset(topic)
         val latestOffset1 = util.getLatestOffset(topic)
         val latestOffset2 = util.getOffset(topic, OffsetRequest.LatestTime, 2).map(item => s"${item._1}->${item._2.mkString(",")}").mkString(" , ")
@@ -219,7 +220,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
 
     @Test
     def testKafkaUtil_setFetchOffset: Unit = {
-        val util = new KafkaUtil(kafkaBrokerHost, kafkaBrokerPort, clientId)
+        val util = KafkaUtil(zkServers, clientId)
         val offsets = Map(0 -> 100L, 1 -> 0L, 2 -> 0L, 3 -> 0L)
         val res = util.setFetchOffset(topic, groupId, offsets)
         if (!res._1) {
@@ -234,7 +235,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
 
     @Test
     def testKafkaUtil_setFetchOffsetAndConsumer: Unit = {
-        val util = new KafkaUtil(kafkaBrokerHost, kafkaBrokerPort, clientId)
+        val util =   KafkaUtil(zkServers, clientId)
         val latestOffset = util.getLatestOffset(topic)
 
         val size = 1000
@@ -280,7 +281,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
 
     @Test
     def TestKafkaUtil_getLatestMessage: Unit = {
-        val util = new KafkaUtil(kafkaBrokerHost, kafkaBrokerPort)
+        val util =   KafkaUtil(zkServers)
         val latestOffset = util.getLatestOffset(topic)
         println(latestOffset)
 

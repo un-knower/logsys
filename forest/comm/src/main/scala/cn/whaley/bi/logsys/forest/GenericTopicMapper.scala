@@ -68,6 +68,7 @@ class GenericTopicMapper extends InitialTrait with LogTrait with NameTrait {
                 topics.append(ret.result.get: _*)
             }
         }
+        topics.foreach(topic => addTargetTopicMap(sourceTopic, topic))
         topics
     }
 

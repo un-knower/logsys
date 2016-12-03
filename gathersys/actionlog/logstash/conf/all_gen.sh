@@ -1,0 +1,5 @@
+sh auto_gen_logstash_config.sh boikgpokn78sb95kbqei6cc9 5044 pre-boikgpokn78sb95kbqei6cc9
+sh auto_gen_logstash_config.sh boikgpokn78sb95kjhfrendo 5045 pre-boikgpokn78sb95kjhfrendo
+sh auto_gen_logstash_config.sh boikgpokn78sb95kjtihcg26 5046 pre-boikgpokn78sb95kjtihcg26
+sh auto_gen_logstash_config.sh boikgpokn78sb95kkls3bhmt 5047 pre-boikgpokn78sb95kkls3bhmt
+sh auto_gen_logstash_config.sh boikgpokn78sb95ktmsc1bnk 5048 pre-boikgpokn78sb95ktmsc1bnk

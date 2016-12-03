@@ -20,12 +20,21 @@ class GenericMsgDecoder extends MsgDecodeTrait with NameTrait {
         val decodeStr = new String(bytes)
         val str =
             if (ngxLogDecode) {
-                StringUtil.decodeNgxStrToString(decodeStr)
+                val ngxStr=StringUtil.decodeNgxStrToString(decodeStr)
+                //处理nginx的POST消息体为空的问题
+                ngxStr.replace("\"body\":-","\"body\":{}")
             } else {
                 decodeStr
             }
-        val msg = new MsgEntity(JSON.parseObject(str))
-        new ProcessResult(this.name, ProcessResultCode.processed, "", Some(msg))
+        try {
+            val msg = new MsgEntity(JSON.parseObject(str))
+            new ProcessResult(this.name, ProcessResultCode.processed, "", Some(msg))
+        } catch {
+            case e: Throwable => {
+                new ProcessResult(this.name, ProcessResultCode.exception, "JSON解析异常:" + str, None, Some(e))
+            }
+        }
+
     }
 
     /**

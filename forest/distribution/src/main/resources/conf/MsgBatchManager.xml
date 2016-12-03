@@ -37,6 +37,14 @@
         <name>KafkaMsgSource.topics</name>
         <value>pre-boikgpokn.*</value>
     </property>
+    <property>
+        <name>KafkaMsgSource.defaultOffset</name>
+        <value>
+            pre-boikgpokn78sb95ktmsc1bnk:-2,
+            pre-boikgpokn78sb95kbqei6cc9:-2,
+            pre-boikgpokn78sb95kjtihcg26:-2
+        </value>
+    </property>
     <!--
     <property>
         <name>KafkaMsgSource.topicCount</name>

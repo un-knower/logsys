@@ -13,4 +13,22 @@ do
 done < $filepath
 
 
+http://log.moretv.com.cn:8180/activity
+http://log.moretv.com.cn:8180/medusalog
+http://log.moretv.com.cn:8180/moretv/userdurationlog
+
+http://log.moretv.com.cn:8180/uploadlog
+http://log.moretv.com.cn:8180/uploadplaylog
+
+http://log.moretv.com.cn:8180/mtvkidslog
+http://log.moretv.com.cn:8180/mobilehelperlog
+http://log.moretv.com.cn:8180/mobilelog
+
+http://vrlog.aginomoto.com:8180/vrapplog
+http://crawlerlog.aginomoto.com:8180/price
+
+
+
+
+
 

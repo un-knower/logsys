@@ -1,12 +1,18 @@
 package cn.whaley.bi.logsys.common
 
 import java.util
-import java.util.Arrays
+import java.util.{Collections, Arrays}
 
 import kafka.admin.TopicCommand.TopicCommandOptions
-import kafka.api.{FetchRequestBuilder, ConsumerMetadataRequest, OffsetRequest, PartitionOffsetRequestInfo}
+import kafka.api._
 import kafka.common.{BrokerNotAvailableException, OffsetAndMetadata, TopicAndPartition}
 import kafka.consumer.{Whitelist}
+import kafka.javaapi.OffsetCommitResponse
+import kafka.javaapi.OffsetFetchRequest
+import kafka.javaapi.OffsetFetchResponse
+import kafka.javaapi.PartitionMetadata
+import kafka.javaapi.TopicMetadata
+import kafka.javaapi.TopicMetadataRequest
 import kafka.javaapi._
 import kafka.javaapi.consumer.SimpleConsumer
 import kafka.message.{MessageAndOffset}
@@ -27,10 +33,13 @@ import scala.language.implicitConversions
  * 目前实现是基于在0.8.2.2客户端库
  *
  */
-class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMetadataRequest.DefaultClientId) {
+class KafkaUtil(brokerList: Seq[(String, Int)], clientId: String = ConsumerMetadataRequest.DefaultClientId) {
     val soTimeout = 5000
     val bufferSize = 4096000
-    val simpleConsumer: SimpleConsumer = new SimpleConsumer(brokeHost, brokePort, soTimeout, bufferSize, clientId)
+
+    def getSimpleConsumer(brokeHost: String, brokePort: Int): SimpleConsumer = {
+        new SimpleConsumer(brokeHost, brokePort, soTimeout, bufferSize, clientId)
+    }
 
     /**
      * 获取指定topic的某个时间点之前的有效offset集合
@@ -40,24 +49,40 @@ class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMe
      * @return partition与offset数组的map
      */
     def getOffset(topic: String, whichTime: Long, maxNumOffsets: Int): Map[Int, Array[Long]] = {
-        //获取topic的partition列表，构建每个partition的offset请求
-        val request0 = new TopicMetadataRequest(Arrays.asList(topic))
-        val response0 = simpleConsumer.send(request0)
-        val it = response0.topicsMetadata.get(0).partitionsMetadata.iterator()
-        val requestInfo = new util.HashMap[TopicAndPartition, PartitionOffsetRequestInfo]()
-        while (it.hasNext) {
-            val curr = it.next()
-            val topicAndPartition = new TopicAndPartition(topic, curr.partitionId)
-            requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(whichTime, maxNumOffsets))
-        }
-        //获取每个partition的offset
-        val request = new kafka.javaapi.OffsetRequest(requestInfo, kafka.api.OffsetRequest.CurrentVersion, clientId)
         val offsetMap = new scala.collection.mutable.HashMap[Int, Array[Long]]()
-        val response = simpleConsumer.getOffsetsBefore(request)
-        val responseInfoIt = requestInfo.keySet().iterator()
-        while (responseInfoIt.hasNext) {
-            val curr = responseInfoIt.next()
-            offsetMap.put(curr.partition, response.offsets(curr.topic, curr.partition))
+        for (broker <- brokerList) {
+            var simpleConsumer: SimpleConsumer = null
+            try {
+                simpleConsumer = getSimpleConsumer(broker._1, broker._2)
+                //获取topic的partition列表，构建每个partition的offset请求
+                val request0 = new TopicMetadataRequest(Arrays.asList(topic))
+                val response0 = simpleConsumer.send(request0)
+                val it = response0.topicsMetadata.get(0).partitionsMetadata.iterator()
+                val requestInfo = new util.HashMap[TopicAndPartition, PartitionOffsetRequestInfo]()
+                while (it.hasNext) {
+                    val curr = it.next()
+                    val topicAndPartition = new TopicAndPartition(topic, curr.partitionId)
+                    requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(whichTime, maxNumOffsets))
+                }
+
+                //获取每个partition的offset
+                val request = new kafka.javaapi.OffsetRequest(requestInfo, kafka.api.OffsetRequest.CurrentVersion, clientId)
+
+                val response = simpleConsumer.getOffsetsBefore(request)
+                val responseInfoIt = requestInfo.keySet().iterator()
+                while (responseInfoIt.hasNext) {
+                    val curr = responseInfoIt.next()
+                    val offset = response.offsets(curr.topic, curr.partition)
+                    if (offset.length > 0) {
+                        offsetMap.put(curr.partition, response.offsets(curr.topic, curr.partition))
+                    }
+                    //println(s"KafkaUtil.getOffset:${topic};${curr.partition};${response.offsets(curr.topic, curr.partition).mkString(",")}")
+                }
+            } finally {
+                if (simpleConsumer != null) {
+                    simpleConsumer.close()
+                }
+            }
         }
         offsetMap.toMap
     }
@@ -69,7 +94,8 @@ class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMe
      */
     def getLatestOffset(topic: String): Map[Int, Long] = {
         val ret = getOffset(topic, OffsetRequest.LatestTime, 1)
-        ret.map(item => (item._1, item._2(0))).toMap
+        println(s"KafkaUtil.latestOffset: ${topic};${ret.map(item => (item._1, item._2.mkString(","))).mkString(";")}")
+        ret.filter(!_._2.isEmpty).map(item => (item._1, item._2(0)))
     }
 
     /**
@@ -79,7 +105,8 @@ class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMe
      */
     def getEarliestOffset(topic: String): Map[Int, Long] = {
         val ret = getOffset(topic, OffsetRequest.EarliestTime, 1)
-        ret.map(item => (item._1, item._2(0))).toMap
+        println(s"KafkaUtil.earliestOffset: ${topic};${ret.map(item => (item._1, item._2.mkString(","))).mkString(";")}")
+        ret.filter(!_._2.isEmpty).map(item => (item._1, item._2(0)))
     }
 
     /**
@@ -89,18 +116,30 @@ class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMe
      * @return
      */
     def getFetchOffset(topic: String, groupId: String, clientId: String = clientId): Map[Int, Long] = {
-        val topicAndPartitions = new util.ArrayList[TopicAndPartition]
-        val partitionMetadata = getPartitionMetadata(topic)
-        partitionMetadata.foreach(item => {
-            topicAndPartitions.add(new TopicAndPartition(topic, item.partitionId));
-        })
-        val request: OffsetFetchRequest = new OffsetFetchRequest(groupId, topicAndPartitions, ConsumerMetadataRequest.CurrentVersion, 0, clientId)
-        val response: OffsetFetchResponse = simpleConsumer.fetchOffsets(request)
         val offsets = new mutable.HashMap[Int, Long]
-        val offsetsIt = response.offsets.keySet().iterator()
-        while (offsetsIt.hasNext) {
-            val curr = offsetsIt.next()
-            offsets.put(curr.partition, response.offsets.get(curr).offset);
+        for (broker <- brokerList) {
+            var simpleConsumer: SimpleConsumer = null
+            try {
+                simpleConsumer = getSimpleConsumer(broker._1, broker._2)
+                val topicAndPartitions = new util.ArrayList[TopicAndPartition]
+                val partitionMetadata = getPartitionMetadata(topic)
+                partitionMetadata.foreach(item => {
+                    topicAndPartitions.add(new TopicAndPartition(topic, item.partitionId));
+                })
+                val request: OffsetFetchRequest = new OffsetFetchRequest(groupId, topicAndPartitions, ConsumerMetadataRequest.CurrentVersion, 0, clientId)
+                val response: OffsetFetchResponse = simpleConsumer.fetchOffsets(request)
+
+                val offsetsIt = response.offsets.keySet().iterator()
+                while (offsetsIt.hasNext) {
+                    val curr = offsetsIt.next()
+                    offsets.put(curr.partition, response.offsets.get(curr).offset);
+                }
+            }
+            finally {
+                if (simpleConsumer != null) {
+                    simpleConsumer.close()
+                }
+            }
         }
         return offsets.toMap
     }
@@ -169,6 +208,10 @@ class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMe
         val targetOffsets = latestOffset.map(item => (item._1, item._2 - msgCount))
         var sizeFactor = 1
 
+        println(s"KafkaUtil.getLatestMessage:${topic};${earliestOffset.mkString(",")};${latestOffset.mkString(",")}")
+
+        val metadatas = getPartitionMetadata(topic)
+
         targetOffsets.map(item => {
             val partition = item._1
             val earliest = earliestOffset.get(partition).get
@@ -180,42 +223,51 @@ class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMe
                 item._2
             }
 
-            val v: Long = (latest - fromOffset) * msgAvgSize
-            val fetchSize: Int = if (v > maxFetchSize) maxFetchSize else v.toInt
+            var simpleConsumer: SimpleConsumer = null
+            try {
+                val leader = metadatas.filter(_.partitionId == partition).map(_.leader).head
+                simpleConsumer = getSimpleConsumer(leader.host, leader.port)
+                val v: Long = (latest - fromOffset) * msgAvgSize
+                val fetchSize: Int = if (v > maxFetchSize) maxFetchSize else v.toInt
 
-            val messages =
-                if (fetchSize > 0) {
-                    val buf = new ArrayBuffer[MessageAndOffset]()
-                    var nextOffset = fromOffset
-                    while (nextOffset < latest) {
-                        val req = new FetchRequestBuilder()
-                            .clientId(clientId)
-                            .addFetch(topic, partition, nextOffset, fetchSize * sizeFactor)
-                            .build();
-                        val fetchResponse: kafka.javaapi.FetchResponse = simpleConsumer.fetch(req);
-                        if (fetchResponse.hasError) {
-                            throw new Exception(s"topic:${topic},partition:{${partition}},errorCode:${fetchResponse.errorCode(topic, partition)}")
-                        }
-                        val fetched = fetchResponse.messageSet(topic, partition)
+                val messages =
+                    if (fetchSize > 0) {
+                        val buf = new ArrayBuffer[MessageAndOffset]()
+                        var nextOffset = fromOffset
+                        while (nextOffset < latest) {
+                            val req = new FetchRequestBuilder()
+                                .clientId(clientId)
+                                .addFetch(topic, partition, nextOffset, fetchSize * sizeFactor)
+                                .build();
+                            val fetchResponse: kafka.javaapi.FetchResponse = simpleConsumer.fetch(req);
+                            if (fetchResponse.hasError) {
+                                throw new Exception(s"topic:${topic},partition:{${partition}},errorCode:${fetchResponse.errorCode(topic, partition)}")
+                            }
+                            val fetched = fetchResponse.messageSet(topic, partition)
 
-                        //如果没有读到消息，则很可能是fetchSize设置过小，不足以消费一个消息，此时需要调整sizeFactor
-                        val size = fetched.size
-                        if (size <= 0) {
-                            sizeFactor = Math.pow(2, sizeFactor).toInt
-                        } else {
-                            fetched.foreach(item => {
-                                nextOffset = item.nextOffset
-                                if (item.offset >= fromOffset && item.offset <= latest) {
-                                    buf.append(item)
-                                }
-                            })
+                            //如果没有读到消息，则很可能是fetchSize设置过小，不足以消费一个消息，此时需要调整sizeFactor
+                            val size = fetched.size
+                            if (size <= 0) {
+                                sizeFactor = Math.pow(2, sizeFactor).toInt
+                            } else {
+                                fetched.foreach(item => {
+                                    nextOffset = item.nextOffset
+                                    if (item.offset >= fromOffset && item.offset <= latest) {
+                                        buf.append(item)
+                                    }
+                                })
+                            }
                         }
+                        buf.toArray
+                    } else {
+                        KafkaUtil.emptyMessageAndOffsets
                     }
-                    buf.toArray
-                } else {
-                    KafkaUtil.emptyMessageAndOffsets
+                (partition, messages)
+            } finally {
+                if (simpleConsumer != null) {
+                    simpleConsumer.close()
                 }
-            (partition, messages)
+            }
         })
     }
 
@@ -225,19 +277,26 @@ class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMe
      * @return
      */
     def getPartitionMetadata(topic: String): List[PartitionMetadata] = {
-        val request0 = new TopicMetadataRequest(Arrays.asList(topic))
-        val response0 = simpleConsumer.send(request0)
-        val metadatas = response0.topicsMetadata
-        val topicAndPartitions = new util.ArrayList[TopicAndPartition]
-        metadatas.get(0).partitionsMetadata.toList
-    }
-
-
-    /**
-     * 销毁
-     */
-    def destroy(): Unit = {
-        simpleConsumer.close()
+        val infos = new util.HashMap[Int, PartitionMetadata]()
+        for (broker <- brokerList) {
+            var consumer: SimpleConsumer = null;
+            try {
+                consumer = new SimpleConsumer(broker._1, broker._2, 100000, 64 * 1024, "leaderLookup");
+                val topics = Collections.singletonList(topic);
+                val req = new TopicMetadataRequest(topics);
+                val resp = consumer.send(req);
+                val metaData = resp.topicsMetadata;
+                for (item <- metaData) {
+                    for (partitionMetadata <- item.partitionsMetadata)
+                        infos.put(partitionMetadata.partitionId, partitionMetadata)
+                }
+            } finally {
+                if (consumer != null) {
+                    consumer.close();
+                }
+            }
+        }
+        infos.map(_._2).toList
     }
 
 
@@ -278,16 +337,60 @@ class KafkaUtil(brokeHost: String, brokePort: Int, clientId: String = ConsumerMe
 }
 
 object KafkaUtil {
-    private val emptyMessageAndOffsets = new ArrayBuffer[kafka.message.MessageAndOffset]().toArray
+    val emptyMessageAndOffsets = new ArrayBuffer[kafka.message.MessageAndOffset]().toArray
+
+    //从zookeeper连接构建KafkaUtil
+    def apply(zkServers: String, clientId: String = ConsumerMetadataRequest.DefaultClientId): KafkaUtil = {
+        val zkClient = new ZkClient(zkServers, 30000, 30000, kafka.utils.ZKStringSerializer)
+        val brokerList = getAllBrokerInfo(zkClient)
+        new KafkaUtil(brokerList)
+    }
+
+    /**
+     * 获取所有broker节点的主机信息
+     * @param zkClient
+     * @return
+     */
+    def getAllBrokerInfo(zkClient: ZkClient): Seq[(String, Int)] = {
+        val ids = ZkUtils.getChildren(zkClient, ZkUtils.BrokerIdsPath)
+        ids.map(id => {
+            getBrokerInfo(zkClient, id.toInt)
+        }).filter(_.isDefined).map(_.get)
+    }
+
+
+    /**
+     * 获取特定broker节点的主机信息
+     * @param zkClient
+     * @param bid
+     * @return
+     */
+    def getBrokerInfo(zkClient: ZkClient, bid: Int): Option[(String, Int)] = {
+
+        ZkUtils.readDataMaybeNull(zkClient, ZkUtils.BrokerIdsPath + "/" + bid)._1 match {
+            case Some(brokerInfoString) =>
+                kafka.utils.Json.parseFull(brokerInfoString) match {
+                    case Some(m) =>
+                        val brokerInfo = m.asInstanceOf[Map[String, Any]]
+                        val host = brokerInfo.get("host").get.asInstanceOf[String]
+                        val port = brokerInfo.get("port").get.asInstanceOf[Int]
+                        Some((host, port))
+                    case None =>
+                        throw new BrokerNotAvailableException("Broker id %d does not exist".format(bid))
+                }
+            case None =>
+                throw new BrokerNotAvailableException("Broker id %d does not exist".format(bid))
+        }
+
+    }
+
 
     /**
      * 获取kafka集群topic列表
-     * @param zkServers
      * @return
      */
-    def getTopics(zkServers: String): Seq[String] = {
+    def getTopics(zkClient: ZkClient): Seq[String] = {
         val opts = new TopicCommandOptions(Array("list"))
-        val zkClient = new ZkClient(zkServers)
         val allTopics = ZkUtils.getAllTopics(zkClient).sorted
         if (opts.options.has(opts.topicOpt)) {
             val topicsSpec = opts.options.valueOf(opts.topicOpt)
@@ -297,40 +400,8 @@ object KafkaUtil {
             allTopics
     }
 
-    //从zookeeper连接构建KafkaUtil
-    def apply(zkServers: String, brokerId: Int = 0): KafkaUtil = {
-        val brokerInfo = getBrokerInfo(zkServers, brokerId)
-        new KafkaUtil(brokerInfo._1, brokerInfo._2)
-    }
-
-    //获取特定broker节点的主机信息
-    def getBrokerInfo(zkServers: String, brokerId: Int = 0): (String, Int) = {
-        val zkClient = new ZkClient(zkServers, 30000, 30000, kafka.utils.ZKStringSerializer)
-        //val brokerId = ZkUtils.getLeaderForPartition(zkClient, topic, partitionId).get
-        getBrokerInfo(zkClient, brokerId).get
-    }
-
-    private def getBrokerInfo(zkClient: ZkClient, bid: Int): Option[(String, Int)] = {
-        try {
-            ZkUtils.readDataMaybeNull(zkClient, ZkUtils.BrokerIdsPath + "/" + bid)._1 match {
-                case Some(brokerInfoString) =>
-                    kafka.utils.Json.parseFull(brokerInfoString) match {
-                        case Some(m) =>
-                            val brokerInfo = m.asInstanceOf[Map[String, Any]]
-                            val host = brokerInfo.get("host").get.asInstanceOf[String]
-                            val port = brokerInfo.get("port").get.asInstanceOf[Int]
-                            Some((host, port))
-                        case None =>
-                            throw new BrokerNotAvailableException("Broker id %d does not exist".format(bid))
-                    }
-                case None =>
-                    throw new BrokerNotAvailableException("Broker id %d does not exist".format(bid))
-            }
-        } catch {
-            case t: Throwable =>
-                println("Could not parse broker info due to " + t.getCause)
-                None
-        }
+    def getTopics(zkServers: String): Seq[String] = {
+        getTopics(new ZkClient(zkServers))
     }
 
 }

@@ -50,7 +50,15 @@ class GenericLogProcessor extends LogProcessorTrait {
             //记录流程是否应该中断，只有所有消息都要求中断的情况下才进行中断
             var isBreak = false
             logs.foreach(curr => {
-                val result = processes(i).process(curr)
+                val result = {
+                    try {
+                        processes(i).process(curr)
+                    } catch {
+                        case e: Throwable => {
+                            new ProcessResult(route.mkString("->"), ProcessResultCode.exception, "throw exception:" + e.getMessage, None, Some(e))
+                        }
+                    }
+                }
                 if (result.hasErr) {
                     return new ProcessResult(route.mkString("->"), result.code, result.message, None, result.ex)
                 }

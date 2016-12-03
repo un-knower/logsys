@@ -3,13 +3,13 @@ package cn.whaley.bi.logsys.forest
 import java.util.Properties
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.forest.Traits.ExecutedTrait
+import cn.whaley.bi.logsys.forest.Traits.{LogTrait, ExecutedTrait}
 import org.apache.commons.cli.{OptionBuilder, BasicParser, Options}
 
 /**
  * Created by fj on 16/11/20.
  */
-class MsgProcExecutor extends ExecutedTrait {
+class MsgProcExecutor extends ExecutedTrait with LogTrait {
 
     case class Parameters(confValues: Properties, confFiles: Seq[String])
 
@@ -25,7 +25,15 @@ class MsgProcExecutor extends ExecutedTrait {
         val confManager = new ConfManager(parameters.confValues, parameters.confFiles)
         batchManager = new MsgBatchManager()
         batchManager.init(confManager)
-        batchManager.start()
+        try {
+            batchManager.start()
+        } catch {
+            case e: Throwable => {
+                LOG.error("batchManager start failure.", e)
+                System.exit(-1)
+            }
+        }
+
     }
 
     def shutdownOnCompleted(): Unit = {

@@ -13,6 +13,10 @@
         <value>true</value>
     </property>
     <property>
+        <name>kafka-consumer.auto.commit.interval.ms</name>
+        <value>1000</value>
+    </property>
+    <property>
         <name>kafka-consumer.auto.offset.reset</name>
         <value>smallest</value>
     </property>
