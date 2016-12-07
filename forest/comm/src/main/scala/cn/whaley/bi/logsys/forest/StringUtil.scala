@@ -20,6 +20,8 @@ object StringUtil {
             || (chr >= 97 && chr <= 102)
             || (chr >= 48 && chr <= 57)
             )
+
+        "".hashCode
     }
 
 
