@@ -1,0 +1,144 @@
+#cat /var/log/logcenter/current/log.access-2017-01-11-11_2-21-3.log|grep log.moretv.com.cn|more
+#log.moretv.com.cn
+{"baseInfo":"{\"apkVersion\":\"3.0.9\",\"groupId\":\"918\",\"accountId\":\"\",\"appEnterWay\":\"native\",\"promotionChannel\":\"shafa\",\"userId\":\"fb520bc05b1135fda425ea0d9c3a6277
+\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"productModel\":\"MagicBox1s_Plus\",\"versionCode\":\"309\",\"buildDate\":\"20160816\",\"uploadTime\":\"20170111105959\",\"weatherCode\"
+:\"101010100\"}","date":"2017-01-11","remoteIp":"106.75.34.229","version":"01","urlPath":"medusalog/","tags":{"product":"medusa","method":"POST"},"logTimestamp":1484103600083,"datet
+ime":"2017-01-11 11:00:00","hour":"11","host":"log.moretv.com.cn","forwardedIp":"113.47.171.88, 106.75.34.229","logs":"[{\"logVersion\":\"02\",\"params\":{\"pageType\":\"运营图\"},\
+"happenTime\":1484103299001,\"eventId\":\"medusa-startPageView-startpage\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"params\":{\"inputMethod\":\"T9\"},\"happenTime\":148410332
+0056,\"eventId\":\"medusa-search-inputmethodusage\",\"logType\":\"event\"}]","day":"2017-01-11","md5":"ed2ad4b3190ff0f1fc8871c214d4ba3c","ts":1484103599095}
+{"baseInfo":"{\"apkVersion\":\"3.1.1\",\"groupId\":\"741\",\"accountId\":\"\",\"appEnterWay\":\"native\",\"promotionChannel\":\"huanstore\",\"userId\":\"b843a9db9a55402a335a030a5db4
+38d6\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"productModel\":\"TCL-CN-AM6C-A71C-MG\",\"versionCode\":\"311\",\"buildDate\":\"20161014\",\"uploadTime\":\"20170111105959\",\"weath
+erCode\":\"101090117\"}","date":"2017-01-11","remoteIp":"106.114.111.187","version":"01","urlPath":"medusalog/","tags":{"product":"medusa","method":"POST"},"logTimestamp":1484103600
+153,"datetime":"2017-01-11 11:00:00","hour":"11","host":"log.moretv.com.cn","forwardedIp":"106.114.111.187","logs":"[{\"logVersion\":\"02\",\"actionId\":\"medusa-play-play-pause\",\
+"uuid\":\"f8f25ffa-400d-45c6-b31b-e04a5d417857\",\"params\":{\"videoName\":\"僵尸新娘\",\"operation\":\"pause\",\"videoSid\":\"s9n8wxa2uvwx\",\"contentType\":\"movie\"},\"happenTime
+\":1484103335511,\"status\":\"start\",\"logType\":\"start_end\"}]","day":"2017-01-11","md5":"758a45a0e4250ddad67581fa84ae8897","ts":1484103599993}
+{"baseInfo":"{\"apkVersion\":\"3.1.1\",\"groupId\":\"327\",\"accountId\":\"\",\"appEnterWay\":\"native\",\"promotionChannel\":\"boshilian\",\"userId\":\"c98fe9006b758af229023369649d
+42a7\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"productModel\":\"TOPBOX_A31S\",\"versionCode\":\"311\",\"buildDate\":\"20161014\",\"uploadTime\":\"20170111110011\",\"weatherCode\"
+:\"101290101\"}","date":"2017-01-11","remoteIp":"182.245.170.228","version":"01","urlPath":"medusalog/","tags":{"product":"medusa","method":"POST"},"logTimestamp":1484103600215,"dat
+etime":"2017-01-11 11:00:00","hour":"11","host":"log.moretv.com.cn","forwardedIp":"182.245.170.228","logs":"[{\"logVersion\":\"02\",\"happenTime\":2968120049676,\"params\":{\"pathMa
+in\":\"home*my_tv*history-history\",\"videoSid\":\"fh3fi66jd4jm\",\"contentType\":\"comic\",\"videoName\":\"第184话 复活的死亡讯息(下集)\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"ke
+y\":\"right\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":2968120050177,\"params\":{\"pathMain\":\"home*my_tv*history-hist
+ory\",\"videoSid\":\"fh3fi66jd4jm\",\"contentType\":\"comic\",\"videoName\":\"第184话 复活的死亡讯息(下集)\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"right\"},\"eventId\":\"m
+edusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":2968120050177,\"params\":{\"pathMain\":\"home*my_tv*history-history\",\"videoSid\":\"fh3fi66jd
+4jm\",\"contentType\":\"comic\",\"videoName\":\"第184话 复活的死亡讯息(下集)\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"right\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"lo
+gType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":2968120050677,\"params\":{\"pathMain\":\"home*my_tv*history-history\",\"videoSid\":\"fh3fi66jd4jm\",\"contentType\":\"comic\
+",\"videoName\":\"第184话 复活的死亡讯息(下集)\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"right\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersi
+on\":\"02\",\"happenTime\":2968120051178,\"params\":{\"pathMain\":\"home*my_tv*history-history\",\"videoSid\":\"fh3fi66jd4jm\",\"contentType\":\"comic\",\"videoName\":\"第184话 复活
+的死亡讯息(下集)\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"right\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":296
+8120058184,\"params\":{\"pathMain\":\"home*my_tv*history-history\",\"videoSid\":\"fh3fi66jd4jm\",\"contentType\":\"comic\",\"videoName\":\"第184话 复活的死亡讯息(下集)\",\"pathSub\"
+:\"\",\"pathSpecial\":\"\",\"key\":\"longRight\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":2968120061186,\"params\":{\"p
+athMain\":\"home*my_tv*history-history\",\"videoSid\":\"fh3fi66jd4jm\",\"contentType\":\"comic\",\"videoName\":\"第184话 复活的死亡讯息(下集)\",\"pathSub\":\"\",\"pathSpecial\":\"\"
+,\"key\":\"right\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":2968120061687,\"params\":{\"pathMain\":\"home*my_tv*history
+-history\",\"videoSid\":\"fh3fi66jd4jm\",\"contentType\":\"comic\",\"videoName\":\"第184话 复活的死亡讯息(下集)\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"right\"},\"eventId\
+":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":2968120061687,\"params\":{\"pathMain\":\"home*my_tv*history-history\",\"videoSid\":\"fh3f
+i66jd4jm\",\"contentType\":\"comic\",\"videoName\":\"第184话 复活的死亡讯息(下集)\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"right\"},\"eventId\":\"medusa-play-keyEvent_KEY\"
+,\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":2968120062187,\"params\":{\"pathMain\":\"home*my_tv*history-history\",\"videoSid\":\"fh3fi66jd4jm\",\"contentType\":\"c
+omic\",\"videoName\":\"第184话 复活的死亡讯息(下集)\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"right\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"}]","day
+":"2017-01-11","md5":"e8a775325e9a6bcf7af895e69101d688","ts":1484103611659}
+{"baseInfo":"{\"apkVersion\":\"3.1.1\",\"groupId\":\"742\",\"accountId\":\"\",\"appEnterWay\":\"native\",\"promotionChannel\":\"dangbei\",\"userId\":\"9f0d0a22f1ed5279bd005a68fe60fa
+ed\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"productModel\":\"VIDAA_TV\",\"versionCode\":\"311\",\"buildDate\":\"20161014\",\"uploadTime\":\"20170111110000\",\"weatherCode\":\"10
+1200602\"}","date":"2017-01-11","remoteIp":"106.75.34.229","version":"01","urlPath":"medusalog/","tags":{"product":"medusa","method":"POST"},"logTimestamp":1484103600258,"datetime":
+"2017-01-11 11:00:00","hour":"11","host":"log.moretv.com.cn","forwardedIp":"117.150.93.78, 106.75.34.229","logs":"[{\"logVersion\":\"02\",\"happenTime\":1484103403520,\"params\":{\"
+pathMain\":\"home-search*MRX\",\"videoSid\":\"np6l6jceuvg6\",\"contentType\":\"tv\",\"videoName\":\"美人心计[39]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"longRight\"},\"eve
+ntId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":1484103427532,\"params\":{\"pathMain\":\"home-search*MRX\",\"videoSid\":\"np6l6jceuv
+g6\",\"contentType\":\"tv\",\"videoName\":\"美人心计[39]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"longRight\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\
+"},{\"logVersion\":\"02\",\"happenTime\":1484103438065,\"params\":{\"pathMain\":\"home-search*MRX\",\"videoSid\":\"np6l6jceuvg6\",\"contentType\":\"tv\",\"videoName\":\"美人心计[39]
+\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"longRight\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":1484103480086,\
+"params\":{\"pathMain\":\"home-search*MRX\",\"videoSid\":\"np6l6jceuvg6\",\"contentType\":\"tv\",\"videoName\":\"美人心计[39]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"longR
+ight\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":1484103490591,\"params\":{\"pathMain\":\"home-search*MRX\",\"videoSid\"
+:\"np6l6jceuvg6\",\"contentType\":\"tv\",\"videoName\":\"美人心计[39]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"longRight\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logTy
+pe\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":1484103494594,\"params\":{\"pathMain\":\"home-search*MRX\",\"videoSid\":\"np6l6jceuvg6\",\"contentType\":\"tv\",\"videoName\":\
+"美人心计[39]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"longRight\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":14
+84103500096,\"params\":{\"pathMain\":\"home-search*MRX\",\"videoSid\":\"np6l6jceuvg6\",\"contentType\":\"tv\",\"videoName\":\"美人心计[40]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"
+key\":\"longRight\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":1484103588642,\"params\":{\"pathMain\":\"home-search*MRX\"
+,\"videoSid\":\"np6l6jceuvg6\",\"contentType\":\"tv\",\"videoName\":\"美人心计[40]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"longRight\"},\"eventId\":\"medusa-play-keyEvent_
+KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":1484103595646,\"params\":{\"pathMain\":\"home-search*MRX\",\"videoSid\":\"np6l6jceuvg6\",\"contentType\":\"tv\",\"
+videoName\":\"美人心计[40]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"longRight\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"ha
+ppenTime\":1484103599147,\"params\":{\"pathMain\":\"home-search*MRX\",\"videoSid\":\"np6l6jceuvg6\",\"contentType\":\"tv\",\"videoName\":\"美人心计[40]\",\"pathSub\":\"\",\"pathSpec
+ial\":\"\",\"key\":\"longRight\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"}]","day":"2017-01-11","md5":"4239ddbfdf43ea6ceb34e01363282a18","ts":1484103600059}
+{"baseInfo":"{\"apkVersion\":\"3.1.1\",\"groupId\":\"587\",\"accountId\":\"\",\"appEnterWay\":\"native\",\"promotionChannel\":\"dangbei\",\"userId\":\"adb801c9d0f7bc0bb449cccc8262a5
+31\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"productModel\":\"DM1016\",\"versionCode\":\"311\",\"buildDate\":\"20161014\",\"uploadTime\":\"20170111110000\",\"weatherCode\":\"1010
+20100\"}","date":"2017-01-11","remoteIp":"106.75.34.229","version":"01","urlPath":"medusalog/","tags":{"product":"medusa","method":"POST"},"logTimestamp":1484103600281,"datetime":"2
+017-01-11 11:00:00","hour":"11","host":"log.moretv.com.cn","forwardedIp":"211.161.242.232, 106.75.34.229","logs":"[{\"logVersion\":\"02\",\"actionId\":\"medusa-play-play-pause\",\"u
+uid\":\"983a59d2-96f2-4a0d-9d2f-aeedd7b854e9\",\"params\":{\"videoName\":\"14 争宠大战\",\"operation\":\"pause\",\"videoSid\":\"fh1ck7ce5iij\",\"contentType\":\"kids\"},\"happenTime
+\":1484103298665,\"status\":\"start\",\"logType\":\"start_end\"},{\"logVersion\":\"02\",\"happenTime\":1484103302668,\"params\":{\"pathMain\":\"home*classification*kids-kids_home-ka
+ndonghua*热播推荐\",\"videoSid\":\"fh1ck7ce5iij\",\"contentType\":\"kids\",\"videoName\":\"14 争宠大战\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"back\",\"option\":\"nextEpis
+ode\"},\"eventId\":\"medusa-play-keyEvent_MENU\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"actionId\":\"medusa-play-play-pause\",\"uuid\":\"f3a59a06-a6e1-418c-86e1-d01d38874fa
+1\",\"params\":{\"operation\":\"pause\",\"videoSid\":\"fh1ck7ce5iij\",\"episodeSid\":\"fhbdqs8se5cd\",\"contentType\":\"kids\",\"videoName\":\"16 泡泡大战\"},\"happenTime\":14841034
+39236,\"status\":\"start\",\"logType\":\"start_end\"}]","day":"2017-01-11","md5":"30a8c93061afa01186a22c8d692ff8c0","ts":1484103600268}
+{"baseInfo":"{\"apkVersion\":\"3.1.1\",\"groupId\":\"55\",\"accountId\":\"\",\"appEnterWay\":\"native\",\"promotionChannel\":\"dangbei\",\"userId\":\"bc79105933b6ed67e31d7d6ef85f4c4
+1\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"productModel\":\"LE42R31R1I1\",\"versionCode\":\"311\",\"buildDate\":\"20161014\",\"uploadTime\":\"20170111105959\",\"weatherCode\":\"
+101250608\"}","date":"2017-01-11","remoteIp":"106.75.34.229","version":"01","urlPath":"medusalog/","tags":{"product":"medusa","method":"POST"},"logTimestamp":1484103600310,"datetime
+":"2017-01-11 11:00:00","hour":"11","host":"log.moretv.com.cn","forwardedIp":"183.204.34.148, 106.75.34.229","logs":"[{\"logVersion\":\"02\",\"actionId\":\"medusa-play-play-pause\",
+\"uuid\":\"00ab2ee1-5298-400b-807d-382ad88f6a02\",\"params\":{\"videoName\":\"新大头儿子和小头爸爸（第二季）[2]\",\"operation\":\"pause\",\"videoSid\":\"s9n8u91cg6vw\",\"contentType
+\":\"kids\"},\"happenTime\":1484103402071,\"status\":\"start\",\"logType\":\"start_end\"}]","day":"2017-01-11","md5":"50af6478e87751c56393eaa3669e0017","ts":1484103599242}
+{"baseInfo":"{\"groupId\":\"251\",\"versionCode\":\"311\",\"userId\":\"357ce26d9f2b80b52adf9c0253b4dbec\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"accountId\":\"67539378\",\"build
+Date\":\"20161014\",\"promotionChannel\":\"dangbei\",\"productModel\":\"VAY_3368\",\"apkVersion\":\"3.1.1\",\"weatherCode\":\"101050101\",\"appEnterWay\":\"native\",\"uploadTime\":\
+"20170111110000\"}","date":"2017-01-11","remoteIp":"42.184.47.154","version":"01","urlPath":"medusalog/","tags":{"product":"medusa","method":"POST"},"logTimestamp":1484103600316,"da
+tetime":"2017-01-11 11:00:00","hour":"11","host":"log.moretv.com.cn","forwardedIp":"42.184.47.154","logs":"[{\"logType\":\"start_end\",\"actionId\":\"medusa-play-play-pause\",\"stat
+us\":\"end\",\"logVersion\":\"02\",\"params\":{\"videoSid\":\"9wn8qr6jef2c\",\"videoName\":\"青树[4]\",\"contentType\":\"tv\",\"operation\":\"play\"},\"happenTime\":1484103478813,\"
+uuid\":\"fa371ad5-4daf-4394-aff9-d612ecd5a97d\"}]","day":"2017-01-11","ts":1484103600025,"md5":"8ada65c45f2356b799d1049c01f5afba"}
+{"baseInfo":"{\"apkVersion\":\"3.1.1\",\"groupId\":\"73\",\"accountId\":\"\",\"appEnterWay\":\"native\",\"promotionChannel\":\"dangbei\",\"userId\":\"6ac723ff2e73f58cd9f1f6a75ce6b38
+d\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"productModel\":\"RK3128_MYSOTO_52\",\"versionCode\":\"311\",\"buildDate\":\"20161014\",\"uploadTime\":\"20170111110000\",\"weatherCode
+\":\"101050605\"}","date":"2017-01-11","remoteIp":"106.75.34.229","version":"01","urlPath":"medusalog/","tags":{"product":"medusa","method":"POST"},"logTimestamp":1484103600338,"dat
+etime":"2017-01-11 11:00:00","hour":"11","host":"log.moretv.com.cn","forwardedIp":"111.41.127.103, 106.75.34.229","logs":"[{\"logVersion\":\"02\",\"happenTime\":1484103364276,\"para
+ms\":{\"pathMain\":\"home*classification*comic-comic*热播动漫\",\"videoSid\":\"vxvxlnbcmnvx\",\"contentType\":\"comic\",\"videoName\":\"火影忍者[687]\",\"pathSub\":\"\",\"pathSpecia
+l\":\"\",\"key\":\"longRight\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":1484103368278,\"params\":{\"pathMain\":\"home*c
+lassification*comic-comic*热播动漫\",\"videoSid\":\"vxvxlnbcmnvx\",\"contentType\":\"comic\",\"videoName\":\"火影忍者[687]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"longRigh
+t\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"}]","day":"2017-01-11","md5":"48cdb96fe497813a8e3bef382b5a5f1c","ts":1484103600695}
+{"baseInfo":"{\"apkVersion\":\"3.1.1\",\"groupId\":\"810\",\"accountId\":\"\",\"appEnterWay\":\"native\",\"promotionChannel\":\"10moons\",\"userId\":\"86a87f0b8ea1b99e79569ef38187bc
+4e\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"productModel\":\"10MOONS_D8G\",\"versionCode\":\"311\",\"buildDate\":\"20161014\",\"uploadTime\":\"20170111105959\",\"weatherCode\":\
+"101150101\"}","date":"2017-01-11","remoteIp":"106.75.34.229","version":"01","urlPath":"medusalog/","tags":{"product":"medusa","method":"POST"},"logTimestamp":1484103600393,"datetim
+e":"2017-01-11 11:00:00","hour":"11","host":"log.moretv.com.cn","forwardedIp":"111.44.144.99, 106.75.34.229","logs":"[{\"logVersion\":\"02\",\"happenTime\":1484103433671,\"params\":
+{\"pathMain\":\"home*recommendation*9\",\"videoSid\":\"tvn8123e7pbc\",\"contentType\":\"tv\",\"videoName\":\"漂亮的李慧珍 未删减版[13]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\
+":\"right\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":1484103433671,\"params\":{\"pathMain\":\"home*recommendation*9\",\
+"videoSid\":\"tvn8123e7pbc\",\"contentType\":\"tv\",\"videoName\":\"漂亮的李慧珍 未删减版[13]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"right\"},\"eventId\":\"medusa-play-ke
+yEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":1484103434671,\"params\":{\"pathMain\":\"home*recommendation*9\",\"videoSid\":\"tvn8123e7pbc\",\"contentTyp
+e\":\"tv\",\"videoName\":\"漂亮的李慧珍 未删减版[13]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"right\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"lo
+gVersion\":\"02\",\"happenTime\":1484103435171,\"params\":{\"pathMain\":\"home*recommendation*9\",\"videoSid\":\"tvn8123e7pbc\",\"contentType\":\"tv\",\"videoName\":\"漂亮的李慧珍
+删减版[13]\",\"pathSub\":\"\",\"pathSpecial\":\"\",\"key\":\"right\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"},{\"logVersion\":\"02\",\"happenTime\":148410343
+5671,\"params\":{\"pathMain\":\"home*recommendation*9\",\"videoSid\":\"tvn8123e7pbc\",\"contentType\":\"tv\",\"videoName\":\"漂亮的李慧珍 未删减版[13]\",\"pathSub\":\"\",\"pathSpeci
+al\":\"\",\"key\":\"right\"},\"eventId\":\"medusa-play-keyEvent_KEY\",\"logType\":\"event\"}]","day":"2017-01-11","md5":"ab50580967e4c79f725cf8f4e3093752","ts":1484103599712}
+
+#log.tvmore.com.cn
+{"date":"2017-01-11","logType":"liveqos","productModel":"8H87G7200","weatherCode":"101101107","groupId":"795","buildDate":"20161014","logTimestamp":1484103600001,"datetime":"2017-01
+-11 11:00:00","apkVersion":"3.1.1","promotionChannel":"shafah13","hour":"11","host":"log.tvmore.com.cn","logVersion":"01","day":"2017-01-11","jsonLog":"{ \"userId\":\"2d590eb6d6100a
+d601b341c735ba863f\", \"accountId\":\"\", \"liveSid\":\"s9n8op9wf5vw\", \"liveName\":\"成龙经典电影轮播\", \"playType\":\"live\", \"initDuration\":2623, \"getVideoInfoDuration\":279
+, \"playStatus\":1, \"avgDownloadSpeed\":55, \"uploadTime\":\"20170111105959\",\"liveqos\":[{\"videoSource\":\"kk\", \"sourceIndex\":0, \"sourceSwitch\":\"\", \"sourcecases\":[{\"pa
+rseDuration\":255, \"initBufferDuration\":1647, \"totalBufferTimes\":-1, \"totalBufferDuration\":-1, \"bufferDurations\":[], \"playDuration\":9600, \"playCode\":200}]}]}","apkSeries
+":"MoreTV_TVApp3.0_Medusa","remoteIp":"113.26.31.47","uploadTime":"20170111105959","userId":"2d590eb6d6100ad601b341c735ba863f","urlPath":"medusalog/","versionCode":"311","tags":{"pr
+oduct":"medusa","method":"GET"},"accountId":"","appEnterWay":"native","forwardedIp":"113.26.31.47"}
+{"date":"2017-01-11","logType":"play","programDuration":"0","productModel":"KIUI-S3368D","weatherCode":"101080401","groupId":"948","pathSub":"","buildDate":"20161229","duration":"",
+"logTimestamp":1484103600017,"playId":"496b6926-9f74-4d32-a312-5428f41bd5e7","datetime":"2017-01-11 11:00:00","searchText":"","apkVersion":"3.1.2","promotionChannel":"dangbei","hour
+":"11","retrieval":"","containAd":"0","videoName":"挖路","host":"log.tvmore.com.cn","logVersion":"01","event":"startplay","day":"2017-01-11","contentType":"kids","episodeSid":"fh2d8
+rhjfhce","apkSeries":"MoreTV_TVApp3.0_Medusa","remoteIp":"123.179.169.103","uploadTime":"20170111105958","userId":"093029e8bf4dcf93d3a6fdd34a42432e","urlPath":"medusalog/","versionC
+ode":"312","pathMain":"home*my_tv*history-history","tags":{"product":"medusa","method":"GET"},"accountId":"","videoSid":"fh2dpq7oe5wx","pathSpecial":"","appEnterWay":"native","forwa
+rdedIp":"123.179.169.103"}
+{"date":"2017-01-11","logType":"playqos","productModel":"ChangHongAndroidTV","weatherCode":"101020100","groupId":"11","buildDate":"20161229","logTimestamp":1484103600011,"playId":"6
+574a95d-8cb5-4868-b2b8-89e5201b8737","datetime":"2017-01-11 11:00:00","apkVersion":"3.1.2","promotionChannel":"huanstore","hour":"11","containAd":"0","host":"log.tvmore.com.cn","log
+Version":"01","day":"2017-01-11","jsonLog":"{ \"userId\":\"fc5e7294d0eac235af68c82bebb29621\", \"accountId\":\"\", \"contentType\":\"hot\", \"videoSid\":\"tvn812ru1ctu\", \"episodeS
+id\":\"tvn812ru1ctu\", \"playType\":\"vod\", \"initDuration\":2160, \"getVideoInfoDuration\":124, \"playRate\":0.0, \"playStatus\":1, \"avgDownloadSpeed\":0, \"uploadTime\":\"201701
+11105958\",\"playqos\":[{\"videoSource\":\"yinyuetai\", \"sourceIndex\":0, \"sourceSwitch\":\"\", \"containAd\":\"0\", \"sourcecases\":[{\"parseDuration\":588, \"initBufferDuration\
+":-1, \"totalBufferTimes\":-1, \"totalBufferDuration\":-1, \"bufferDurations\":[], \"playDuration\":-1, \"preAdPlayDuration\":-1, \"mediumAdPlayDuration\":-1, \"postAdPlayDuration\"
+:-1, \"playCode\":-1}]}]}","apkSeries":"MoreTV_TVApp3.0_Medusa","remoteIp":"106.75.34.229","uploadTime":"20170111105958","userId":"fc5e7294d0eac235af68c82bebb29621","urlPath":"medus
+alog/","versionCode":"312","tags":{"product":"medusa","method":"GET"},"accountId":"","appEnterWay":"native","forwardedIp":"183.222.255.106, 106.75.34.229","aid":"fc5e7294d0eac235af6
+8c82bebb296211484103502306"}
+{"baseInfo":"{\"apkVersion\":\"3.1.2\",\"groupId\":\"638\",\"accountId\":\"\",\"appEnterWay\":\"native\",\"promotionChannel\":\"dangbei\",\"userId\":\"d6df970af7d1024d4db294f77354d0
+5f\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"productModel\":\"MagicBox_M16C\",\"versionCode\":\"312\",\"buildDate\":\"20161229\",\"uploadTime\":\"20170111105959\",\"weatherCode\"
+:\"101050107\"}","date":"2017-01-11","remoteIp":"182.46.167.173","version":"01","urlPath":"medusalog/","tags":{"product":"medusa","method":"POST"},"logTimestamp":1484103600009,"date
+time":"2017-01-11 11:00:00","hour":"11","host":"log.tvmore.com.cn","forwardedIp":"182.46.167.173","logs":"[{\"logVersion\":\"02\",\"happenTime\":1484103509212,\"params\":{\"notifica
+tionMethod\":\"keep-alive\",\"notificationType\":\"Launcher\"},\"eventId\":\"medusa-notification-action\",\"logType\":\"event\"}]","day":"2017-01-11","md5":"cb845d138bd9ba6736441bf5
+9b4b7eb4","ts":1484103599945}
+{"date":"2017-01-11","logType":"play","programDuration":"362","productModel":"MNT_H2","weatherCode":"101110304","groupId":"885","pathSub":"","buildDate":"20161229","duration":"352",
+"logTimestamp":1484103600007,"playId":"ff5ca76e-93ae-42ad-93c4-9db271aaec11","datetime":"2017-01-11 11:00:00","searchText":"","apkVersion":"3.1.2","promotionChannel":"boshilian","ho
+ur":"11","retrieval":"","containAd":"0","videoName":"口水三国[18]","host":"log.tvmore.com.cn","logVersion":"01","event":"userexit","day":"2017-01-11","contentType":"comic","episodeS
+id":"3f1bl7g6231b","apkSeries":"MoreTV_TVApp3.0_Medusa","remoteIp":"106.75.34.229","uploadTime":"20170111105958","userId":"cb4b9b22312aba50394cdc4fe91cdcf6","urlPath":"medusalog/","
+versionCode":"312","pathMain":"home*classification*comic-comic*热播动漫","tags":{"product":"medusa","method":"GET"},"accountId":"","videoSid":"a2bdcee54fd4","pathSpecial":"","appEnt
+erWay":"native","forwardedIp":"111.19.78.81, 106.75.34.229"}
+{"date":"2017-01-11","logType":"live","productModel":"OTT_RK3128","weatherCode":"101180711","liveType":"live","groupId":"243","buildDate":"20161229","duration":"256","logTimestamp":
+1484103600004,"datetime":"2017-01-11 11:00:00","apkVersion":"3.1.2","promotionChannel":"tianshang","hour":"11","liveMenuCode":"cctv","host":"log.tvmore.com.cn","logVersion":"01","ev
+ent":"switchchannel","day":"2017-01-11","apkSeries":"MoreTV_TVApp3.0_Medusa","channelSid":"ab12h6st2dde","remoteIp":"123.53.124.73","liveName":"CCTV-4 国际","uploadTime":"2017011110
+5959","userId":"96d20b5640f500b1ca0bbb6fe516300f","urlPath":"medusalog/","versionCode":"312","pathMain":"home*live*telecast","tags":{"product":"medusa","method":"GET"},"accountId":"
+","sourceType":"telecast","appEnterWay":"native","forwardedIp":"123.53.124.73"}
+
+

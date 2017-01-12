@@ -1,14 +1,94 @@
 
+import java.io.FileInputStream
 import java.util.concurrent.Future
 
 import cn.whaley.bi.logsys.common.ConfManager
-import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.{JSONObject, JSON}
 import org.apache.kafka.clients.producer.{KafkaProducer, RecordMetadata, ProducerRecord}
 import org.junit.Test
 
 import scalaj.http._
 
 class LogTest {
+
+    @Test
+    def test: Unit = {
+        import scalaj.http._
+        import com.alibaba.fastjson.{JSONObject, JSON}
+        val dir = "/Users/fj/workspace/whaley/projects/WhaleyLogSys/gathersys/actionlog/src/test/datas/rawlogs"
+
+        val parseJSONLines = (filepath: String) => {
+            val stream = new FileInputStream(filepath)
+            val source = scala.io.Source.fromInputStream(stream)
+            val info = source.getLines().flatMap(line => {
+                try {
+                    val jsonObj = JSON.parseObject(line)
+                    if (jsonObj.containsKey("tags")) {
+                        var urlPath = jsonObj.getString("urlPath")
+                        if (!urlPath.startsWith("/")) urlPath = "/" + urlPath
+                        if (urlPath.endsWith("/")) urlPath = urlPath.substring(0, urlPath.length - 1)
+                        (jsonObj.getString("host"), jsonObj.getJSONObject("tags").getString("method").toUpperCase(), urlPath, line) :: Nil
+                    } else {
+                        new Array[(String, String, String, String)](0)
+                    }
+                } catch {
+                    case e: Throwable => {
+                        new Array[(String, String, String, String)](0)
+                    }
+                }
+            })
+            info
+        }
+
+        val parseGetLogLines = (filepath: String) => {
+            val stream = new FileInputStream(filepath)
+            val source = scala.io.Source.fromInputStream(stream)
+            val info = source.getLines().map(_.trim).filter(line => {
+                line.length > 0 && !line.startsWith("#")
+            }).flatMap(line => {
+                val fields = line.split(" ")
+                val host = fields(1)
+                val urlPath = fields(7)
+                (host, "GET", urlPath, line) :: Nil
+            })
+            info
+        }
+
+        val aginomotoData = parseJSONLines(s"${dir}/aginomoto.txt")
+        val moretvData = parseJSONLines(s"${dir}/moretv.com.cn.post.txt")
+        val moretvGetData = parseGetLogLines(s"${dir}/moretv.com.cn.get.txt")
+
+        //aginomotoData.toArray.distinct.sortBy(_._1).foreach(println)
+        //moretvData.toArray.distinct.sortBy(_._1).foreach(println)
+
+        val sendHttp = (host: String, method: String, urlPath: String, data: String) => {
+            val url = s"http://${host}:81${urlPath}"
+            val request: HttpRequest = Http(url).method(method)
+            try {
+                val res = method match {
+                    case "GET" => {
+                        request.asString
+                    }
+                    case "POST" => {
+                        request.postData(data.getBytes).header("content-type", "application/json").asString
+                    }
+                }
+                println(s"url:$url ; res:${res}")
+            } catch {
+                case e: Throwable => {
+                    println(s"url:$url, data:$data")
+                    e.printStackTrace()
+                }
+            }
+
+        }
+
+        //aginomotoData.foreach(data=>{ sendHttp(data._1,data._2,data._3,data._4) })
+        //moretvData.foreach(data=>{ sendHttp(data._1,data._2,data._3,data._4) })
+        moretvGetData.foreach(data => {
+            sendHttp(data._1, data._2, data._3, data._4)
+        })
+    }
 
 
     @Test
@@ -53,7 +133,7 @@ class LogTest {
         val source = scala.io.Source.fromInputStream(stream)
         val lines = source.getLines().toArray
         var count = 0
-        for(i <- 0 to 10) {
+        for (i <- 0 to 10) {
             lines.foreach(item => {
                 val request: HttpRequest = Http("http://logupload.aginomoto.com:8180/")
                 val res = request.postData(item.getBytes).header("content-type", "application/json").asString
