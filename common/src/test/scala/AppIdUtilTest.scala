@@ -15,6 +15,8 @@ class AppIdUtilTest {
         println("whaleytv:" + util.createAppId("whaley", "whaleytv", "main"))
         println("whaleyorca:" + util.createAppId("whaley", "whaleyorca", "main"))
         println("whaleyvr:" + util.createAppId("whaley", "whaleyvr", "main"))
+        println("eagle:" + util.createAppId("whaley", "eagle", "main"))
+        println("epop:" + util.createAppId("whaley", "whaleytv", "epop"))
     }
 
     @Test
@@ -30,7 +32,9 @@ class AppIdUtilTest {
         appInfo.append(("whaley", "whaleytv", "main"))
         appInfo.append(("whaley", "whaleyvr", "main"))
         appInfo.append(("whaley", "crawler", "price"))
-        appInfo.append(("whaley", "crawler", "cis"))
+        appInfo.append(("whaley", "whaleytv", "epop"))
+        appInfo.append(("whaley", "whaleytv", "global_menu_2.0"))
+
 
         appInfo.foreach(item => {
             val id = util.createAppId(item._1, item._2, item._3)
