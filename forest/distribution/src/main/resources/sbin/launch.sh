@@ -2,7 +2,8 @@
 
 #################################################################
 # example:
-#   ./launch.sh --task=forest_actionlog
+#   ./launch.sh --task=forest_actionlog_start
+#   ./launch.sh --task=forest_actionlog_stop
 #################################################################
 
 cd `dirname $0`
