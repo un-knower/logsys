@@ -24,7 +24,7 @@ class AppIdUtilTest {
         val util = new AppIdUtil
 
         val appInfo = new ArrayBuffer[(String, String, String)]()
-        appInfo.append(("whaley", "medusa", "main3.0"))
+        appInfo.append(("whaley", "medusa", "main3.1"))
         appInfo.append(("whaley", "medusa", "main2.0"))
         appInfo.append(("whaley", "medusa", "main1.0"))
         appInfo.append(("whaley", "medusa", "kids"))
@@ -34,6 +34,8 @@ class AppIdUtilTest {
         appInfo.append(("whaley", "crawler", "price"))
         appInfo.append(("whaley", "whaleytv", "epop"))
         appInfo.append(("whaley", "whaleytv", "global_menu_2.0"))
+        appInfo.append(("whaley", "medusa", "main3.0")) //留给WUI2.0
+        appInfo.append(("whaley", "whaleytv", "wui2.0"))
 
 
         appInfo.foreach(item => {

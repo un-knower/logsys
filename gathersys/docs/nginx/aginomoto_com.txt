@@ -1,0 +1,404 @@
+----applog_aginomoto.conf(15)
+-- 没有applog2，applog3
+server {
+    listen       80;
+    server_name  applog.aginomoto.com;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/applog.access.log  main;
+
+    location ^~/ {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            #access_log  /var/log/nginx/applog.access.log  main;
+	    if ($request_method ~* "GET"){
+                access_log  /var/log/nginx/applog.access.log  main;
+		proxy_pass  http://10.10.2.15:8181;
+            }
+            if ($request_method ~* "POST"){
+                access_log  /var/log/nginx/post/applog.access.log  json_log;
+                proxy_pass  http://10.10.2.15:8181;
+                #proxy_pass  http://10.10.1.7:8654;
+            }
+        }
+
+     location /playqoslog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            #access_log  /var/log/nginx/playqoslog.access.log  main;
+            if ($request_method ~* "GET"){
+                access_log  /var/log/nginx/playqoslog.access.log  main;
+                 proxy_pass  http://10.10.2.15:8181;
+            }
+            if ($request_method ~* "POST"){
+                access_log  /var/log/nginx/post/playqoslog.access.log  json_log;
+                proxy_pass  http://10.10.2.15:8181;
+                #proxy_pass  http://10.10.1.7:8654;
+            }
+        }
+    location = /favicon.ico {
+                log_not_found off;
+                access_log off;
+        }
+
+
+    location /monitor {
+                default_type    application/json;
+                echo "{\"status\":\"200\"}";
+        }
+
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+
+
+----tvlog_aginomoto.conf(15)
+---缺少tvlog2,tvlog3
+
+server {
+    listen       80;
+    server_name  tvlog.aginomoto.com tvlog.galaxytv.cn;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/tvlog.access.log  main;
+
+    location ^~/ {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            #access_log  /var/log/nginx/tvlog.access.log  main;
+	    if ($request_method ~* "GET"){
+                access_log  /var/log/nginx/tvlog.access.log  main;
+                proxy_pass  http://10.10.2.15:8181;
+            }
+            if ($request_method ~* "POST"){
+                access_log  /var/log/nginx/post/tvlog.access.log  json_log;
+                proxy_pass  http://10.10.2.15:8181;
+		#proxy_pass  http://10.10.1.7:8654;
+            }
+        }
+
+    location ^~/test/upgradelog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/test_upgradelog.access.log  main;
+
+        }
+
+    location /monitor {
+                default_type    application/json;
+                echo "{\"status\":\"200\"}";
+        }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+
+--videolog_aginomoto.conf(15)
+--缺少videolog2,videolog3
+server {
+    listen       80;
+    server_name  videolog.aginomoto.com;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/videolog.access.log  main;
+
+     location ^~/ {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            #access_log  /var/log/nginx/videolog.access.log  main;
+            if ($request_method ~* "GET"){
+                access_log  /var/log/nginx/videolog.access.log  main;
+                proxy_pass  http://10.10.2.15:8181;
+            }
+            if ($request_method ~* "POST"){
+                access_log  /var/log/nginx/post/videolog.access.log  json_log;
+                proxy_pass  http://10.10.2.15:8181;
+            }
+        }
+
+     location /playqoslog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            #access_log  /var/log/nginx/playqoslog.access.log  main;
+            if ($request_method ~* "GET"){
+                access_log  /var/log/nginx/playqoslog.access.log  main;
+                proxy_pass  http://10.10.2.15:8181;
+            }
+            if ($request_method ~* "POST"){
+                access_log  /var/log/nginx/post/playqoslog.access.log  json_log;
+                proxy_pass  http://10.10.2.15:8181;
+            }
+        }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+
+---vrlog.aginomoto.com.conf(15)
+server {
+    listen       80;
+    server_name  vrlog.aginomoto.com;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/vrlog.aginomoto.com.access.log  main;
+
+     location ^~/ {
+            #index  index.html index.htm index.php;
+            #empty_gif;
+	    default_type    application/json;
+            echo "{\"status\":200}";
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/vrlog.aginomoto.com.access.log  main;
+            }
+
+   location ^~/vrapplog {
+	#lua_need_request_body on;
+        #content_by_lua 'local s = ngx.var.request_body';
+	#default_type    application/json;
+        #echo "{\"status\":200}";
+        proxy_set_header HTTP_Host $host;
+        proxy_set_header HTTP_X-Real-IP $remote_addr;
+        proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+        if ($request_method ~* "GET"){
+            access_log  /var/log/nginx/vrapplog/vrapplog.get.access.log  json_log;
+            proxy_pass  http://127.0.0.1:8281;
+        }
+        if ($request_method ~* "POST"){
+            access_log  /var/log/nginx/vrapplog/vrapplog.post.access.log  json_log;
+            proxy_pass  http://127.0.0.1:8281;
+        }
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+
+-----appstorelog_aginomoto.conf(15)
+---缺少appstorelog2，appstorelog3
+server {
+    listen       80;
+    server_name  appstorelog.aginomoto.com appstorelog.galaxytv.cn;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/appstorelog.access.log  main;
+
+    location ^~/ {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            #access_log  /var/log/nginx/appstorelog.access.log  main;
+            if ($request_method ~* "GET"){
+                access_log  /var/log/nginx/appstorelog.access.log  main;
+                proxy_pass  http://10.10.2.15:8181;
+            }
+            if ($request_method ~* "POST"){
+                access_log  /var/log/nginx/post/appstorelog.access.log  json_log;
+                proxy_pass  http://10.10.2.15:8181;
+                #proxy_pass  http://10.10.1.7:8654;
+            }
+        }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+
+---crashlog.aginomoto.com.conf(15)
+server {
+    listen       80;
+    server_name  crashlog.aginomoto.com;
+
+#charset koi8-r;
+    access_log  /var/log/nginx/crashlog.aginomoto.com.access.log  main;
+
+     location ^~/ {
+            #index  index.html index.htm index.php;
+            #empty_gif;
+            default_type    application/json;
+            echo "{\"status\":200}";
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/crashlog.aginomoto.com.access.log  main;
+            }
+
+   location ^~/crashlog {
+        proxy_set_header HTTP_Host $host;
+        proxy_set_header HTTP_X-Real-IP $remote_addr;
+        proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+        if ($request_method ~* "GET"){
+            access_log  /var/log/nginx/crashlog/crashlog.get.access.log  json_log;
+            proxy_pass  http://10.10.2.15:8789;
+        }
+        if ($request_method ~* "POST"){
+            access_log  /var/log/nginx/crashlog/crashlog.post.access.log  json_log;
+            proxy_pass  http://10.10.2.15:8789;
+        }
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+
+--nginx.conf(16)
+    server {
+
+	listen       80;
+	server_name  applog.aginomoto.com;
+
+	location /moretv/userdurationlog {
+            empty_gif;
+	    proxy_set_header    HTTP_Host    $host;
+            proxy_set_header    HTTP_X-Real-IP   $remote_addr;
+            proxy_set_header    HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            add_header          Pragma "no-cache";
+            access_log  /var/log/nginx/userdurationlog.access.log  json_log;
+
+	}
+
+	location /price {
+            empty_gif;
+	    proxy_set_header    HTTP_Host    $host;
+            proxy_set_header    HTTP_X-Real-IP   $remote_addr;
+            proxy_set_header    HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header    HTTP_X-Tags '{"product":"price"}';
+            add_header          Pragma "no-cache";
+            access_log  /var/log/nginx/priceinfo.access.log  json_log;
+	    proxy_pass  http://10.10.2.16:8788;
+
+	}
+    }
+
+
+
+
+----logupload.conf(17)
+
+   server {
+        listen       80;
+        server_name  logupload.aginomoto.com  logupload2.aginomoto.com logupload3.aginomoto.com;
+        client_max_body_size 2050m;
+	    client_body_buffer_size 1024k;
+        access_log  /var/log/nginx/logupload.access.log  main;
+        location / {
+		#empty_gif;
+        }
+
+        location /Service/upload {
+             proxy_set_header    Host    $host;
+             proxy_set_header    X-Real-IP   $remote_addr;
+             proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+             add_header          Pragma "no-cache";
+             #allow 210.22.101.26;
+             #deny all;
+             #empty_gif;
+             proxy_pass  http://logupload_group_ip/ip/Service/upload;
+        }
+
+       location /ip/ {
+            proxy_set_header    Host    $host;
+            proxy_set_header    X-Real-IP   $remote_addr;
+            proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+            add_header          Pragma "no-cache";
+            proxy_pass  http://logupload_group_ip/ip/;
+        }
+
+        location /getLog/ {
+            proxy_set_header    Host    $host;
+            proxy_set_header    X-Real-IP   $remote_addr;
+            proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+            add_header          Pragma "no-cache";
+            proxy_pass  http://logupload_group_ip/ip/;
+        }
+
+        location /getLog2/ {
+            proxy_set_header    Host    $host;
+            proxy_set_header    X-Real-IP   $remote_addr;
+            proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+            add_header          Pragma "no-cache";
+            proxy_pass  http://10.10.2.1:8090/ip/;
+        }
+
+	    location /monitor {
+                default_type    application/json;
+                echo "{\"status\":\"200\"}";
+        }
+
+	    location /upload {
+      	  	allow 180.166.221.0/24;
+            allow 140.206.114.0/24;
+            allow 116.236.232.0/24;
+            allow 61.129.122.0/24;
+            allow 116.228.159.0/24;
+            deny all;
+            root /home/moretv/ip/;
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+
+        location ~ /\.ht {
+            deny  all;
+        }
+
+    }

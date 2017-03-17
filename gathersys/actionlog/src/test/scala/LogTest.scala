@@ -83,11 +83,9 @@ class LogTest {
 
         }
 
-        //aginomotoData.foreach(data=>{ sendHttp(data._1,data._2,data._3,data._4) })
-        //moretvData.foreach(data=>{ sendHttp(data._1,data._2,data._3,data._4) })
-        moretvGetData.foreach(data => {
-            sendHttp(data._1, data._2, data._3, data._4)
-        })
+        aginomotoData.foreach(data=>{ sendHttp(data._1,data._2,data._3,data._4) })
+        moretvData.foreach(data=>{ sendHttp(data._1,data._2,data._3,data._4) })
+        moretvGetData.foreach(data => { sendHttp(data._1, data._2, data._3, data._4) })
     }
 
 
