@@ -36,6 +36,7 @@ class AppIdUtilTest {
         appInfo.append(("whaley", "whaleytv", "global_menu_2.0"))
         appInfo.append(("whaley", "medusa", "main3.0")) //留给WUI2.0
         appInfo.append(("whaley", "whaleytv", "wui2.0"))
+        appInfo.append(("whaley", "orca", "global_menu_2.0"))
 
 
         appInfo.foreach(item => {
