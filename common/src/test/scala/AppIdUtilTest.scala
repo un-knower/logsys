@@ -1,4 +1,4 @@
-import cn.whaley.bi.logsys.common.AppIdUtil
+import cn.whaley.bi.logsys.common.{AppIdCreator, AppIdUtil}
 import org.junit.Test
 
 import scala.collection.mutable.ArrayBuffer
@@ -44,6 +44,12 @@ class AppIdUtilTest {
             println(s"${id}\t${item._1}\t${item._2}\t${item._3}")
         })
 
+    }
+
+    @Test
+    def testCreateAppId3: Unit = {
+        //AppIdCreator.main("whaley,orca,global_menu_2.0,ds".split(","))
+        AppIdCreator.main("whaley,orca,global_menu_2.0".split(","))
     }
 
 }

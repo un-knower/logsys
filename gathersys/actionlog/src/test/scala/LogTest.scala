@@ -2,7 +2,7 @@
 import java.io.FileInputStream
 import java.util.concurrent.Future
 
-import cn.whaley.bi.logsys.common.ConfManager
+import cn.whaley.bi.logsys.common.{DigestUtil, ConfManager}
 import com.alibaba.fastjson.{JSONObject, JSON}
 import org.apache.kafka.clients.producer.{KafkaProducer, RecordMetadata, ProducerRecord}
 import org.junit.Test
@@ -10,6 +10,16 @@ import org.junit.Test
 import scalaj.http._
 
 class LogTest {
+
+    val signKey="92DOV+sOk160j=430+DM!ZzESf@XkEsn#cKanpB$KFB6%D8z4C^xg7cs6&7wn0A4A*iR9M3j)pLs]ll5E9aFlU(dE0[QKxHZzC.CaO/2Ym3|Tk<YyGZR>WuRUmI?x2s:Cg;YEA-hZubmGnWgXE"
+
+    //(ts,md5)
+    def getSignMd5Info(logBody:String):(String,String)={
+        val ts = System.currentTimeMillis().toString
+        val str = ts + logBody + signKey
+        val md5 = DigestUtil.getMD5Str32(str)
+        (ts,md5)
+    }
 
     @Test
     def test: Unit = {
@@ -62,15 +72,22 @@ class LogTest {
         //moretvData.toArray.distinct.sortBy(_._1).foreach(println)
 
         val sendHttp = (host: String, method: String, urlPath: String, data: String) => {
-            val url = s"http://${host}:81${urlPath}"
-            val request: HttpRequest = Http(url).method(method)
+            val signInfo=getSignMd5Info(data)
+            //val url = s"http://${host}:81${urlPath}"
+            val url = s"http://test-wlslog.aginomoto.com:80${urlPath}"
+            val request: HttpRequest = Http(url).method(method).header("forwardhost",host)
             try {
                 val res = method match {
                     case "GET" => {
                         request.asString
                     }
                     case "POST" => {
-                        request.postData(data.getBytes).header("content-type", "application/json").asString
+                        request.header("log-sign-method","md5")
+                            .header("log-sign-version","1.0")
+                            .header("log-sign-ts",signInfo._1)
+                            .header("log-sign-value",signInfo._2)
+                            .header("content-type", "application/json")
+                            .postData(data.getBytes).asString
                     }
                 }
                 println(s"url:$url ; res:${res}")
@@ -84,8 +101,8 @@ class LogTest {
         }
 
         aginomotoData.foreach(data=>{ sendHttp(data._1,data._2,data._3,data._4) })
-        moretvData.foreach(data=>{ sendHttp(data._1,data._2,data._3,data._4) })
-        moretvGetData.foreach(data => { sendHttp(data._1, data._2, data._3, data._4) })
+        //moretvData.foreach(data=>{ sendHttp(data._1,data._2,data._3,data._4) })
+        //moretvGetData.foreach(data => { sendHttp(data._1, data._2, data._3, data._4) })
     }
 
 
