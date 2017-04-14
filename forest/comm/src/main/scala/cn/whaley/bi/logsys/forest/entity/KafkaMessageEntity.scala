@@ -1,10 +1,11 @@
 package cn.whaley.bi.logsys.forest.entity
 
-import kafka.message.MessageAndMetadata
+import org.apache.kafka.clients.consumer.ConsumerRecord
+
 
 /**
  * Created by fj on 16/11/17.
  */
-case class KafkaMessageEntity(topic: String, messages: Seq[MessageAndMetadata[Array[Byte], Array[Byte]]]) {
+case class KafkaMessageEntity(topic: String, messages: Seq[ConsumerRecord[Array[Byte], Array[Byte]]]) {
 
 }
