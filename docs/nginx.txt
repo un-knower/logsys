@@ -43,10 +43,8 @@ server {
     }
 }
 
-curl --insecure -v https://test-wlslog.aginomoto.com/log/boikgpokn78sb95kbqei6cc98dc5mlsr?type=test
 
 curl -k -v https://test-wlslog.aginomoto.com/log/boikgpokn78sb95kbqei6cc98dc5mlsr?type=test
 
-curl -k -v https://test-wlsconfig.aginomoto.com/config
+curl -k -v -H "Content-Type:application/json" -X POST --data '{"appId":"boikgpokn78sb95kbqei6cc98dc5mlsr"}'  https://test-wlsconfig.aginomoto.com/config
 
-curl -v http://test-wlslog.aginomoto.com/log/boikgpokn78sb95kbqei6cc98dc5mlsr?type=test
