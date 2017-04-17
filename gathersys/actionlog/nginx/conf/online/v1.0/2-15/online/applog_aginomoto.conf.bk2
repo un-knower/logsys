@@ -1,0 +1,92 @@
+
+lua_shared_dict sharedDict 1m;
+
+init_by_lua_file 'conf/online/nginx_init.lua';
+
+upstream logcenter {
+    server 10.10.2.15:8787;
+}
+
+upstream loggathersys {
+    server 10.10.1.11:8180;
+}
+
+
+server {
+    listen       80;
+    server_name  applog.aginomoto.com;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/applog.access.log  main;
+
+    location ^~/ {
+        content_by_lua 'doSubrequest("/logcenter"..ngx.var.request_uri,"/loggathersys"..ngx.var.request_uri)';
+    }
+
+     location /playqoslog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            #access_log  /var/log/nginx/playqoslog.access.log  main;
+            if ($request_method ~* "GET"){
+                 access_log  /var/log/nginx/playqoslog.access.log  main;
+                 proxy_pass  http://10.10.2.15:8787;
+            }
+            if ($request_method ~* "POST"){
+                access_log  /var/log/nginx/post/playqoslog.access.log  json_log;
+                proxy_pass  http://10.10.2.15:8787;
+                #proxy_pass  http://10.10.1.7:8654;
+            }
+        }
+
+        #logcenter
+        location ~ /logcenter/(.*) {
+            internal;
+            log_subrequest on;
+            empty_gif;
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            if ($request_method ~* "GET"){
+                access_log  /var/log/nginx/playqoslog.access.log  main;
+                proxy_pass http://logcenter/$1$is_args$args;
+            }
+            if ($request_method ~* "POST"){
+                access_log  /var/log/nginx/post/playqoslog.access.log  json_log;
+                proxy_pass http://logcenter/$1$is_args$args;
+            }
+        }
+
+        #loggathersys
+        location ~ /loggathersys/(.*) {
+            internal;
+            access_log off;
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_pass http://loggathersys/$1$is_args$args;
+        }
+
+        location = /favicon.ico {
+                log_not_found off;
+                access_log off;
+        }
+
+
+        location /monitor {
+                default_type    application/json;
+                echo "{\"status\":\"200\"}";
+        }
+
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}

@@ -8,8 +8,8 @@ import java.util.concurrent._
 import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
 import cn.whaley.bi.logsys.forest.entity.{LogEntity}
+import org.apache.kafka.clients.consumer.ConsumerRecord
 
-import kafka.message.MessageAndMetadata
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
@@ -18,7 +18,7 @@ import scala.collection.mutable
  */
 class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
-    type KafkaMessage = MessageAndMetadata[Array[Byte], Array[Byte]]
+    type KafkaMessage = ConsumerRecord[Array[Byte], Array[Byte]]
 
     /**
      * 初始化方法
@@ -423,7 +423,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
             val result =
                 data.map(item => {
                     try {
-                        val message = item.message()
+                        val message = item.value()
                         (item, processorChain.process(message))
                     } catch {
                         case e: Throwable => {

@@ -42,7 +42,7 @@ function doSubrequest(mainLocaition, subLocation)
     if res1.status ~= ngx.HTTP_OK then
         ngx.log(ngx.ERR, subLocation .. " err[" .. res1.status .. "]: "
         .. ngx.var.request_method .. " "
-        .. ngx.var.content_type .. " "
+        .. getOrElse(ngx.var.content_type,"UNKNOWN") .. " "
         .. res1.body)
     end
 

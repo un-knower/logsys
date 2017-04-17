@@ -1,0 +1,28 @@
+---
+
+- hosts: ngx-extsvr-log
+  tasks:
+
+    - name: make online dir
+      file: dest=/opt/openresty/nginx/conf/online state=directory  mode=755 owner=root group=root
+
+    - name: make log dir
+      file: dest=/data/logs/nginx state=directory  mode=755 owner=nobody group=nobody
+
+    - name: copy app-svr-webproxy config file to remote host
+      copy: src=/data/tools/ansible/modules/nginx/config/ngx-extsvr-log-v2.0/{{ item.name }} dest=/opt/openresty/nginx/conf/{{ item.dest }} owner=root group=root mode=0771
+      with_items:
+        - {name: 'nginx.conf', dest: 'nginx.conf'}
+        - {name: 'online/nginx_http.conf', dest: 'online/'}
+        - {name: 'online/nginx_init.lua', dest: 'online/'}
+        - {name: 'online/nginx_crawler.conf', dest: 'online/'}
+        - {name: 'online/nginx_medusa.conf', dest: 'online/'}
+        - {name: 'online/nginx_mobilehelper.conf', dest: 'online/'}
+        - {name: 'online/nginx_server_shared.conf', dest: 'online/'}
+        - {name: 'online/nginx_whaleytv.conf', dest: 'online/'}
+        - {name: 'online/nginx_whaleyvr.conf', dest: 'online/'}
+        - {name: 'online/nginx_monitor.conf', dest: 'online/'}
+
+    - name : reload nginx worker process
+      shell : /opt/openresty/nginx/sbin/nginx -t -c /opt/openresty/nginx/conf/nginx.conf && /opt/openresty/nginx/sbin/nginx -s reload
+

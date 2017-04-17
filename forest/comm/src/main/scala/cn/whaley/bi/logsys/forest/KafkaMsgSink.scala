@@ -1,13 +1,12 @@
 package cn.whaley.bi.logsys.forest
 
 import java.net.Socket
-import java.nio.charset.Charset
 import java.util.concurrent.Future
 
 import cn.whaley.bi.logsys.common.{KafkaUtil, ConfManager}
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
 import cn.whaley.bi.logsys.forest.entity.LogEntity
-import kafka.message.MessageAndMetadata
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.{RecordMetadata, ProducerRecord, KafkaProducer}
 
 import scala.collection.mutable
@@ -16,7 +15,7 @@ import scala.collection.mutable
  * Created by fj on 16/10/30.
  */
 class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
-    type KafkaMessage = MessageAndMetadata[Array[Byte], Array[Byte]]
+    type KafkaMessage = ConsumerRecord[Array[Byte], Array[Byte]]
 
     /**
      * 初始化方法
@@ -70,7 +69,7 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
             val errorTopic: String = item._1
             val message: KafkaMessage = item._2
             val key: Array[Byte] = getKeyFromSource(message).getBytes()
-            val value: Array[Byte] = message.message()
+            val value: Array[Byte] = message.value()
             val record = new ProducerRecord[Array[Byte], Array[Byte]](errorTopic, key, value)
             kafkaProducer.send(record)
         })
@@ -87,11 +86,9 @@ class KafkaMsgSink extends InitialTrait with NameTrait with LogTrait {
     def getTopicLastOffset(sourceTopic: String, sourceLatestOffset: Map[Int, Long], targetTopic: String, maxMsgCount: Int): Map[Int, Long] = {
         val offsetMap = new mutable.HashMap[Int, Long]
         val msgs = kafkaUtil.getLatestMessage(targetTopic, maxMsgCount)
-        val charset = Charset.forName("UTF-8")
-        val decoder = charset.newDecoder()
         msgs.foreach(msg => {
             msg._2.map(item => {
-                val strKey = decoder.decode(item.message.key.asReadOnlyBuffer()).toString
+                val strKey = new String(item.key(),"UTF-8")
                 val offsetInfo = getOffsetInfoFromKey(strKey, sourceTopic)
                 //LOG.info(s"key:${strKey},offsetInfo:${offsetInfo}")
                 if (offsetInfo.isDefined) {

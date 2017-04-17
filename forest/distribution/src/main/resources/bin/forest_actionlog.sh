@@ -7,7 +7,9 @@ source ./dateFn.sh
 load_args $*
 
 pwd=`pwd`
-pid_file=$pwd/../logs/forest_actionlog.pid
+
+taskName=${taskName:-forest_actionlog}
+pid_file=$pwd/../logs/${taskName}.pid
 
 cmd=$cmd
 

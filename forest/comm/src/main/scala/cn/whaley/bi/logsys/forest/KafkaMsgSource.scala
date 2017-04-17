@@ -1,14 +1,14 @@
 package cn.whaley.bi.logsys.forest
 
 
+import java.util.Properties
 import java.util.concurrent.{CountDownLatch, LinkedBlockingQueue}
 
 import cn.whaley.bi.logsys.common.{KafkaUtil, ConfManager}
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
-import kafka.consumer.KafkaStream
-import kafka.javaapi.consumer.ConsumerConnector
-import kafka.message.MessageAndMetadata
+import org.apache.kafka.clients.consumer.{KafkaConsumer, ConsumerRecord}
 import org.apache.kafka.clients.producer.{KafkaProducer}
+import org.apache.kafka.common.PartitionInfo
 import scala.collection.JavaConversions._
 import scala.collection.{mutable}
 import scala.util.matching.Regex
@@ -20,9 +20,10 @@ import scala.util.matching.Regex
  */
 class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
-    type KafkaMessage = MessageAndMetadata[Array[Byte], Array[Byte]]
+    type KafkaMessage = ConsumerRecord[Array[Byte], Array[Byte]]
 
     var confManager: ConfManager = null
+    var consumerConf: Properties = null
 
     /**
      * 初始化方法
@@ -42,22 +43,23 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         val producerConf = confManager.getAllConf("kafka-producer", true)
         kafkaProducer = new KafkaProducer[Array[Byte], Array[Byte]](producerConf)
 
-        //实例化kafka消费者
-        val consumerConf = confManager.getAllConf("kafka-consumer", true)
-        consumerConnector = kafka.consumer.Consumer.createJavaConsumerConnector(new kafka.consumer.ConsumerConfig(consumerConf))
-
-        val zkServers = consumerConf.get("zookeeper.connect").toString
-
+        //kafka消费者
+        this.consumerConf = confManager.getAllConf("kafka-consumer", true)
 
         initDefaultOffset(confManager)
 
         //kafkaUtil
+        val bootstrapStr = producerConf.getProperty("kafka-producer.bootstrap.servers")
+        val bootstrap = bootstrapStr.split(",").map(item => {
+            val pair = item.split(":")
+            (pair(0), pair(1).toInt)
+        })
         groupId = consumerConf.getProperty("group.id")
-        kafkaUtil = KafkaUtil(zkServers, groupId)
+        kafkaUtil = new KafkaUtil(bootstrap, groupId)
+
 
         //通过正则表达式过滤需要订阅的topic列表
-
-        val allTopic = KafkaUtil.getTopics(zkServers)
+        val allTopic = kafkaUtil.getTopics()
         topics =
             allTopic.filter(topic => {
                 if (topic.startsWith("__")) {
@@ -72,7 +74,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
         //topic元数据信息
         topicMetaInfos = topics.map(topic => {
-            (topic, kafkaUtil.getPartitionMetadata(topic))
+            (topic, kafkaUtil.getPartitionInfo(topic))
         }).toMap
 
 
@@ -80,7 +82,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         //初始化消息队列Map，每个topic对应一个队列
         msgQueueMap =
             topics.map(item => {
-                val queue = new LinkedBlockingQueue[MessageAndMetadata[Array[Byte], Array[Byte]]](queueCapacity)
+                val queue = new LinkedBlockingQueue[ConsumerRecord[Array[Byte], Array[Byte]]](queueCapacity)
                 (item, queue)
             }).toMap
     }
@@ -89,24 +91,13 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
      * 启动数据源读取线程
      */
     def start(): Unit = {
-        val topicCountMap = getSourceTopicCountMap(topics, confManager)
-        LOG.info("topicCountMap:{}", topicCountMap)
-
-        val streams = consumerConnector.createMessageStreams(topicCountMap)
-
-        //特定topic的特定partition对应一个线程
-        consumerThreads =
-            streams.flatMap(streamItem => {
-                val topic = streamItem._1
-                val streamList = streamItem._2
-                var index = 0
-                streamList.map(stream => {
-                    LOG.info(s"create MsgConsumerThread[${index}] for ${topic}")
-                    val thread = new MsgConsumerThread(topic, index, msgQueueMap(topic), stream)
-                    index = index + 1
-                    thread
-                })
-            }).toSeq
+        var index = 0
+        consumerThreads = topics.map(topic => {
+            val consumer = new KafkaConsumer[Array[Byte], Array[Byte]](consumerConf)
+            consumer.subscribe(topic :: Nil)
+            index = index + 1
+            new MsgConsumerThread(topic, index, msgQueueMap(topic), consumer)
+        })
 
         val latch = new CountDownLatch(consumerThreads.length)
         consumerThreads.foreach(item => {
@@ -143,7 +134,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         if (confValue == null || confValue.trim.length == 0) {
             topics.map(topic => {
                 val metaInfos = topicMetaInfos.get(topic)
-                LOG.info(s"metaInfos:${topic},${metaInfos.get.map(item => (item.partitionId, item.leader)).mkString(",")}")
+                LOG.info(s"metaInfos:${topic},${metaInfos.get.map(item => (item.partition(), item.leader)).mkString(",")}")
                 val ps = topicMetaInfos.get(topic).get.size
                 topicCountMap.put(topic, ps)
             })
@@ -196,7 +187,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         }
         val metaInfos = topicMetaInfos.get(topic).get
         val map = metaInfos.flatMap(metaInfo => {
-            val partition = metaInfo.partitionId
+            val partition = metaInfo.partition()
             val matched =
                 defaultOffset.map(item => {
                     var regStr = item._1
@@ -232,7 +223,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
      * 获取当前数据源topic的元数据信息
      * @return
      */
-    def getTopicMetadatas(): Map[String, List[kafka.javaapi.PartitionMetadata]] = {
+    def getTopicMetadatas(): Map[String, List[PartitionInfo]] = {
         topicMetaInfos
     }
 
@@ -260,12 +251,12 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
     private val defaultQueueCapacity = 2000
     private var groupId: String = null
-    private var consumerConnector: ConsumerConnector = null
+    private var consumerConnector: KafkaConsumer[Array[Byte], Array[Byte]] = null
     private var kafkaProducer: KafkaProducer[Array[Byte], Array[Byte]] = null
     private var kafkaUtil: KafkaUtil = null
     private var topicRegexs: Seq[Regex] = null
     private var topics: Seq[String] = null
-    private var topicMetaInfos: Map[String, List[kafka.javaapi.PartitionMetadata]] = null
+    private var topicMetaInfos: Map[String, List[PartitionInfo]] = null
     private var queueCapacity: Int = defaultQueueCapacity
     private var msgQueueMap: Map[String, LinkedBlockingQueue[KafkaMessage]] = null
     private var consumerThreads: Seq[MsgConsumerThread] = null
@@ -273,7 +264,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
     private var defaultOffset: Map[String, Long] = null
 
 
-    class MsgConsumerThread(topic: String, index: Int, queue: LinkedBlockingQueue[KafkaMessage], stream: KafkaStream[Array[Byte], Array[Byte]]) extends Thread {
+    class MsgConsumerThread(topic: String, index: Int, queue: LinkedBlockingQueue[KafkaMessage], stream: KafkaConsumer[Array[Byte], Array[Byte]]) extends Thread {
 
         @volatile private var keepRunning: Boolean = true
 
@@ -290,22 +281,27 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         override def run(): Unit = {
             this.setName(s"${topic}/${index}")
             var count = 0
-            val it = stream.iterator
-
             LOG.info(s"MsgConsumerThread[${this.getName}] started")
             while (keepRunning) {
-                if (it.hasNext()) {
-                    try {
-                        queue.put(it.next())
+                try {
+                    var timeout = 100
+                    val records = stream.poll(timeout)
+                    if (records.count() > 0) {
+                        records.foreach(record => {
+                            queue.put(record)
+                        })
+                        timeout = 100
                         count = count + 1
                         if (count % logPerMsgCount == 0) {
                             LOG.info(s"MsgConsumerThread[${this.getName}] msgCount: ${count}")
                         }
-                    } catch {
-                        case e: InterruptedException => {
-                            LOG.info(s"${this.getName} is interrupted. keepRunning:${keepRunning}")
-                            return
-                        }
+                    } else {
+                        timeout = 1000
+                    }
+                } catch {
+                    case e: InterruptedException => {
+                        LOG.info(s"${this.getName} is interrupted. keepRunning:${keepRunning}")
+                        return
                     }
                 }
             }

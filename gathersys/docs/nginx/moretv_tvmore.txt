@@ -1,0 +1,423 @@
+----log.conf(13,14)
+server {
+    listen       80;
+    server_name  log.moretv.com.cn log.tvmore.com.cn log2.tvmore.com.cn log3.tvmore.com.cn;
+
+    #charset koi8-r;
+    access_log  /var/log/nginx/moretvlog.access.log  main;
+
+     location / {
+            empty_gif;
+        }
+
+     #location ^~/uploadlog {
+     #       #index  index.html index.htm index.php;
+     #       #empty_gif;
+     #       proxy_set_header Host $host;
+     #       proxy_set_header X-Real-IP $remote_addr;
+     #       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+     #       access_log  /var/log/nginx/log.access.log  main;
+     #       proxy_pass http://101.71.28.210;
+     #   }
+
+	location ^~/uploadlog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+	        proxy_redirect off;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            #proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_connect_timeout 300s;
+            proxy_send_timeout 300s;
+            proxy_read_timeout 600s;
+            send_timeout 600s;
+            access_log  /var/log/nginx/log.access.log  main;
+            #proxy_pass http://101.71.28.210;
+        }
+
+
+        location ^~/uploadplaylog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/playlog.access.log  main;
+            #proxy_pass http://114.80.124.85;
+        }
+
+        location ^~/activity {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/activity.access.log  main;
+            #proxy_pass http://114.80.124.85;
+        }
+
+        location ^~/promotionqrcode {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/promotionqrcode.access.log  main;
+            #proxy_pass http://114.80.124.85;
+        }
+
+        location ^~/contentqrcode {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/contentqrcode.access.log  main;
+            #proxy_pass http://114.80.124.85;
+        }
+
+        location ^~/mobilelog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/mobilehelperlog.access.log  main;
+            #proxy_pass http://114.80.124.85;
+        }
+
+        location ^~/mobilehelperlog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/mobilehelperlog.access.log  main;
+            #proxy_pass http://114.80.124.85;
+        }
+
+        location ^~/accountlog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/accountlog.access.log  main;
+            #proxy_pass http://114.80.124.85;
+        }
+
+	location ^~/mtvkidslog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/mtvkidslog.access.log  main;
+            #proxy_pass http://114.80.124.85;
+        }
+
+	location ^~/user/Service/accountLogin {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/mobileloginlog.access.log  main;
+            #proxy_pass http://114.80.124.85;
+        }
+
+	location ^~/weixinlog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/weixinlog.access.log  main;
+        }
+
+	location ^~/medusalog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header HTTP_Host $host;
+            proxy_set_header HTTP_X-Real-IP $remote_addr;
+            proxy_set_header HTTP_X-Forwarded-For $proxy_add_x_forwarded_for;
+            #access_log  /var/log/nginx/medusalog.access.log  main;
+	        if ($request_method ~* "GET"){
+                access_log  /var/log/nginx/medusalog.access.log  main;
+		        proxy_pass  http://logcenter;
+            }
+            if ($request_method ~* "POST"){
+                access_log  /var/log/nginx/post/medusalog.access.log  json_log;
+                #proxy_pass  http://10.10.2.13:8787;
+		        proxy_pass  http://logcenter;
+	        }
+        }
+
+	location ^~/metislog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/metislog.access.log  main;
+        }
+
+	location ^~/test/metislog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/test_metislog.access.log  main;
+        }
+
+        location ^~/danmulog {
+            #index  index.html index.htm index.php;
+            empty_gif;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            access_log  /var/log/nginx/danmulog.access.log  main;
+        }
+
+	location /monitor {
+                default_type    application/json;
+                echo "{\"status\":\"200\"}";
+            }
+
+	location = /favicon.ico {
+                log_not_found off;
+                access_log off;
+        }
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+
+----logupload.conf(13)
+
+    server {
+        listen       80;
+        server_name  logupload.moretv.com.cn;
+        client_max_body_size 1024m;
+        access_log  /var/log/nginx/logupload.access.log  main;
+        location / {
+		empty_gif;
+        }
+
+        location /Service/upload {
+             proxy_set_header    Host    $host;
+             proxy_set_header    X-Real-IP   $remote_addr;
+             proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+             add_header          Pragma "no-cache";
+             #allow 210.22.101.26;
+             #deny all;
+             #empty_gif;
+             proxy_pass  http://logupload_group_ip/ip/Service/upload;
+        }
+
+       location /ip/ {
+            proxy_set_header    Host    $host;
+            proxy_set_header    X-Real-IP   $remote_addr;
+            proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+            add_header          Pragma "no-cache";
+            proxy_pass  http://logupload_group_ip/ip/;
+        }
+
+        location /getLog/ {
+            proxy_set_header    Host    $host;
+            proxy_set_header    X-Real-IP   $remote_addr;
+            proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+            add_header          Pragma "no-cache";
+            proxy_pass  http://logupload_group_ip/ip/;
+        }
+
+        location /getLog2/ {
+            proxy_set_header    Host    $host;
+            proxy_set_header    X-Real-IP   $remote_addr;
+            proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+            add_header          Pragma "no-cache";
+            proxy_pass  http://10.10.2.1:8090/ip/;
+        }
+
+	location /monitor {
+                default_type    application/json;
+                echo "{\"status\":\"200\"}";
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+
+        location ~ /\.ht {
+            deny  all;
+        }
+
+    }
+
+
+-----mobilelog.conf(13)
+    server {
+            listen       80;
+            server_name  mobilelog.moretv.com.cn mobilelog.tvmore.com.cn;
+            access_log  /var/log/nginx/mobilelog.access.log  main;
+
+            location / {
+                empty_gif;
+            }
+
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   html;
+            }
+
+            location ~ /\.ht {
+                deny  all;
+            }
+            location ~ /(conf|bin|inc)/ {
+                deny all;
+            }
+
+        }
+
+
+----- rss.conf(13)
+        server {
+            listen       80;
+            server_name  rss.moretv.com.cn;
+
+            #charset koi8-r;
+            access_log  /var/log/nginx/rss.access.log  main;
+
+            location / {
+                root   /usr/share/nginx/html;
+                     proxy_redirect off ;
+                     proxy_set_header Host $host;
+                     proxy_set_header X-Real-IP $remote_addr;
+                     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                     client_max_body_size 50m;
+                     client_body_buffer_size 256k;
+                     proxy_connect_timeout 30;
+                     proxy_send_timeout 30;
+                     proxy_read_timeout 60;
+                     proxy_buffer_size 256k;
+                     proxy_buffers 4 256k;
+                     proxy_busy_buffers_size 256k;
+                     proxy_temp_file_write_size 256k;
+                     proxy_next_upstream error timeout invalid_header http_500 http_503 http_404;
+                     proxy_max_temp_file_size 128m;
+                     proxy_pass http://114.80.124.84;
+                     #proxy_pass http://$http_host$request_uri;
+            }
+
+            #error_page  404              /404.html;
+
+            # redirect server error pages to the static page /50x.html
+            #
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   /usr/share/nginx/html;
+            }
+        }
+
+
+---- cat medusalog.conf(17)
+       server {
+            listen       80;
+            server_name  medusalog.tvmore.com.cn medusalog2.tvmore.com.cn medusalog3.tvmore.com.cn testlog.tvmore.com.cn;
+            client_max_body_size 2050m;
+            client_body_buffer_size 1024k;
+                access_log  /var/log/nginx/medusalog.access.log  main;
+                location / {
+                #empty_gif;
+            }
+
+            location /Service/upload2 {
+                 proxy_set_header    Host    $host;
+                 proxy_set_header    X-Real-IP   $remote_addr;
+                 proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+                 add_header          Pragma "no-cache";
+                 #allow 210.22.101.26;
+                 #deny all;
+                 #empty_gif;
+                 proxy_pass  http://logupload_group_ip/ip/Service/upload;
+            }
+
+            location /Service/upload {
+                 proxy_set_header    log-Host    $host;
+                 proxy_set_header    log-Real-IP   $remote_addr;
+                 proxy_set_header    log-Forwarded-For  $proxy_add_x_forwarded_for;
+                 add_header          Pragma "no-cache";
+                 proxy_pass  http://127.0.0.1:8789/crashformlog;
+            }
+
+
+            location /crashlog {
+                 proxy_set_header    log-Host    $host;
+                 proxy_set_header    log-Real-IP   $remote_addr;
+                 proxy_set_header    log-Forwarded-For  $proxy_add_x_forwarded_for;
+                 add_header          Pragma "no-cache";
+                 proxy_pass  http://127.0.0.1:8789;
+            }
+
+
+           location /ip/ {
+                proxy_set_header    Host    $host;
+                proxy_set_header    X-Real-IP   $remote_addr;
+                proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+                add_header          Pragma "no-cache";
+                proxy_pass  http://logupload_group_ip/ip/;
+            }
+
+            location /getLog/ {
+                proxy_set_header    Host    $host;
+                proxy_set_header    X-Real-IP   $remote_addr;
+                proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+                add_header          Pragma "no-cache";
+                proxy_pass  http://logupload_group_ip/ip/;
+            }
+
+            location /getLog2/ {
+                proxy_set_header    Host    $host;
+                proxy_set_header    X-Real-IP   $remote_addr;
+                proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+                add_header          Pragma "no-cache";
+                proxy_pass  http://10.10.2.1:8090/ip/;
+            }
+
+        location /monitor {
+                    #default_type    application/json;
+                    #echo "{\"status\":\"200\"}";
+             proxy_set_header    log-Host    $host;
+                 proxy_set_header    log-Real-IP   $remote_addr;
+                 proxy_set_header    log-Forwarded-For  $proxy_add_x_forwarded_for;
+                 add_header          Pragma "no-cache";
+                 proxy_pass  http://127.0.0.1:8789/;
+            }
+
+        location /upload {
+                allow 180.166.221.0/24;
+            allow 140.206.114.0/24;
+            allow 116.236.232.0/24;
+            allow 61.129.122.0/24;
+            allow 116.228.159.0/24;
+            deny all;
+            root /home/moretv/ip/;
+            }
+
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   html;
+            }
+
+            location ~ /\.ht {
+                deny  all;
+            }
+
+        }
