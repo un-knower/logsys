@@ -1,0 +1,33 @@
+<!-- https://www.playframework.com/documentation/latest/SettingsLogger -->
+<configuration>
+
+  <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel" />
+
+  <!-- 现网日志收集配置 start -->
+  <appender name="file_appId" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/var/log/logcenter/current/log_2-15.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- hourly rollover -->
+      <fileNamePattern>/var/log/logcenter/current/log.access-%d{yyyy-MM-dd-HH}_2-15.log</fileNamePattern>
+
+      <!-- keep 2 days' worth of history capped at 300GB total size -->
+      <maxHistory>48</maxHistory>
+      <totalSizeCap>300GB</totalSizeCap>
+
+    </rollingPolicy>
+    <encoder>
+      <pattern>%message%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="appId" level="INFO" additivity="false">
+    <appender-ref ref="file_appId" />
+  </logger>
+  <!-- 现网日志收集配置 end -->
+
+  <root level="WARN">
+    <appender-ref ref="ASYNCFILE" />
+    <appender-ref ref="ASYNCSTDOUT" />
+  </root>
+
+</configuration>
