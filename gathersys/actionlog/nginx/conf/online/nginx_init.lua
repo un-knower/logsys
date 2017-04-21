@@ -129,7 +129,7 @@ function doMsgSign()
             return -1
         end
 
-        local md5 = ngx.md5(logSignTs .. req_body .. logSignKey)
+        local md5 = ngx.md5(logSignKey .. logSignTs .. req_body)
         if (md5 == logSignValue) then
             return 1
         else
