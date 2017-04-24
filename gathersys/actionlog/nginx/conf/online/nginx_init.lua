@@ -53,9 +53,9 @@ end
 --构建消息相关的上下文信息
 function buildMsgInfo()
 
-    local msgRemoteIp = ngx.var.remote_addr
+    local msgRemoteIp = ngx.var.http_x_forwarded_for
     if msgRemoteIp == "" then
-        msgRemoteIp = ngx.var.http_x_forwarded_for
+        msgRemoteIp = ngx.var.remote_addr
     end
 
     ngx.req.read_body();
