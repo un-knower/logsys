@@ -8,8 +8,8 @@ import cn.whaley.bi.logsys.forest.actionlog.medusa20.LogFields._
 
 
 /**
- * Created by Will on 2015/9/19.
- * This program transformed the string log to an array of filed.
+ * Created by fj on 16/11/9.
+ * medusa2.0 Get日志处理器
  */
 object LogPreProcess {
 
