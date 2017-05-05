@@ -13,10 +13,6 @@
         <value>GenericProcessorChain</value>
     </property>
     <property>
-        <name>MsgBatchManager.topicNameMapper</name>
-        <value>GenericTopicMapper</value>
-    </property>
-    <property>
         <name>MsgBatchManager.recoverSourceOffsetFromSink</name>
         <value>1</value>
     </property>
@@ -69,7 +65,7 @@
     <!-- KafkaMsgSink -->
     <property>
         <name>KafkaMsgSink.class</name>
-        <value>cn.whaley.bi.logsys.forest.KafkaMsgSink</value>
+        <value>cn.whaley.bi.logsys.forest.sinker.KafkaMsgSink</value>
     </property>
     <property>
         <name>KafkaMsgSink.include</name>
@@ -83,31 +79,6 @@
     <property>
         <name>GenericProcessorChain.include</name>
         <value>GenericProcessorChain.xml,GenericActionLogPostProcessor.properties</value>
-    </property>
-    <!-- GenericTopicMapper -->
-    <property>
-        <name>GenericTopicMapper.class</name>
-        <value>cn.whaley.bi.logsys.forest.GenericTopicMapper</value>
-    </property>
-    <property>
-        <name>GenericTopicMapper.errTopicMapper</name>
-        <value>DefaultErrorTopicMapper</value>
-    </property>
-    <property>
-        <name>GenericTopicMapper.targetTopicMapper</name>
-        <value>ActionLogTargetTopicMapper,DefaultTargetTopicMapper</value>
-    </property>
-    <property>
-        <name>ActionLogTargetTopicMapper.class</name>
-        <value>cn.whaley.bi.logsys.forest.actionlog.ActionLogTargetTopicMapper</value>
-    </property>
-    <property>
-        <name>DefaultTargetTopicMapper.class</name>
-        <value>cn.whaley.bi.logsys.forest.TopicMapper.DefaultTargetTopicMapper</value>
-    </property>
-    <property>
-        <name>DefaultErrorTopicMapper.class</name>
-        <value>cn.whaley.bi.logsys.forest.TopicMapper.DefaultErrorTopicMapper</value>
     </property>
 
 </configuration>

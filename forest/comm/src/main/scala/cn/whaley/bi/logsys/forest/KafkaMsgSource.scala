@@ -1,7 +1,7 @@
 package cn.whaley.bi.logsys.forest
 
 
-import java.util.Properties
+import java.util.{TimerTask, Timer, Properties}
 import java.util.concurrent.{CountDownLatch, LinkedBlockingQueue}
 
 import cn.whaley.bi.logsys.common.{KafkaUtil, ConfManager}
@@ -10,6 +10,7 @@ import org.apache.kafka.clients.consumer.{KafkaConsumer, ConsumerRecord}
 import org.apache.kafka.clients.producer.{KafkaProducer}
 import org.apache.kafka.common.PartitionInfo
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ArrayBuffer
 import scala.collection.{mutable}
 import scala.util.matching.Regex
 
@@ -57,54 +58,76 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         groupId = consumerConf.getProperty("group.id")
         kafkaUtil = new KafkaUtil(bootstrap, groupId)
 
-
-        //通过正则表达式过滤需要订阅的topic列表
-        val allTopic = kafkaUtil.getTopics()
-        topics =
-            allTopic.filter(topic => {
-                if (topic.startsWith("__")) {
-                    false
-                } else {
-                    val c = topicRegexs.count(reg => reg.findFirstMatchIn(topic).isDefined)
-                    c > 0
-                }
-            })
-        require(topics.length > 0)
-        LOG.info(s"topics:${topics.mkString}")
-
-        //topic元数据信息
-        topicMetaInfos = topics.map(topic => {
-            (topic, kafkaUtil.getPartitionInfo(topic))
-        }).toMap
-
-
-
-        //初始化消息队列Map，每个topic对应一个队列
-        msgQueueMap =
-            topics.map(item => {
-                val queue = new LinkedBlockingQueue[ConsumerRecord[Array[Byte], Array[Byte]]](queueCapacity)
-                (item, queue)
-            }).toMap
+        //定期扫描,以匹配任务启动后创建的topic
+        val timer = new Timer()
+        timer.scheduleAtFixedRate(new TimerTask {
+            override def run(): Unit = {
+                LOG.info(s"scan topics. topicRegexs:${topicRegexs}")
+                start()
+            }
+        }, 300 * 1000, 300 * 1000)
     }
 
     /**
      * 启动数据源读取线程
      */
     def start(): Unit = {
+        //通过正则表达式过滤需要订阅的topic列表
+        val allTopic = kafkaUtil.getTopics()
+        topics = allTopic.filter(topic => {
+            if (topic.startsWith("__") || consumerThreads.exists(thread => thread.consumerTopic == topic)) {
+                false
+            } else {
+                val c = topicRegexs.count(reg => reg.findFirstMatchIn(topic).isDefined)
+                c > 0
+            }
+        })
+        if (topics.length == 0) {
+            return
+        }
+
+        LOG.info(s"topics:${topics.mkString}")
+        val validTopics = topics.map(topic => {
+            val partitionInfo = kafkaUtil.getPartitionInfo(topic)
+            if (partitionInfo.size == 0) {
+                ""
+            } else {
+                topicMetaInfos.put(topic, partitionInfo)
+                topic
+            }
+        }).filter(topic => topic != "")
+        if (validTopics.length > 0) {
+            launch(validTopics)
+        }
+    }
+
+    //为每个topic启动一个读线程
+    def launch(topics: Seq[String]): Unit = {
+
         var index = 0
-        consumerThreads = topics.map(topic => {
+        val threads = topics.filter(topic => !consumerThreads.exists(thread => thread.consumerTopic == topic)).map(topic => {
             val consumer = new KafkaConsumer[Array[Byte], Array[Byte]](consumerConf)
             consumer.subscribe(topic :: Nil)
             index = index + 1
-            new MsgConsumerThread(topic, index, msgQueueMap(topic), consumer)
+            val queue = new LinkedBlockingQueue[ConsumerRecord[Array[Byte], Array[Byte]]](queueCapacity)
+            msgQueueMap.put(topic, queue)
+            new MsgConsumerThread(topic, index, queue, consumer)
         })
 
-        val latch = new CountDownLatch(consumerThreads.length)
-        consumerThreads.foreach(item => {
+        val threadCount = threads.length
+        if (threadCount == 0) {
+            return
+        }
+
+        val latch = new CountDownLatch(threadCount)
+        threads.foreach(item => {
             item.start()
-            LOG.info(s"MsgConsumerThread[${item.getName}] started.")
+            LOG.info(s"MsgConsumerThread[${
+                item.getName
+            }] started.")
             latch.countDown()
         })
+        consumerThreads = consumerThreads ++ threads
         latch.await()
     }
 
@@ -128,9 +151,21 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
             val topic = item._1
             val offset = item._2
             val ret = kafkaUtil.setFetchOffset(topic, groupId, offset)
-            LOG.info(s"set fetch offset:${topic},${groupId},${offset.mkString(",")},${ret}")
+            LOG.info(s"set fetch offset:${
+                topic
+            },${
+                groupId
+            },${
+                offset.mkString(",")
+            },${
+                ret
+            }")
             val currOffset = kafkaUtil.getFetchOffset(topic, groupId)
-            LOG.info(s"current offset:${topic},${currOffset}")
+            LOG.info(s"current offset:${
+                topic
+            },${
+                currOffset
+            }")
         })
     }
 
@@ -182,7 +217,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
      * @return
      */
     def getTopicMetadatas(): Map[String, List[PartitionInfo]] = {
-        topicMetaInfos
+        topicMetaInfos.toMap
     }
 
     /**
@@ -214,10 +249,10 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
     private var kafkaUtil: KafkaUtil = null
     private var topicRegexs: Seq[Regex] = null
     private var topics: Seq[String] = null
-    private var topicMetaInfos: Map[String, List[PartitionInfo]] = null
+    private var topicMetaInfos: mutable.Map[String, List[PartitionInfo]] = new mutable.HashMap[String, List[PartitionInfo]]()
     private var queueCapacity: Int = defaultQueueCapacity
     private var msgQueueMap: Map[String, LinkedBlockingQueue[KafkaMessage]] = null
-    private var consumerThreads: Seq[MsgConsumerThread] = null
+    private var consumerThreads: ArrayBuffer[MsgConsumerThread] = new ArrayBuffer[MsgConsumerThread]
     private var logPerMsgCount = 100
     private var defaultOffset: Map[String, Long] = null
 
