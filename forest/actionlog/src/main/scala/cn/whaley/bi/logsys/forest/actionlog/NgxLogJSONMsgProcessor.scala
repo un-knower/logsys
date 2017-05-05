@@ -20,7 +20,7 @@ class NgxLogJSONMsgProcessor extends MsgProcessorTrait {
     override def process(msgEntity: MsgEntity): ProcessResult[Seq[LogEntity]] = {
 
         if (msgEntity.msgSource == "ngx_log" && msgEntity.msgFormat == "json") {
-            val msgBody = msgEntity.msgBody
+            val msgBody = msgEntity.get(MsgEntity.KEY_MSG_BODY)
             var msgBodyObj: Option[JSONObject] = None
             if (msgBody.isInstanceOf[String]) {
                 msgBodyObj = Some(JSON.parseObject(msgBody.asInstanceOf[String]))
