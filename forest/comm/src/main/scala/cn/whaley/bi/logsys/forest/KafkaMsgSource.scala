@@ -120,48 +120,6 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
     }
 
     /**
-     * 获取源topic及其线程数
-     * @return
-     */
-    def getSourceTopicCountMap(topics: Seq[String], confManager: ConfManager): java.util.HashMap[String, Integer] = {
-
-        val topicCountMap = new java.util.HashMap[String, Integer]()
-
-
-        val confValue = confManager.getConfOrElseValue(this.name, "topicCount", "")
-
-        //默认情况下，每个partition一个消费线程
-        if (confValue == null || confValue.trim.length == 0) {
-            topics.map(topic => {
-                val metaInfos = topicMetaInfos.get(topic)
-                LOG.info(s"metaInfos:${topic},${metaInfos.get.map(item => (item.partition(), item.leader)).mkString(",")}")
-                val ps = topicMetaInfos.get(topic).get.size
-                topicCountMap.put(topic, ps)
-            })
-        } else {
-            val topicAndThreadsStr = StringUtil.splitStr(confValue, ",")
-            val map = new mutable.HashMap[String, Int]()
-            topics.foreach(topic => {
-                topicAndThreadsStr.map(str => {
-                    val strValues = str.split(":")
-                    var regStr = strValues(0)
-                    val count = strValues(1).toInt
-                    if (!regStr.startsWith("^")) regStr = "^" + regStr
-                    if (!regStr.endsWith("$")) regStr = regStr + "$"
-                    regStr.r.findFirstMatchIn(topic) match {
-                        case Some(m) => {
-                            topicCountMap.put(topic, count)
-                        }
-                        case None =>
-                    }
-                })
-            })
-        }
-
-        topicCountMap
-    }
-
-    /**
      * 提交偏移信息
      * @param offsetInfo
      */

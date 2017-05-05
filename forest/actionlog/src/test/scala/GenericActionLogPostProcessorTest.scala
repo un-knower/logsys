@@ -24,14 +24,16 @@ class GenericActionLogPostProcessorTest {
 
     @Test
     def testPost: Unit = {
-        val stream = this.getClass.getClassLoader.getResourceAsStream("boikgpokn78sb95kjhfrendo8dc5mlsr.log")
+        val stream = this.getClass.getClassLoader.getResourceAsStream("boikgpokn78sb95kjhfrendoj8ilnoi7.log")
         val source = scala.io.Source.fromInputStream(stream)
         //val lines = source.getLines().toArray
         val fileLines = source.getLines().map(item => StringUtil.decodeNgxStrToString(item)).toArray
         val lines = new ArrayBuffer[String]()
-        for (i <- 1 to 100) {
+
+        for (i <- 1 to 1) {
             lines.append(fileLines: _*)
         }
+
         println("length:" + lines.length)
         val from = System.currentTimeMillis()
         val logs =
@@ -60,12 +62,17 @@ class GenericActionLogPostProcessorTest {
 
 
         logs.foreach(logEntity => {
+            println("==============================")
+            println(logEntity.toJSONString)
+            println("-------------------")
             val ret = processor.process(logEntity)
             if (ret.hasErr) {
                 ret.ex.get.printStackTrace()
             }
             require(ret.hasErr == false)
-            //println(ret.code)
+
+            ret.result.get.foreach(item=>println(item.toJSONString))
+            println("")
         })
 
         println("ts:" + (System.currentTimeMillis() - from))

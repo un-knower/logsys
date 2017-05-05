@@ -3,7 +3,7 @@ package cn.whaley.bi.logsys.forest.actionlog
 import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.forest.Traits.LogTrait
 import cn.whaley.bi.logsys.forest.{ProcessResultCode, ProcessResult, StringUtil}
-import cn.whaley.bi.logsys.forest.entity.LogEntity
+import cn.whaley.bi.logsys.forest.entity.{MsgBodyEntity, LogEntity}
 import cn.whaley.bi.logsys.forest.processor.LogProcessorTrait
 import com.alibaba.fastjson.JSONObject
 
@@ -17,10 +17,7 @@ class GenericActionLogCommProcessor extends LogProcessorTrait with LogTrait {
      */
     override def process(log: LogEntity): ProcessResult[Seq[LogEntity]] = {
 
-        var actionLog = new ActionLogPostEntity(log)
-
-        //平展化params
-        floatParams(actionLog)
+        /*
 
         //特殊处理
         val revise = infoRevise(actionLog)
@@ -41,17 +38,24 @@ class GenericActionLogCommProcessor extends LogProcessorTrait with LogTrait {
                 }
             })
         }
-        longTypeKeys.foreach(item => {
-            val value = actionLog.get(item)
-            if (value != null && !value.isInstanceOf[Long]) {
-                if (value == "") {
-                    actionLog.put(item, 0L)
-                } else {
-                    actionLog.put(item, value.toString.toDouble.toInt)
-                }
-            }
-        })
 
+        //类型转换
+        if(longTypeKeys!=null) {
+            longTypeKeys.foreach(item => {
+                val value = actionLog.get(item)
+                if (value != null && !value.isInstanceOf[Long]) {
+                    if (value == "") {
+                        actionLog.put(item, 0L)
+                    } else {
+                        actionLog.put(item, value.toString.toDouble.toInt)
+                    }
+                }
+            })
+        }
+
+        */
+
+        logTimeProc(log)
         new ProcessResult(this.name, ProcessResultCode.processed, "", Some(log :: Nil))
 
     }
@@ -75,36 +79,23 @@ class GenericActionLogCommProcessor extends LogProcessorTrait with LogTrait {
         if (conf != null) {
             longTypeKeys = conf.split(",")
         }
+
+        happenTimeDeviationMillSec = confManager.getConfOrElseValue("GenericActionLogCommProcessor", "happenTime.deviation.sec", "3600").toLong * 1000
     }
 
-    //平展化params
-    private def floatParams(log: ActionLogPostEntity): ActionLogPostEntity = {
-        // 平展化params信息
-        if (log.containsKey(LogKeys.LOG_PARAMS)) {
-            // 处理params非json格式的情形
-            val paramsV = log.get(LogKeys.LOG_PARAMS)
-            if (paramsV.isInstanceOf[String]) {
-                val paramsInfo = paramsV.asInstanceOf[String]
-                if (paramsInfo.contains(",")) {
-                    val parmasSplit = paramsInfo.split(",")
-                    if (parmasSplit.length >= 1) {
-                        (0 until parmasSplit.length).foreach(i => {
-                            val parameterInfo = parmasSplit(i).trim
-                            if (parameterInfo.contains("=")) {
-                                val parameterSplit = parameterInfo.split("=")
-                                if (parameterSplit.length == 2) {
-                                    log.put(parameterSplit(0), parameterSplit(1))
-                                }
-                            }
-                        })
-                    }
-                }
-            } else if (paramsV.isInstanceOf[JSONObject]) {
-                val paramsInfo = paramsV.asInstanceOf[JSONObject]
-                log.asInstanceOf[java.util.Map[String, Object]].putAll(paramsInfo)
+    private def logTimeProc(log: LogEntity): LogEntity = {
+        val receiveTime = log.logBody.getLong(MsgBodyEntity.KEY_SVR_RECEIVE_TIME)
+        val logTime = if (log.logBody.containsKey(KEY_HAPPEN_TIME)) {
+            val happenTime = log.logBody.getLong(KEY_HAPPEN_TIME)
+            if (Math.abs(receiveTime - happenTime) <= happenTimeDeviationMillSec) {
+                happenTime
+            } else {
+                receiveTime
             }
-            log.remove(LogKeys.LOG_PARAMS)
+        } else {
+            receiveTime
         }
+        log.updateLogTime(logTime)
         log
     }
 
@@ -163,6 +154,9 @@ class GenericActionLogCommProcessor extends LogProcessorTrait with LogTrait {
     }
 
 
+    private val KEY_HAPPEN_TIME: String = "happenTime"
+    private var happenTimeDeviationMillSec: Long = 3600 * 1000;
+    private val normal: Seq[String] = null
     private val regexWord = "^\\w+$".r
     private val regexContentType = "^[\\w\\-/]+$".r
     private var fieldRenameConf: Seq[(String, String, String)] = null

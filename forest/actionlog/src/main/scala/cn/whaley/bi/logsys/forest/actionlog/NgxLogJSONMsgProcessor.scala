@@ -30,7 +30,7 @@ class NgxLogJSONMsgProcessor extends MsgProcessorTrait {
             if (msgBodyObj.isEmpty) {
                 new ProcessResult[Seq[LogEntity]](this.name, ProcessResultCode.formatFailure, "invalid format:" + msgBody.getClass.getName, None)
             } else {
-                val logEntity = new LogEntity(msgBodyObj.get)
+                val logEntity = new LogEntity(msgEntity)
                 logEntity.updateLogId(msgEntity.msgId)
                 new ProcessResult(this.name, ProcessResultCode.processed, "", Some(Array(logEntity)))
             }

@@ -8,6 +8,7 @@ import java.util.concurrent._
 import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
 import cn.whaley.bi.logsys.forest.entity.{LogEntity}
+import cn.whaley.bi.logsys.forest.sinker.MsgSinkTrait
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
 import scala.collection.JavaConversions._
@@ -29,14 +30,10 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         msgSource = instanceFrom(confManager, msgSourceName).asInstanceOf[KafkaMsgSource]
 
         val msgSinkName = confManager.getConf(this.name, "msgSink")
-        msgSink = instanceFrom(confManager, msgSinkName).asInstanceOf[KafkaMsgSink]
+        msgSink = instanceFrom(confManager, msgSinkName).asInstanceOf[MsgSinkTrait]
 
         val processorChainName = confManager.getConf(this.name, "processorChain")
         processorChain = instanceFrom(confManager, processorChainName).asInstanceOf[GenericProcessorChain]
-
-        val topicNameMapperName = confManager.getConf(this.name, "topicNameMapper")
-        topicNameMapper = instanceFrom(confManager, topicNameMapperName).asInstanceOf[GenericTopicMapper]
-
 
         batchSize = confManager.getConfOrElseValue(this.name, "batchSize", "4000").toInt
         callableSize = confManager.getConfOrElseValue(this.name, "callableSize", "2000").toInt
@@ -67,26 +64,22 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
             topicAndQueue.map(item => {
                 val topic = item._1
                 val sourceLatestOffset = msgSource.getLatestOffset(topic)
-                //从所有目标topic中获取源topic的offset信息
-                val map = topicNameMapper.getTargetTopicMap(topic)
+                //从目标中获取源topic的offset信息, 存在源topic已被监听,但尚未创建的情况,此时分区数为0
                 val partitionCount = if (metadatas.get(topic).isDefined) metadatas.get(topic).get.size else 0
-                if (map.isDefined && partitionCount > 0) {
+                if (partitionCount > 0) {
                     //理论上源topic的partition是均衡分布的，那么在目标topic中读取一批的处理数据，
                     //就能恢复源topic每个partition的offset，设置为2倍，以保留一定的余量
                     //如果源topic的partition数据不均衡，那么可能存在部分源topic的partition的offset信息不能恢复
                     //这些partition的offset依然沿用kafka的自动offset管理的值
                     val msgCount = (batchSize / partitionCount) * 2
-                    val seq = map.get
-                    val offset: Map[Int, Long] =
-                        seq.flatMap(targetTopic => {
-                            val info = msgSink.getTopicLastOffset(topic, sourceLatestOffset, targetTopic, msgCount)
-                            LOG.info(s"getTopicLastOffset[${topic},${targetTopic},${msgCount}]:${info.mkString(",")}")
-                            info
-                        }).groupBy(arrItem => arrItem._1)
-                            .map(arrItem => {
-                            (arrItem._1, arrItem._2.maxBy(_._2)._2)
-                        })
-                    LOG.info(s"offsetInfo:[${seq.mkString(",")};${offset.mkString(",")}]")
+                    val info = msgSink.getTopicLastOffset(topic, sourceLatestOffset, msgCount)
+                    LOG.info(s"getTopicLastOffset[${topic},${msgCount}]:${info.mkString(",")}")
+
+                    val offset: Map[Int, Long] = info.groupBy(arrItem => arrItem._1)
+                        .map(arrItem => {
+                        (arrItem._1, arrItem._2.maxBy(_._2)._2)
+                    })
+                    LOG.info(s"offsetInfo:[${offset.mkString(",")}]")
 
 
                     //合并默认offset
@@ -100,8 +93,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                         offsetMap.put(topic, offset)
                     }
                 } else {
-                    LOG.info(s"topic[${topic}] can not get offset,targetTopic:${map.getOrElse("" :: Nil).mkString(",")},sourcePartitionCount:${partitionCount}")
-
+                    LOG.info(s"topic[${topic}] can not get offset,sourcePartitionCount:${partitionCount}")
                 }
             })
         }
@@ -258,8 +250,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
                 val listSize = list.size()
 
-                //分批次提交消息处理任务
-                val callableCount = (listSize - 1) / callableSize + 1
+                //分批次提交消息处理任务,利用多线程加快处理进度
+                val callableCount: Int = Math.ceil(listSize / callableSize).toInt
                 val futures =
                     for (i <- 0 to callableCount - 1) yield {
                         callId = callId + 1
@@ -273,63 +265,36 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
                 LOG.info(s"${topic}-taskSubmit(${callableCount},${callableSize}):${monitor.checkStep()}")
 
-                //等待所有消息处理任务执行完毕
+                //等待所有消息处理任务执行完毕,sink端采用单线程模式
                 val procResults = futures.map(future => {
-                    val r = future.get
-                    r
+                    future.get
                 }).sortBy(_._1).flatMap(_._2)
-
                 LOG.info(s"${topic}-msgProcess(${procResults.size}):${monitor.checkStep()}")
 
-                //错误处理
-                val errorResults =
-                    procResults.filter(result => result._2.hasErr == true)
-                        .flatMap(result => {
-                        val message = result._1
-                        val procResult = result._2
-                        //打印错误日志
-                        logMsgProcChainErr(message, procResult)
-                        val errTopics = topicNameMapper.getErrTopic(message.topic, null)
-                        errTopics.map(errorTopic => {
-                            (errorTopic, message)
-                        })
-                    })
-
-                if (errorResults.length > 0) {
-                    msgSink.saveErrorMsg(errorResults)
-                    LOG.info(s"${topic}-saveErr(${errorResults.length}):${monitor.checkStep()}")
-                }
-
                 //发送处理成功的数据
-                val okResults =
-                    procResults.filter(result => result._2.hasErr == false)
-                        .flatMap(result => {
-                        val message = result._1
-                        val procResult = result._2.result
-                        procResult.get.flatMap(item => {
-                            val targetTopics = topicNameMapper.getTargetTopic(message.topic, item)
-                            targetTopics.map(targetTopic => (targetTopic, message, item))
-                        })
-                    })
-                msgSink.saveProcMsg(okResults)
+                val ret = msgSink.saveProcMsg(procResults)
+                LOG.info(s"${topic}-ProcMsg(${ret._1},${ret._2}}):${monitor.checkStep()}")
 
-                //保存topic映射，以便后续从目标topic恢复源topic的offset
-                topicNameMapper.saveTargetTopicMap()
+                //打印错误日志
+                var errorCount = 0
+                procResults
+                    .filter(result => result._2.hasErr == true)
+                    .foreach(err => {
+                    errorCount = errorCount + 1
+                    logMsgProcChainErr(err._1, err._2)
+                })
 
-                LOG.info(s"${topic}-sendSink(${okResults.length}):${monitor.checkStep()}")
-
-                //offset
-                val offset =
-                    procResults.map(result => {
-                        val message = result._1
-                        ((message.topic, message.partition), message.offset)
-                    }).groupBy(item => item._1)
-                        .map(item => {
-                        val topicAndPartition = item._1
-                        val lastOffset = item._2.maxBy(offset => offset._2)._2
-                        val firstOffset = item._2.minBy(offset => offset._2)._2
-                        (topicAndPartition, firstOffset, lastOffset)
-                    })
+                //打印offset日志信息
+                val offset = procResults.map(result => {
+                    val message = result._1
+                    ((message.topic, message.partition), message.offset)
+                }).groupBy(item => item._1)
+                    .map(item => {
+                    val topicAndPartition = item._1
+                    val lastOffset = item._2.maxBy(offset => offset._2)._2
+                    val firstOffset = item._2.minBy(offset => offset._2)._2
+                    (topicAndPartition, firstOffset, lastOffset)
+                })
 
                 msgCount = msgCount + list.size()
                 LOG.info(s"${topic}-done(${listSize}):${monitor.checkDone()}:${offset}")
@@ -468,9 +433,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     //是否从消息目标系统中恢复消息源系统的offset
     private var recoverSourceOffsetFromSink: Int = 1
     private var msgSource: KafkaMsgSource = null
-    private var msgSink: KafkaMsgSink = null
+    private var msgSink: MsgSinkTrait = null
     private var processorChain: GenericProcessorChain = null
-    private var topicNameMapper: GenericTopicMapper = null
     private var batchSize: Int = 4000
     //每次消息处理过程调用所处理的消息数量
     private var callableSize: Int = 2000

@@ -4,7 +4,7 @@ package cn.whaley.bi.logsys.forest.actionlog
 import cn.whaley.bi.logsys.common.{ConfManager}
 import cn.whaley.bi.logsys.forest.Traits.LogTrait
 import cn.whaley.bi.logsys.forest.actionlog.medusa20.{LogPreProcess}
-import cn.whaley.bi.logsys.forest.entity.LogEntity
+import cn.whaley.bi.logsys.forest.entity.{MsgEntity, LogEntity}
 import cn.whaley.bi.logsys.forest.processor.LogProcessorTrait
 import cn.whaley.bi.logsys.forest._
 import com.alibaba.fastjson.{JSONObject}
@@ -38,30 +38,32 @@ class GenericActionLogGetProcessor extends LogProcessorTrait with LogTrait {
         val actionLogEntity = new ActionLogGetEntity(log)
         try {
             //跳过非GET方法提交的数据
-            if (actionLogEntity.method != "GET") {
+            if (!actionLogEntity.msgBodyObj.method.equalsIgnoreCase("GET")) {
                 return ProcessResult(this.name, ProcessResultCode.skipped, "", None)
             }
 
             //解析queryString
-            val url = actionLogEntity.url
-            val httpUrl = URLParser.parseHttpURL(url, true)
+            val httpUrl = URLParser.parseHttpURL(actionLogEntity.msgBodyObj.url, true)
             val queryObj = URLParser.parseHttpQueryString(httpUrl.queryString)
+            //移除冗余的url参数
+            actionLogEntity.msgBodyObj.setUrl(httpUrl.location)
+            actionLogEntity.updateLogSignFlag(LogEntity.VAL_SIGN_NO)
+            actionLogEntity.updateLogBody(queryObj)
+            /** ****** 不再处理medusa2.0的get日志, 处理放到数仓层完成 ****************************/
+            /*
             val logBody =
                 if (actionLogEntity.appId == Constants.APPID_MEDUSA_2_0) {
                     //medusa2.0需要解析log查询参数为日志消息体
                     //由于复用历史代码，需要附带上时间数据
-                    val receiveTime = log.getLong("receiveTime")
+                    val receiveTime = actionLogEntity.receiveTime
                     parseMedusa20Log(receiveTime + "-" + queryObj.getString("log"))
                 } else {
                     queryObj
                 }
-
-            //平展化日志消息体
-            actionLogEntity.updateUrl(httpUrl.location)
-            logBody.asInstanceOf[java.util.Map[String, Object]].putAll(actionLogEntity)
-
-            ProcessResult(this.name, ProcessResultCode.processed, "", Some(new ActionLogGetEntity(logBody) :: Nil))
-
+                actionLogEntity.updateLogBody(logBody)
+                */
+            val ret = Some(actionLogEntity.normalize())
+            ProcessResult(this.name, ProcessResultCode.processed, "", ret)
         } catch {
             case e: Throwable => {
                 ProcessResult(this.name, ProcessResultCode.exception, e.getMessage, None, Some(e))

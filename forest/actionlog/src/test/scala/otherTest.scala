@@ -66,5 +66,22 @@ class otherTest {
         Thread.sleep(3000)
     }
 
+    @Test
+    def testJsonObj():Unit={
+        val msg=new JSONObject()
+        msg.put("msg_key1","msg_val1")
+        msg.put("msg_key2","msg_val2")
+        val msg2=new JSONObject(msg)
+
+        println(msg.toJSONString)
+        println(msg2.toJSONString)
+
+        msg.put("msg_key1","msg_val1_1")
+        msg.put("msg_key3","msg_val3")
+
+        println(msg.toJSONString)
+        println(msg2.toJSONString)
+
+    }
 
 }

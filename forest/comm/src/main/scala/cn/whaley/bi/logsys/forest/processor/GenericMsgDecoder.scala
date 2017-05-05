@@ -1,6 +1,6 @@
 package cn.whaley.bi.logsys.forest.processor
 
-import cn.whaley.bi.logsys.common.ConfManager
+import cn.whaley.bi.logsys.common.{StringDecoder, ConfManager}
 import cn.whaley.bi.logsys.forest.Traits.NameTrait
 import cn.whaley.bi.logsys.forest.{ProcessResultCode, ProcessResult, StringUtil}
 import cn.whaley.bi.logsys.forest.entity.MsgEntity
@@ -12,19 +12,19 @@ import com.alibaba.fastjson.JSON
  * 通用归集层消息解码器
  */
 class GenericMsgDecoder extends MsgDecodeTrait with NameTrait {
+
+    val decoder = new StringDecoder()
+
     /**
      * 消息解码，从字节数组解析为归集层消息体格式
      * @return
      */
     override def decode(bytes: Array[Byte]): ProcessResult[MsgEntity] = {
-        val decodeStr = new String(bytes)
         val str =
             if (ngxLogDecode) {
-                val ngxStr=StringUtil.decodeNgxStrToString(decodeStr)
-                //处理nginx的POST消息体为空的问题
-                ngxStr.replace("\"body\":-","\"body\":{}")
+                new String(decoder.decodeToBytes(bytes))
             } else {
-                decodeStr
+                new String(bytes)
             }
         try {
             val msg = new MsgEntity(JSON.parseObject(str))

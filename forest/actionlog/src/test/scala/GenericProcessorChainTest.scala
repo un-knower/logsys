@@ -16,17 +16,17 @@ class GenericProcessorChainTest {
         chain.init(confManager)
 
 
-        val stream = this.getClass.getClassLoader.getResourceAsStream("boikgpokn78sb95kjhfrendo8dc5mlsr.log")
+        val stream = this.getClass.getClassLoader.getResourceAsStream("boikgpokn78sb95kjhfrendoj8ilnoi7.log")
         val source = scala.io.Source.fromInputStream(stream)
         val filelines = source.getLines().toArray
         val lines = new ArrayBuffer[String]()
-        for (i <- 0 to 10) {
+        for (i <- 0 to 0) {
             lines.append(filelines: _*)
         }
 
         val from = System.currentTimeMillis()
 
-        for (i <- 0 to 10) {
+        for (i <- 0 to 0) {
 
             val from2 = System.currentTimeMillis()
 
@@ -40,11 +40,18 @@ class GenericProcessorChainTest {
                         }
                     }
                     require(ret.hasErr == false)
-                    ret.result.get
+
                     //println(ret.result.get.length)
+
+                    ret.result.get.foreach(item=>println(item.toJSONString))
+                    println("")
+
+                    ret.result.get
+
                 })
 
             println(s"${i}:ts:${System.currentTimeMillis() - from2},${result.length}")
+
         }
 
         println(s"${lines.length}:ts:${System.currentTimeMillis() - from}")

@@ -64,6 +64,11 @@
         <value>cn.whaley.bi.logsys.forest.actionlog.GenericActionLogCommProcessor</value>
     </property>
     <property>
+        <name>GenericActionLogCommProcessor.happenTime.deviation.sec</name>
+        <value>3600</value>
+    </property>
+    <!--
+    <property>
         <name>GenericActionLogCommProcessor.FieldRename</name>
         <value>pageview:from->source,launcher:accessArea->accessAera</value>
     </property>
@@ -71,6 +76,7 @@
         <name>GenericActionLogCommProcessor.LongTypeKeys</name>
         <value>accountId,duration,speed,size,preMemory,postMemory</value>
     </property>
+    -->
 
 
 

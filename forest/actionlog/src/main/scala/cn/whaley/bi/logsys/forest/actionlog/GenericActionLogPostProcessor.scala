@@ -3,7 +3,7 @@ package cn.whaley.bi.logsys.forest.actionlog
 
 import cn.whaley.bi.logsys.common.{ConfManager, DigestUtil}
 import cn.whaley.bi.logsys.forest.Traits.LogTrait
-import cn.whaley.bi.logsys.forest.entity.LogEntity
+import cn.whaley.bi.logsys.forest.entity.{MsgEntity, LogEntity}
 import cn.whaley.bi.logsys.forest.processor.LogProcessorTrait
 import cn.whaley.bi.logsys.forest._
 import com.alibaba.fastjson.{JSON, JSONArray, JSONObject}
@@ -66,34 +66,38 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
      *
      */
     private def verify(logEntity: ActionLogPostEntity): ProcessResultCode.ProcessCode = {
-
+        val postBody = logEntity.postMsgBodyObj
+        val bodyObj = postBody.bodyObj
         //对于02版本的消息体，执行消息体签名验证;
         // msgBody中的msgSignFlag属性如果未0，则指明了签名验证未在接入层完成
-        val needSign=logEntity.version == "02" && logEntity.method == "POST" && logEntity.msgSignFlag == 0
+        val needSign = bodyObj.version == "02" && postBody.method.equalsIgnoreCase("POST") && logEntity.msgSignFlag == 0
         //val needSign = (logEntity.version == "02" || logEntity.version == "01") && logEntity.method == "POST" && logEntity.msgSignFlag == 0
         val signed =
             if (needSign) {
-                val hasSignInfo = (logEntity.baseInfo != null && logEntity.logs != null
-                    && logEntity.ts != null && logEntity.md5 != null)
-                val key = signKeyMap.get(logEntity.version)
+                val hasSignInfo = (bodyObj.baseInfo != null && bodyObj.logs != null
+                    && bodyObj.ts != null && bodyObj.md5 != null)
+                val key = signKeyMap.get(bodyObj.version)
                 if (!hasSignInfo || !key.isDefined) {
                     false
                 } else {
-                    val baseInfo = logEntity.baseInfo.asInstanceOf[String]
-                    val logs = logEntity.logs.asInstanceOf[String]
-                    val ts = logEntity.ts
-                    val md5 = logEntity.md5
+                    val baseInfo = bodyObj.baseInfo.asInstanceOf[String]
+                    val logs = bodyObj.logs.asInstanceOf[String]
+                    val ts = bodyObj.ts
+                    val md5 = bodyObj.md5
                     val str = ts + baseInfo + logs + key.get
                     val signMD5 = DigestUtil.getMD5Str32(str)
                     signMD5 == md5
                 }
             } else {
+                logEntity.updateLogSignFlag(LogEntity.VAL_SIGN_NO)
                 true
             }
-
+        //logEntity.removeSignInfo()
         if (!signed) {
+            logEntity.updateLogSignFlag(LogEntity.VAL_SIGN_ERR)
             ProcessResultCode.signFailure
         } else {
+            logEntity.updateLogSignFlag(LogEntity.VAL_SIGN_PASS)
             ProcessResultCode.processed
         }
     }
@@ -118,102 +122,72 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
      */
     def process(log: LogEntity): ProcessResult[Seq[LogEntity]] = {
 
-        //body展开后，构建ActionLogPostEntity对象
-        val bodyValue = log.get("body")
-        val bodyObj =
-            if (bodyValue != null) {
-                val obj =
-                    if (bodyValue.isInstanceOf[String]) {
-                        val str = (bodyValue.asInstanceOf[String])
-                        JSON.parseObject(str)
-                    } else {
-                        bodyValue.asInstanceOf[JSONObject]
-                    }
-                log.remove("body")
-                obj.asInstanceOf[java.util.Map[String, Object]].putAll(log)
-                obj
-            } else {
-                log
-            }
-
-        val actionLogEntity = new ActionLogPostEntity(bodyObj)
-
+        val actionLogEntity = new ActionLogPostEntity(log)
+        val postObj = actionLogEntity.postMsgBodyObj;
         try {
-            if (actionLogEntity.method != "POST") {
+            if (!postObj.method.equalsIgnoreCase("POST")) {
                 return ProcessResult(this.name, ProcessResultCode.skipped, "", None)
             }
 
-
-            //消息体验证
-
+            //消息体验证,方法内部将更新相关签名字段的值
             val verifyCode = verify(actionLogEntity)
             if (verifyCode != ProcessResultCode.processed) {
                 return ProcessResult(this.name, verifyCode, "", None)
             }
-            //actionLogEntity.removeSignInfo()
-
 
             var errorResult: ProcessResult[Seq[LogEntity]] = null
-            var logSeq: Seq[LogEntity] = null
-
 
             //---------------POST解析-----------------
-
+            val bodyObj = postObj.bodyObj;
             //baseInfo展开
-
-            if (actionLogEntity.baseInfo != null) {
+            if (bodyObj.baseInfo != null) {
                 val baseInfo =
-                    if (actionLogEntity.baseInfo.isInstanceOf[String]) {
-                        parseObject(actionLogEntity.baseInfo.asInstanceOf[String])
+                    if (bodyObj.baseInfo.isInstanceOf[String]) {
+                        parseObject(bodyObj.baseInfo.asInstanceOf[String])
                     } else {
-                        Some(actionLogEntity.baseInfo.asInstanceOf[JSONObject])
+                        Some(bodyObj.baseInfo.asInstanceOf[JSONObject])
                     }
                 if (baseInfo.isEmpty) {
                     errorResult = ProcessResult(this.name, ProcessResultCode.formatFailure, "baseInfo is not json", None)
                 } else {
-                    actionLogEntity.removeBaseInfo()
-                    actionLogEntity.asInstanceOf[java.util.Map[String, Object]].putAll(baseInfo.get)
+                    bodyObj.removeBaseInfo()
+                    bodyObj.asInstanceOf[java.util.Map[String, Object]].putAll(baseInfo.get)
                 }
             }
 
             //logs展开,其中每个元素派生出一个新的ActionLogEntity对象
-            if (errorResult == null) {
-                if (actionLogEntity.logs != null) {
-
-                    val logs =
-                        if (actionLogEntity.logs.isInstanceOf[String]) {
-                            parseArray(actionLogEntity.logs.asInstanceOf[String])
-                        } else {
-                            Some(actionLogEntity.logs.asInstanceOf[JSONArray])
-                        }
-                    if (!logs.isDefined) {
-                        errorResult = ProcessResult(this.name, ProcessResultCode.formatFailure, "", None)
+            if (errorResult == null && bodyObj.logs != null) {
+                val logs =
+                    if (bodyObj.logs.isInstanceOf[String]) {
+                        parseArray(bodyObj.logs.asInstanceOf[String])
                     } else {
-
-                        actionLogEntity.removeLogs()
-                        val size = logs.get.size()
-                        logSeq =
-                            for (i <- 0 to size - 1) yield {
-                                //通常log中的属性会比较多，将actionLogEntity合并到log
-                                val log = logs.get.getJSONObject(i)
-                                log.asInstanceOf[java.util.Map[String, Object]].putAll(actionLogEntity.asInstanceOf[java.util.Map[String, Object]])
-                                val actionLog = new ActionLogPostEntity(log)
-                                val logId = actionLogEntity.logId + StringUtil.fixLeftLen(Integer.toHexString(i), '0', 4)
-                                actionLog.updateLogId(logId)
-                                actionLog
-                            }
+                        Some(bodyObj.logs.asInstanceOf[JSONArray])
                     }
-
+                if (!logs.isDefined) {
+                    errorResult = ProcessResult(this.name, ProcessResultCode.formatFailure, "", None)
                 } else {
-                    logSeq = Array(actionLogEntity)
+                    bodyObj.removeLogs()
+                    val size = logs.get.size()
+                    val array = new JSONArray()
+                    for (i <- 0 to size - 1) yield {
+                        //通常log中的属性会比较多，将bodyObj合并到log
+                        val log = logs.get.getJSONObject(i)
+                        log.asInstanceOf[java.util.Map[String, Object]].putAll(bodyObj)
+                        array.add(log)
+                    }
+                    if(array.size==1){
+                        postObj.setBody(array.get(0))
+                    }else{
+                        postObj.setBody(array)
+                    }
                 }
             }
 
             if (errorResult != null) {
                 errorResult
             } else {
-                require(logSeq != null)
-                ProcessResult(this.name, ProcessResultCode.processed, "", Some(logSeq))
+                val ret = Some(actionLogEntity.normalize())
+                ProcessResult(this.name, ProcessResultCode.processed, "", ret)
             }
 
         } catch {
