@@ -13,11 +13,21 @@ import scala.collection.JavaConversions._
  * 配置管理类，加载以hadoop风格的配置xml或properties文件
  * 可以通过key获取value值，或通过key前缀获取一批value值，且其中的#{XXX}部分被替换为在props中的XXX对应的value值
  *
- * @param props 其中的键值对用于替换获取到的配置值中的#{...}部分
+ * @param props 其中的键值对用于替换获取到的配置值中的#{...}部分,并且作为配置的一部分优先于resources指定的配置项
  * @param resources xml文件或properties文件，其他文件将被忽略
  * @param classLoader 资源文件对应的ClassLoader，默认为当前类实例对应的系统类加载器
  */
 class ConfManager(props: Properties, resources: Seq[String], classLoader: ClassLoader) {
+    val conf = new Configuration(false)
+
+    {
+        addConfResource(resources: _*)
+        //合并props
+        props.keySet().toList.foreach(key => {
+            val keyStr = key.toString
+            conf.set(keyStr, props.get(key).toString)
+        })
+    }
 
     def this(prop: Properties, resources: Seq[String]) {
         this(prop, resources, ConfManager.classLoader)
@@ -27,12 +37,6 @@ class ConfManager(props: Properties, resources: Seq[String], classLoader: ClassL
         this(ConfManager.EMPTY_PROP, resources, ConfManager.classLoader)
     }
 
-
-    val conf = new Configuration(false)
-
-    {
-        addConfResource(resources: _*)
-    }
 
     /**
      * 将配置写入到外部流

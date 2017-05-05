@@ -1,18 +1,18 @@
 import java.util
+import java.util.Properties
 import java.util.concurrent.{LinkedBlockingQueue, Executors, Future, TimeUnit}
 
 import cn.whaley.bi.logsys.common.{KafkaUtil, ConfManager}
-import kafka.api.OffsetRequest
-import kafka.consumer.KafkaStream
-import kafka.message.MessageAndMetadata
-import kafka.utils.ZkUtils
-import org.I0Itec.zkclient.ZkClient
+import org.apache.kafka.clients.consumer.KafkaConsumer
+
 
 import org.apache.kafka.clients.producer.{ProducerRecord, RecordMetadata, KafkaProducer}
+import org.apache.kafka.common.TopicPartition
 
 import org.junit.Test
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.JavaConversions._
 
 
 /**
@@ -20,14 +20,30 @@ import scala.collection.mutable.ArrayBuffer
  */
 class KafkaTest extends LogTrait with TimeConsumeTrait {
 
-    val kafkaBrokerHost = "localhost"
-    val kafkaBrokerPort = 9092
+    val kafkaBrokerHost = "bigdata-appsvr-130-1"
+    val kafkaBrokerPort = 9094
     val clientId = "test"
-    val topic = "test2"
+    val topic = "medusa-pre-log"
     val groupId = "test"
-    val zkServers = "localhost:2181"
+    val servers = "bigdata-appsvr-130-1:9094,bigdata-appsvr-130-2:9094,bigdata-appsvr-130-3:9094,bigdata-appsvr-130-4:9094,bigdata-appsvr-130-5:9094,bigdata-appsvr-130-6:9094"
+
 
     val confManager = new ConfManager("kafka-consumer.xml" :: "kafka-producer.xml" :: Nil)
+
+    def getKafkaUtil(): KafkaUtil = {
+        /*
+        val kafkaUtil = new KafkaUtil(
+            ("bigdata-appsvr-130-1", 9094)
+                ::("bigdata-appsvr-130-2", 9094)
+                ::("bigdata-appsvr-130-3", 9094)
+                ::("bigdata-appsvr-130-4", 9094)
+                ::("bigdata-appsvr-130-5", 9094)
+                ::("bigdata-appsvr-130-6", 9094)
+                :: Nil)
+        */
+        val kafkaUtil = new KafkaUtil(("localhost", 9092) :: Nil)
+        kafkaUtil
+    }
 
 
     def getKafkaProducer[K, V]: KafkaProducer[K, V] = {
@@ -35,27 +51,42 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
         new KafkaProducer[K, V](conf)
     }
 
-
-    def getKafkaConsumerConnector(grpId: String = groupId) = {
+    def getKafkaConsumer[K, V](): KafkaConsumer[K, V] = {
         val conf = confManager.getAllConf("kafka-consumer", true)
-        conf.put("group.id", grpId)
-        val consumerConf = new kafka.consumer.ConsumerConfig(conf)
-        kafka.consumer.Consumer.createJavaConsumerConnector(consumerConf)
+        conf.setProperty("bootstrap.servers", "bigdata-appsvr-130-1:9094")
+        new KafkaConsumer[K, V](conf)
     }
+
+    @Test
+    def testConsumer(): Unit = {
+        //val topic = "medusa-pre-log"
+        //val bootstrap = "bigdata-appsvr-130-1:9094"
+        val topic = "test"
+        val bootstrap = "localhost:9092"
+        val conf = confManager.getAllConf("kafka-consumer", true)
+        conf.setProperty("bootstrap.servers", bootstrap)
+        val consumer = new KafkaConsumer[Array[Byte], Array[Byte]](conf)
+        consumer.subscribe(topic :: Nil)
+        val records = consumer.poll(1000)
+        records.foreach(record => {
+            val msg = new String(record.value())
+            println(msg)
+        })
+    }
+
 
     @Test
     def testCreateKafkaUtil: Unit = {
         val topic = "pre-boikgpokn78sb95kjhfrendo8dc5mlsr"
-
-        val zkClient = new ZkClient(zkServers)
-        val topics = KafkaUtil.getTopics(zkClient)
+        val kafkaUtil = new KafkaUtil((kafkaBrokerHost, kafkaBrokerPort) :: Nil)
+        val topics = kafkaUtil.getTopics()
         println(topics.mkString(","))
 
-        val util = KafkaUtil(zkServers)
-        var offset = util.getEarliestOffset("pre-boikgpokn78sb95kjhfrendo8dc5mlsr")
+
+        var offset = kafkaUtil.getEarliestOffset("pre-boikgpokn78sb95kjhfrendo8dc5mlsr")
         println(offset)
 
-        offset = util.getEarliestOffset("11")
+        offset = kafkaUtil.getEarliestOffset("11")
         println(offset)
     }
 
@@ -63,6 +94,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
     def testProducer1: Unit = {
         val producer = getKafkaProducer[Array[Byte], Array[Byte]]
         val chars = "012345678ABCDEFabcdef"
+        val topic = "test"
 
         val threadCount = 4
         val msgCount = 100000
@@ -151,64 +183,13 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
 
 
     @Test
-    def testConsumer1: Unit = {
-
-
-        val connector = getKafkaConsumerConnector()
-        val map = new java.util.HashMap[String, Integer]
-        map.put(topic, 1)
-        val streams = connector.createMessageStreams(map)
-        val stream: KafkaStream[Array[Byte], Array[Byte]] = streams.get(topic).get(0)
-        val queue = new LinkedBlockingQueue[MessageAndMetadata[Array[Byte], Array[Byte]]]()
-
-        val thread = new Thread() {
-            override def run: Unit = {
-                val it = stream.iterator
-                while (it.hasNext) {
-                    queue.put(it.next())
-                }
-            }
-        }
-        thread.start()
-
-        val from = System.currentTimeMillis()
-        var c = 0
-        var running = true
-        val offsetMap = new util.HashMap[Int, Long]
-        while (running) {
-            val element = queue.poll(2, TimeUnit.SECONDS)
-
-            if (element == null) {
-                running = false
-                LOG.info("ended : {},ts：{}", c, System.currentTimeMillis() - from)
-            } else {
-                offsetMap.put(element.partition, element.offset)
-                c = c + 1
-                if (c % 10000 == 0) {
-                    LOG.info("{},ts：{}", c, System.currentTimeMillis() - from)
-                }
-            }
-        }
-
-        LOG.info("offsetMap:{}", offsetMap)
-        connector.shutdown()
-
-        //offsetMap:{0=136293, 1=135999, 2=139102, 3=138824}
-    }
-
-
-    @Test
     def testKafkaUtil_getOffset: Unit = {
-
-        val util = KafkaUtil(zkServers, "test")
+        val topic = "test"
+        val util = getKafkaUtil()
         val earliestOffset = util.getEarliestOffset(topic)
-        val latestOffset1 = util.getLatestOffset(topic)
-        val latestOffset2 = util.getOffset(topic, OffsetRequest.LatestTime, 2).map(item => s"${item._1}->${item._2.mkString(",")}").mkString(" , ")
-        val latestOffset3 = util.getOffset(topic, OffsetRequest.LatestTime, 3).map(item => s"${item._1}->${item._2.mkString(",")}").mkString(" , ")
+        val latestOffset = util.getLatestOffset(topic)
         LOG.info("earliestOffset: {} , {}", topic, earliestOffset, "")
-        LOG.info("latestOffset1: {} , {}", topic, latestOffset1, "")
-        LOG.info("latestOffset2: {} , {}", topic, latestOffset2, "")
-        LOG.info("latestOffset3: {} , {}", topic, latestOffset3, "")
+        LOG.info("latestOffset1: {} , {}", topic, latestOffset, "")
 
         val count = 10000
         val ts1 = timeConsumeTest(count, () => util.getLatestOffset(topic))
@@ -219,89 +200,65 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
     }
 
     @Test
-    def testKafkaUtil_setFetchOffset: Unit = {
-        val util = KafkaUtil(zkServers, clientId)
-        val offsets = Map(0 -> 100L, 1 -> 0L, 2 -> 0L, 3 -> 0L)
-        val res = util.setFetchOffset(topic, groupId, offsets)
-        if (!res._1) {
-            LOG.error("{}", res._2)
-        }
+    def testKafkaUtil_getOffset2: Unit = {
+        val topic = "medusa-processed-log"
+        val props = new Properties()
+        props.put("bootstrap.servers", servers);
+        props.put("group.id", clientId);
+        props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
+        props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
+        val consumer = new KafkaConsumer[Array[Byte], Array[Byte]](props)
+        val topicAndPartitions = consumer.partitionsFor(topic).map(item => new TopicPartition(topic, item.partition()))
+        //.sortBy(item=>item.partition()).toList
+        //val topicAndPartitions = new TopicPartition(topic, 1) :: Nil
+        topicAndPartitions.foreach(item => {
+            val partitionItem = new TopicPartition(topic, item.partition() + 1)
+            print(s"getoffset:${item.partition()}\t")
+            val offset = consumer.endOffsets(item :: Nil)
+            offset.map(item => println(s"${item._1.partition()}\t${item._2.toLong}"))
+        })
+    }
 
-        val offsets2 = util.getFetchOffset(topic, groupId)
-        LOG.info("{} \n {}", offsets, offsets2, "")
+    @Test
+    def testKafkaUtil_setFetchOffset: Unit = {
+        val topic = "test"
+        val util = getKafkaUtil()
+        val consumer = util.getConsumer(groupId)
+        val partitions = util.getPartitionInfo(topic)
+        val offsets = partitions.map(item => (item.partition(), 200000L)).toMap
+        util.setFetchOffset(topic, groupId, offsets, consumer)
+
+        val offsets2 = util.getFetchOffset(topic, groupId, consumer)
+        LOG.info("{} \t {}", offsets, offsets2, "")
 
         require(offsets == offsets2)
     }
 
-    @Test
-    def testKafkaUtil_setFetchOffsetAndConsumer: Unit = {
-        val util =   KafkaUtil(zkServers, clientId)
-        val latestOffset = util.getLatestOffset(topic)
-
-        val size = 1000
-        val targetOffsets = latestOffset.map(item => (item._1, item._2 - size))
-
-        val beforeGroupOffset = util.getFetchOffset(topic, groupId)
-        val ret = util.setFetchOffset(topic, groupId, targetOffsets)
-        println("setFetchOffset:" + ret)
-        if (!ret._1) {
-            return
-        }
-        val afterGroupOffset = util.getFetchOffset(topic, groupId)
-
-        println("latestOffset:" + latestOffset)
-        println("beforeGroupOffset:" + beforeGroupOffset)
-        println("targetOffsets:" + targetOffsets)
-        println("afterGroupOffset:" + afterGroupOffset)
-
-        val connector = getKafkaConsumerConnector()
-        val map = new java.util.HashMap[String, Integer]
-        map.put(topic, 1)
-        val streams = connector.createMessageStreams(map)
-        val stream: KafkaStream[Array[Byte], Array[Byte]] = streams.get(topic).get(0)
-        val queue = new LinkedBlockingQueue[MessageAndMetadata[Array[Byte], Array[Byte]]]()
-        val buf = new ArrayBuffer[MessageAndMetadata[Array[Byte], Array[Byte]]]()
-
-        val it = stream.iterator
-        var endCount = 0
-        while (endCount != latestOffset.size && it.hasNext) {
-            val curr = it.next()
-            buf.append(curr)
-            if (buf.size % 100 == 0) {
-                println(s"${buf.size}:${curr.partition}:${curr.offset}:${latestOffset(curr.partition)}:${endCount}")
-            }
-            if (curr.offset + 1 >= latestOffset(curr.partition)) {
-                endCount = endCount + 1
-            }
-        }
-        connector.commitOffsets()
-        println(s"${buf.size}:${buf.last.offset}")
-
-    }
 
     @Test
     def TestKafkaUtil_getLatestMessage: Unit = {
-        val util =   KafkaUtil(zkServers)
+        val topic="test"
+        val util = getKafkaUtil()
         val latestOffset = util.getLatestOffset(topic)
         println(latestOffset)
 
-        val datas = util.getLatestMessage(topic, 10)
+        val datas = util.getLatestMessage(topic, 100)
 
         datas.foreach(item => {
             val partiton = item._1
             var count = 0
-            item._2.foreach(msgAndOffset => {
+            item._2.foreach(record => {
                 count = count + 1
-                val message = msgAndOffset.message
-                val keyBytes = new Array[Byte](message.keySize)
-                val valueBytes = new Array[Byte](message.payloadSize)
-                message.key.get(keyBytes)
-                message.payload.get(valueBytes)
+                val message = record.key()
+                val keyBytes = record.key()
+                val valueBytes = record.value()
                 val key = new String(keyBytes)
                 val value = new String(valueBytes)
-                println(s"[${partiton}:${count}:${msgAndOffset.offset}:${msgAndOffset.nextOffset}}]:${key}:${value}")
+                println(s"[${partiton}:${count}:${record.offset}}]:${key}:${value}")
             })
         })
+
+        System.in.read()
     }
 
 }

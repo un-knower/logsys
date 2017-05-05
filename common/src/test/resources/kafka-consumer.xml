@@ -9,19 +9,23 @@
         <value>localhost:2181</value>
     </property>
     <property>
+        <name>kafka-consumer.group.id</name>
+        <value>test</value>
+    </property>
+    <property>
         <name>kafka-consumer.enable.auto.commit</name>
         <value>true</value>
     </property>
     <property>
         <name>kafka-consumer.auto.offset.reset</name>
-        <value>smallest</value>
+        <value>earliest</value>
     </property>
     <property>
         <name>kafka-consumer.key.deserializer</name>
         <value>org.apache.kafka.common.serialization.ByteArrayDeserializer</value>
     </property>
     <property>
-        <name>kafka-consumer.key.value</name>
+        <name>kafka-consumer.value.deserializer</name>
         <value>org.apache.kafka.common.serialization.ByteArrayDeserializer</value>
     </property>
 </configuration>
