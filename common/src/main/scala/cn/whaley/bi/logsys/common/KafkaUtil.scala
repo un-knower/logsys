@@ -26,14 +26,8 @@ class KafkaUtil(brokerList: Seq[(String, Int)], clientId: String = "KafkaUtil") 
 
     var defaultConsumer: Option[KafkaConsumer[Array[Byte], Array[Byte]]] = None
 
-
-
     def getDefaultConsumer(): KafkaConsumer[Array[Byte], Array[Byte]] = {
         if (defaultConsumer.isEmpty) {
-            val props = new Properties()
-            val servers = brokerList.map(item => item._1 + ":" + item._2).mkString(",")
-            props.put("bootstrap.servers", servers);
-            props.put("group.id", clientId);
             val consumer = getConsumer(clientId);
             defaultConsumer = Some(consumer);
         }
@@ -178,12 +172,17 @@ class KafkaUtil(brokerList: Seq[(String, Int)], clientId: String = "KafkaUtil") 
 }
 
 
-object KafkaUtil{
-    def apply(brokers: String): KafkaUtil = {
+object KafkaUtil {
+
+    def apply(brokers: String, clientId: String = ""): KafkaUtil = {
         val bootstrap = brokers.split(",").map(server => {
             val vals = server.split(":")
             (vals(0), vals(1).toInt)
         }).toSeq
-        new KafkaUtil(bootstrap)
+        if (clientId == "") {
+            new KafkaUtil(bootstrap)
+        } else {
+            new KafkaUtil(bootstrap, clientId)
+        }
     }
 }

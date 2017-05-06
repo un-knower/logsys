@@ -13,16 +13,16 @@
         <value>GenericProcessorChain</value>
     </property>
     <property>
-        <name>MsgBatchManager.recoverSourceOffsetFromSink</name>
-        <value>1</value>
-    </property>
-    <property>
         <name>MsgBatchManager.batchSize</name>
         <value>10000</value>
     </property>
     <property>
         <name>MsgBatchManager.callableSize</name>
         <value>1000</value>
+    </property>
+    <property>
+        <name>MsgBatchManager.recoverSourceOffsetFromSink</name>
+        <value>1</value>
     </property>
     <!-- KafkaMsgSource -->
     <property>
@@ -31,7 +31,7 @@
     </property>
     <property>
         <name>KafkaMsgSource.topics</name>
-        <value>pre-boikgpokn.*</value>
+        <value>log-raw-boikgpokn78sb95ktmsc1bnk.*</value>
     </property>
     <property>
         <name>KafkaMsgSource.defaultOffset</name>
@@ -41,22 +41,9 @@
             pre-boikgpokn78sb95kjtihcg26:-2
         </value>
     </property>
-    <!--
-    <property>
-        <name>KafkaMsgSource.topicCount</name>
-        <value>
-            pre-boikgpokn.*:4
-            ,pre-boikgpokn78sb95kjhfrendo8dc5mlsr:2
-        </value>
-    </property>
-    -->
-    <property>
-        <name>KafkaMsgSource.queueCapacity</name>
-        <value>10000</value>
-    </property>
     <property>
         <name>KafkaMsgSource.logPerMsgCount</name>
-        <value>1000</value>
+        <value>200</value>
     </property>
     <property>
         <name>KafkaMsgSource.include</name>
@@ -70,6 +57,31 @@
     <property>
         <name>KafkaMsgSink.include</name>
         <value>kafka-producer.xml,kafka.properties</value>
+    </property>
+    <!-- HdfsMsgSink -->
+    <property>
+        <name>HdfsMsgSink.class</name>
+        <value>cn.whaley.bi.logsys.forest.sinker.HdfsMsgSink</value>
+    </property>
+    <property>
+        <name>HdfsMsgSink.commitOpCount</name>
+        <value>100000</value>
+    </property>
+    <property>
+        <name>HdfsMsgSink.commitSizeByte</name>
+        <value>10485760</value>
+    </property>
+    <property>
+        <name>HdfsMsgSink.commitTimeMillSec</name>
+        <value>300000</value>
+    </property>
+    <property>
+        <name>HdfsMsgSink.commitRootDir</name>
+        <value>/data_warehouse/ods_origin.db/log_origin</value>
+    </property>
+    <property>
+        <name>HdfsMsgSink.errRootDir</name>
+        <value>/data_warehouse/ods_origin.db/err_log_origin</value>
     </property>
     <!-- GenericProcessorChain -->
     <property>

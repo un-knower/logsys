@@ -79,6 +79,7 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
                         val fromOffset = offsetInfo.get._2 + 1
                         val oldValue = offsetMap.getOrElse(partition, 0L)
                         val newValue = Math.max(fromOffset, oldValue)
+                        //最后偏移不能大于源topic的最后偏移值
                         val latestOffsetValue = sourceLatestOffset.getOrElse(partition, 0L)
                         val value = Math.min(newValue, latestOffsetValue)
                         offsetMap.put(partition, value)

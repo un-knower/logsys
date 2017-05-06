@@ -20,18 +20,26 @@ class GenericMsgDecoder extends MsgDecodeTrait with NameTrait {
      * @return
      */
     override def decode(bytes: Array[Byte]): ProcessResult[MsgEntity] = {
-        val str =
-            if (ngxLogDecode) {
-                new String(decoder.decodeToBytes(bytes))
-            } else {
-                new String(bytes)
-            }
+        val str = new String(bytes)
         try {
-            val msg = new MsgEntity(JSON.parseObject(str))
+            var value = str
+            var fbTime = ""
+            if (filebeatDecode) {
+                val json = JSON.parseObject(str)
+                value = json.getString("message")
+                fbTime = json.getString("@timestamp")
+            }
+            if (ngxLogDecode) {
+                value = decoder.decodeToString(value)
+            }
+            val msg = new MsgEntity(JSON.parseObject(value))
+            if (filebeatDecode) {
+                msg.msgBody.put("fb_Time", fbTime)
+            }
             new ProcessResult(this.name, ProcessResultCode.processed, "", Some(msg))
         } catch {
             case e: Throwable => {
-                new ProcessResult(this.name, ProcessResultCode.exception, "JSON解析异常:" + str, None, Some(e))
+                new ProcessResult(this.name, ProcessResultCode.exception, "JSON解析异常:" + new String(bytes), None, Some(e))
             }
         }
 
@@ -43,7 +51,9 @@ class GenericMsgDecoder extends MsgDecodeTrait with NameTrait {
      */
     override def init(confManager: ConfManager): Unit = {
         ngxLogDecode = confManager.getConfOrElseValue(this.name, "ngxLogDecode", "true").toBoolean
+        filebeatDecode = confManager.getConfOrElseValue(this.name, "filebeatDecode", "true").toBoolean
     }
 
     private var ngxLogDecode: Boolean = true
+    private var filebeatDecode: Boolean = true
 }

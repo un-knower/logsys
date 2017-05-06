@@ -5,8 +5,8 @@
         <value>test</value>
     </property>
     <property>
-        <name>kafka-consumer.zookeeper.connect</name>
-        <value>localhost:2181</value>
+        <name>kafka-consumer.bootstrap.servers</name>
+        <value>localhost:9092</value>
     </property>
     <property>
         <name>kafka-consumer.enable.auto.commit</name>

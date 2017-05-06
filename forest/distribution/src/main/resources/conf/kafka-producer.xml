@@ -2,19 +2,15 @@
 <configuration>
     <property>
         <name>kafka-producer.bootstrap.servers</name>
-        <value>${prop.kafka.bootstrap.servers}</value>
+        <value>localhost:9092</value>
     </property>
     <property>
-        <name>kafka-producer.request.required.acks</name>
+        <name>kafka-producer.acks</name>
         <value>1</value>
     </property>
     <property>
-        <name>kafka-producer.producer.type</name>
-        <value>sync</value>
-    </property>
-    <property>
         <name>kafka-producer.compression.type</name>
-        <value>snappy</value>
+        <value>none</value>
     </property>
     <property>
         <name>kafka-producer.max.request.size</name>

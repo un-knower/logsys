@@ -14,8 +14,10 @@ import cn.whaley.bi.logsys.forest.entity.LogEntity
 import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path, FileSystem}
-import org.apache.hadoop.io.{SequenceFile, Text}
+import org.apache.hadoop.io.{IOUtils, Writable, SequenceFile, Text}
+import org.apache.hadoop.util.ReflectionUtils
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -62,7 +64,50 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
      * @param maxMsgCount 检索目标时,每个partition最多读取的消息数量
      * @return 源topic相关的offse信（partition，offset），如果没有则返回空Map对象
      */
-    override def getTopicLastOffset(sourceTopic: String, sourceLatestOffset: Map[Int, Long], maxMsgCount: Int): Map[Int, Long] = ???
+    override def getTopicLastOffset(sourceTopic: String, sourceLatestOffset: Map[Int, Long], maxMsgCount: Int): Map[Int, Long] = {
+        val offsetMap = new mutable.HashMap[Int, Long]
+        val isFromOri = sourceTopic.startsWith("log-origin-")
+        val isFromRaw = sourceTopic.startsWith("log-raw-")
+        val appIdOrProduct = if (isFromRaw) {
+            sourceTopic.substring("log-raw-".length)
+        } else if (isFromOri) {
+            sourceTopic.substring("log-origin-".length)
+        } else {
+            ""
+        }
+        if (appIdOrProduct == "") {
+            return offsetMap.toMap
+        }
+
+        val fs = FileSystem.get(hdfsConf)
+        val pathPattern = new Path(s"${commitRootDir}/${appIdOrProduct}*.seq")
+        val fileStatuses = fs.globStatus(pathPattern)
+        if (fileStatuses.size == 0) {
+            return offsetMap.toMap
+        }
+        fileStatuses.foreach(status => {
+            val reader = new SequenceFile.Reader(hdfsConf, SequenceFile.Reader.file(status.getPath));
+            var lastKey: Text = null
+            val key = ReflectionUtils.newInstance(reader.getKeyClass, hdfsConf).asInstanceOf[Text];
+            val value = ReflectionUtils.newInstance(reader.getValueClass, hdfsConf).asInstanceOf[Text]
+            //取最后一行数据
+            while (reader.next(key, value)) {
+                lastKey = key
+            }
+            if (lastKey != null && lastKey.getLength > 0) {
+                val syncInfo = JSON.parseObject(new String(key.getBytes))
+                val parId = if (isFromOri) syncInfo.getIntValue("oriParId") else syncInfo.getIntValue("rawParId")
+                val offset = if (isFromOri) syncInfo.getLongValue("oriOffset") else syncInfo.getLongValue("rawOffset")
+                //最后偏移不能大于源topic的最后偏移值
+                val latestOffsetValue = sourceLatestOffset.getOrElse(parId, 0L)
+                val currValue = Math.max(offset, offsetMap.getOrElse(parId, offset))
+                val value = Math.min(currValue, latestOffsetValue)
+                offsetMap.put(parId, value)
+            }
+            IOUtils.closeStream(reader)
+        })
+        offsetMap.toMap
+    }
 
     /**
      * 保存正常数据
@@ -78,7 +123,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             val message: KafkaMessage = item._1
             val log: LogEntity = item._2
 
-            val isFromOri = messageFromOri(message)
+            val isFromOri = message.topic().startsWith("log-origin")
             val fileFlag = if (isFromOri) "ori" else "raw"
             val parId = message.partition()
             val appId = log.appId
@@ -88,6 +133,8 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         groups.foreach(group => {
             val fileKey = group._1
             val items = group._2
+
+            //以第一条记录的offset作为文件名的一部分,同一时间段内可以存在多个文件
             val firstItem = items.head
             val offset = firstItem._1.offset()
             val fileNamePrefix = fileKey.fileNamePrefix
@@ -140,7 +187,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                 val message: KafkaMessage = item._1
                 val errResult = item._2
 
-                val errData =buildErrorData(message,errResult)
+                val errData = buildErrorData(message, errResult)
                 writer.write(errData.toJSONString.getBytes)
                 writer.write('\n')
                 count = count + 1
@@ -169,30 +216,6 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                 })
             }
         }, new Date(System.currentTimeMillis() + commitTimeMillSec), commitTimeMillSec)
-    }
-
-    //消息是否来源于应用层
-    private def messageFromOri(source: KafkaMessage): Boolean = {
-        val keyBytes = source.key()
-        if (keyBytes == null || keyBytes.length == 0) {
-            false
-        } else {
-            try {
-                val keyStr = new String(keyBytes)
-                val obj = JSON.parseObject(keyStr)
-                if (obj.containsKey("rawTopic")) {
-                    true
-                } else {
-                    false
-                }
-            } catch {
-                case ex: Throwable => {
-                    //LOG.warn("parse keyObj error:" + keyStr)
-                    false
-                }
-            }
-        }
-
     }
 
     //如有必要则提交文件,并清理相关缓存项
