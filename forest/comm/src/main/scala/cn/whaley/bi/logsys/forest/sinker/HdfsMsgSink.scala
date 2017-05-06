@@ -42,6 +42,9 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         commitRootDir = confManager.getConfOrElseValue("HdfsMsgSink", "commitRootDir", commitRootDir)
         errRootDir = confManager.getConfOrElseValue("HdfsMsgSink", "errRootDir", errRootDir)
 
+        //至少需要有一个选项被设置
+        require(!(commitTimeMillSec <= 0 && commitOpCount <= 0 && commitSizeByte <= 0))
+
         launchTimeCommitter()
 
     }
@@ -198,16 +201,17 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
     }
 
 
-    //启动定期提交扫描线程
+    //启动定期提交扫描线程,提交已经提交就绪的文件
     private def launchTimeCommitter(): Unit = {
         val timer = new java.util.Timer()
+        val interval = if (commitTimeMillSec > 0) commitTimeMillSec else 300 * 1000
         timer.scheduleAtFixedRate(new TimerTask {
             override def run(): Unit = {
                 LOG.info("launch committer.")
                 val entries = logWriterCache.entrySet().toList
                 entries.foreach(entry => {
                     val value = entry.getValue
-                    if (System.currentTimeMillis() - value.lastOpTs > commitTimeMillSec) {
+                    if (commitTimeMillSec > 0 && System.currentTimeMillis() - value.lastOpTs > commitTimeMillSec) {
                         value.readyForCommit.set(true)
                     }
                     if (value.readyForCommit.get()) {
@@ -215,7 +219,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                     }
                 })
             }
-        }, new Date(System.currentTimeMillis() + commitTimeMillSec), commitTimeMillSec)
+        }, new Date(System.currentTimeMillis() + interval), interval)
     }
 
     //如有必要则提交文件,并清理相关缓存项
@@ -252,16 +256,20 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
     //获取日志数据文件writer对象
     private def getOrCreateLogWriter(fileKey: LogWriteCacheKey, filePath: String): LogWriteCacheItem = {
         val item = logWriterCache.get(fileKey)
-        if (item != null && item.readyForCommit == false) {
-            return item
-        }
 
-        //提交
         if (item != null) {
-            commitLogFileIf(fileKey)
+            //获取写锁,确保状态判断的正确性
+            try {
+                item.writeLock.lock()
+                if (item.readyForCommit == false) {
+                    return item
+                }
+            } finally {
+                item.writeLock.unlock()
+            }
         }
 
-        //新建缓存项
+        //如果不存在,则新建缓存项
         val path = new Path(filePath)
         var writer: SequenceFile.Writer = null
         writer = SequenceFile.createWriter(hdfsConf, SequenceFile.Writer.file(path)
@@ -292,12 +300,18 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         buf.toArray
     }
 
-    private var errRootDir = "/data_warehouse/ods_origin.db/err_log_origin"
-    private var commitRootDir = "/data_warehouse/ods_origin.db/log_origin"
-    private var commitOpCount: Int = 100000
-    private var commitSizeByte: Long = 1024 * 1024 * 10
-    private var commitTimeMillSec: Long = 300 * 1000
     private val hdfsConf: Configuration = new Configuration()
+    //错误数据根目录
+    private var errRootDir = "/data_warehouse/ods_origin.db/err_log_origin"
+    //提交数据根目录
+    private var commitRootDir = "/data_warehouse/ods_origin.db/log_origin"
+    //操作次数阈值
+    private var commitOpCount: Int = 100000
+    //操作字节数阈值
+    private var commitSizeByte: Long = 1024 * 1024 * 10
+    //操作时间间隔阈值
+    private var commitTimeMillSec: Long = 300 * 1000
+    //缓存
     private val logWriterCache: ConcurrentMap[LogWriteCacheKey, LogWriteCacheItem] = new ConcurrentHashMap[LogWriteCacheKey, LogWriteCacheItem]()
 
     case class LogWriteCacheKey(appId: String, timeKey: String, fileFlag: String, parId: Int) {
@@ -319,13 +333,14 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
 
         val writeLock = new ReentrantReadWriteLock().writeLock()
 
+        //记录更改,且如条件满足则设置提交标致
         def changeOpBytes(byteCount: Int): Unit = {
             OpBytes = OpBytes + byteCount
             OpCount = OpCount + 1
 
-            if (OpBytes >= commitSizeByte) {
+            if (commitSizeByte > 0 && OpBytes >= commitSizeByte) {
                 readyForCommit.set(true)
-            } else if (OpCount >= commitOpCount) {
+            } else if (commitOpCount > 0 && OpCount >= commitOpCount) {
                 readyForCommit.set(true)
             } else if (System.currentTimeMillis() - lastOpTs >= commitTimeMillSec) {
                 readyForCommit.set(true)
