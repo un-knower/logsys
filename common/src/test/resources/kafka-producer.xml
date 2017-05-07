@@ -2,7 +2,7 @@
 <configuration>
     <property>
         <name>kafka-producer.bootstrap.servers</name>
-        <value>localhost:9092</value>
+        <value>${kafka.bootstrap.servers}</value>
     </property>
     <property>
         <name>kafka-producer.acks</name>

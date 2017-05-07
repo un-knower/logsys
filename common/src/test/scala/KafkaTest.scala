@@ -28,7 +28,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
     val servers = "bigdata-appsvr-130-1:9094,bigdata-appsvr-130-2:9094,bigdata-appsvr-130-3:9094,bigdata-appsvr-130-4:9094,bigdata-appsvr-130-5:9094,bigdata-appsvr-130-6:9094"
 
 
-    val confManager = new ConfManager("kafka-consumer.xml" :: "kafka-producer.xml" :: Nil)
+    val confManager = new ConfManager("settings.properties" :: "kafka-consumer.xml" :: "kafka-producer.xml" :: Nil)
 
     def getKafkaUtil(): KafkaUtil = {
         /*
@@ -41,7 +41,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
                 ::("bigdata-appsvr-130-6", 9094)
                 :: Nil)
         */
-        val kafkaUtil = new KafkaUtil(("localhost", 9092) :: Nil)
+        val kafkaUtil = KafkaUtil(confManager.getConf("kafka-producer.bootstrap.servers"))
         kafkaUtil
     }
 
@@ -53,25 +53,24 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
 
     def getKafkaConsumer[K, V](): KafkaConsumer[K, V] = {
         val conf = confManager.getAllConf("kafka-consumer", true)
-        conf.setProperty("bootstrap.servers", "bigdata-appsvr-130-1:9094")
         new KafkaConsumer[K, V](conf)
     }
 
     @Test
     def testConsumer(): Unit = {
-        //val topic = "medusa-pre-log"
-        //val bootstrap = "bigdata-appsvr-130-1:9094"
         val topic = "test"
-        val bootstrap = "localhost:9092"
-        val conf = confManager.getAllConf("kafka-consumer", true)
-        conf.setProperty("bootstrap.servers", bootstrap)
-        val consumer = new KafkaConsumer[Array[Byte], Array[Byte]](conf)
+        val consumer = getKafkaConsumer[Array[Byte], Array[Byte]]()
         consumer.subscribe(topic :: Nil)
-        val records = consumer.poll(1000)
-        records.foreach(record => {
-            val msg = new String(record.value())
-            println(msg)
-        })
+        while (true) {
+
+            val records = consumer.poll(1000)
+            records.foreach(record => {
+                val msg = new String(record.value())
+                println(msg)
+            })
+
+            Thread.sleep(1000)
+        }
     }
 
 
@@ -237,7 +236,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
 
     @Test
     def TestKafkaUtil_getLatestMessage: Unit = {
-        val topic="test"
+        val topic = "test"
         val util = getKafkaUtil()
         val latestOffset = util.getLatestOffset(topic)
         println(latestOffset)

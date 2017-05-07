@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
     <property>
-        <name>kafka-consumer.zookeeper.connect</name>
-        <value>localhost:2181</value>
-    </property>
-    <property>
-        <name>kafka-consumer.zookeeper.connect</name>
-        <value>localhost:2181</value>
+        <name>kafka-consumer.bootstrap.servers</name>
+        <value>${kafka.bootstrap.servers}</value>
     </property>
     <property>
         <name>kafka-consumer.group.id</name>
