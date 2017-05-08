@@ -10,11 +10,11 @@ class PostMsgBodyEntity(from: JSONObject) extends MsgBodyEntity(from) {
 
     class PostBody(from: JSONObject) extends JSONObject(from) {
 
-        val ts: String = {
+        def ts(): String = {
             this.getString(PostMsgBodyEntity.KEY_FOR_BODY_TS)
         }
 
-        val md5: String = {
+        def md5(): String = {
             this.getString(PostMsgBodyEntity.KEY_FOR_BODY_MD5)
         }
 
@@ -24,11 +24,11 @@ class PostMsgBodyEntity(from: JSONObject) extends MsgBodyEntity(from) {
         }
 
 
-        val version: String = {
+        def version(): String = {
             this.getString(PostMsgBodyEntity.KEY_FOR_BODY_VERSION)
         }
 
-        def baseInfo: Object = {
+        def baseInfo(): Object = {
             this.get(PostMsgBodyEntity.KEY_FOR_BODY_BASE_INFO)
         }
 
@@ -36,7 +36,7 @@ class PostMsgBodyEntity(from: JSONObject) extends MsgBodyEntity(from) {
             this.remove(PostMsgBodyEntity.KEY_FOR_BODY_BASE_INFO)
         }
 
-        def logs: Object = {
+        def logs(): Object = {
             this.get(PostMsgBodyEntity.KEY_FOR_BODY_LOGS)
         }
 
@@ -45,7 +45,7 @@ class PostMsgBodyEntity(from: JSONObject) extends MsgBodyEntity(from) {
         }
     }
 
-    def bodyObj():PostBody = {
+    def bodyObj(): PostBody = {
         new PostBody(this.body.asInstanceOf[JSONObject])
     }
 

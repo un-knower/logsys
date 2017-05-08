@@ -28,13 +28,13 @@ class KafkaUtil(brokerList: Seq[(String, Int)], clientId: String = "KafkaUtil") 
 
     def getDefaultConsumer(): KafkaConsumer[Array[Byte], Array[Byte]] = {
         if (defaultConsumer.isEmpty) {
-            val consumer = getConsumer(clientId);
+            val consumer = createConsumer(clientId);
             defaultConsumer = Some(consumer);
         }
         defaultConsumer.get
     }
 
-    def getConsumer(groupId: String): KafkaConsumer[Array[Byte], Array[Byte]] = {
+    def createConsumer(groupId: String): KafkaConsumer[Array[Byte], Array[Byte]] = {
         val props = new Properties()
         val servers = brokerList.map(item => item._1 + ":" + item._2).mkString(",")
         props.put("bootstrap.servers", servers);
@@ -94,21 +94,21 @@ class KafkaUtil(brokerList: Seq[(String, Int)], clientId: String = "KafkaUtil") 
      * @return
      */
     def getFetchOffset(topic: String, groupId: String, consumer: KafkaConsumer[Array[Byte], Array[Byte]] = null): Map[Int, Long] = {
-        val offsets = new mutable.HashMap[Int, Long]
         val consumerObj = if (consumer == null) {
-            getConsumer(groupId)
+            createConsumer(groupId)
         } else {
             consumer
         }
-        val topicAndPartitions = consumer.partitionsFor(topic).map(item => new TopicPartition(topic, item.partition())).toList
-
-        consumerObj.assign(topicAndPartitions)
-        val result = topicAndPartitions.map(item => {
-            val pos = consumerObj.position(item)
-            (item.partition(), pos)
+        if (consumer == null) {
+            consumerObj.subscribe(java.util.Arrays.asList(topic))
+        }
+        val offset = consumerObj.assignment().filter(_.topic() == topic).map(item => {
+            (item.partition(), consumerObj.position(item))
         }).toMap
-
-        result
+        if (consumer == null) {
+            consumerObj.close()
+        }
+        offset
     }
 
     /**
@@ -119,13 +119,20 @@ class KafkaUtil(brokerList: Seq[(String, Int)], clientId: String = "KafkaUtil") 
      * @return （是否全部成功，（partition,status))
      */
     def setFetchOffset(topic: String, groupId: String, offsets: Map[Int, Long], consumer: KafkaConsumer[Array[Byte], Array[Byte]] = null): Unit = {
-        val consumerObj = if (consumer == null) {
-            getConsumer(groupId)
-        } else {
-            consumer
+        val consumerObj = if (consumer == null) createConsumer(groupId) else consumer
+        //过滤consumer监听的分区
+        val partitions = consumerObj.assignment().filter(_.topic() == topic)
+        val reqOffset = offsets.filter(offset => {
+            partitions.exists(p => p.partition() == offset._1)
+        }).map(item => (new TopicPartition(topic, item._1), new OffsetAndMetadata(item._2)))
+
+        if (reqOffset.size > 0) {
+            consumerObj.commitSync(reqOffset)
+            if (consumer == null) {
+                consumerObj.close()
+            }
         }
-        val map = offsets.map(item => (new TopicPartition(topic, item._1), new OffsetAndMetadata(item._2))).toMap
-        consumerObj.commitSync(map)
+
     }
 
     /**
@@ -146,17 +153,25 @@ class KafkaUtil(brokerList: Seq[(String, Int)], clientId: String = "KafkaUtil") 
             (item._1, Math.max(pos, earliest))
         })
 
-        val consumer = getDefaultConsumer()
-        this.setFetchOffset(topic, "", fromOffsets, consumer)
+        val groupId = clientId + "-" + System.currentTimeMillis()
+        val consumer = createConsumer(groupId)
+        this.getPartitionInfo(topic).map(item => {
+            val topicPartition = new TopicPartition(topic, item.partition())
+            val cur = fromOffsets.get(topicPartition.partition()).get
+            if (!consumer.assignment().contains(topicPartition)) {
+                consumer.assign(topicPartition :: Nil)
+            }
+            consumer.seek(topicPartition,cur)
+        })
+
         val result = this.getPartitionInfo(topic).map(item => {
             val topicPartition = new TopicPartition(topic, item.partition())
-            consumer.assign(topicPartition :: Nil)
             val last = latestOffset.get(topicPartition.partition()).get
             var cur = fromOffsets.get(topicPartition.partition()).get
             val recordBuf = new ArrayBuffer[ConsumerRecord[Array[Byte], Array[Byte]]]()
             var loop = true
             while (recordBuf.size <= msgCount && loop) {
-                val records = consumer.poll(1000)
+                val records = consumer.poll(10000)
                 if (records.count() > 0) {
                     cur = records.map(record => record.offset()).max
                     recordBuf.appendAll(records)
@@ -165,7 +180,7 @@ class KafkaUtil(brokerList: Seq[(String, Int)], clientId: String = "KafkaUtil") 
             }
             (topicPartition.partition(), recordBuf.toList)
         }).toMap
-        consumer.unsubscribe()
+        consumer.close()
         result
     }
 

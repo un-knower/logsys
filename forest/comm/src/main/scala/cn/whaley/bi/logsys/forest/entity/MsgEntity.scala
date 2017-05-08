@@ -90,7 +90,9 @@ class MsgEntity(from: JSONObject) extends JSONObject(from) {
     }
 
 
-    val msgBodyObj: MsgBodyEntity = new MsgBodyEntity(this.msgBody)
+    def msgBodyObj(): MsgBodyEntity = {
+        new MsgBodyEntity(this.msgBody)
+    }
 
 
 }
@@ -110,9 +112,9 @@ object MsgEntity {
     }
 
     def copy(obj: JSONObject): MsgEntity = {
-        val msgEntity = new MsgEntity(new JSONObject())
-        msgEntity.asInstanceOf[java.util.Map[String, Object]].putAll(obj)
-        msgEntity
+        val copyObj = new JSONObject()
+        copyObj.asInstanceOf[java.util.Map[String, Object]].putAll(obj)
+        new MsgEntity(copyObj)
     }
 
 

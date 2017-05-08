@@ -34,7 +34,7 @@ class GenericMsgDecoder extends MsgDecodeTrait with NameTrait {
             }
             val msg = new MsgEntity(JSON.parseObject(value))
             if (filebeatDecode) {
-                msg.msgBody.put("fb_Time", fbTime)
+                msg.msgBody.put("svr_fb_Time", fbTime)
             }
             new ProcessResult(this.name, ProcessResultCode.processed, "", Some(msg))
         } catch {

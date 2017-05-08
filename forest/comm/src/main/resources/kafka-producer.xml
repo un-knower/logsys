@@ -2,7 +2,7 @@
 <configuration>
     <property>
         <name>kafka-producer.bootstrap.servers</name>
-        <value>localhost:9092</value>
+        <value>${prop.kafka.bootstrap.servers}</value>
     </property>
     <property>
         <name>kafka-producer.acks</name>
@@ -10,11 +10,11 @@
     </property>
     <property>
         <name>kafka-producer.compression.type</name>
-        <value>none</value>
+        <value>${prop.kafka-producer.compression.type}</value>
     </property>
     <property>
         <name>kafka-producer.max.request.size</name>
-        <value>1572864</value>
+        <value>${prop.kafka-producer.max.request.size}</value>
     </property>
     <property>
         <name>kafka-producer.key.serializer</name>

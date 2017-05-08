@@ -7,7 +7,7 @@ import java.util.concurrent.{CountDownLatch, LinkedBlockingQueue}
 import cn.whaley.bi.logsys.common.{KafkaUtil, ConfManager}
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
 import org.apache.kafka.clients.consumer.{KafkaConsumer, ConsumerRecord}
-import org.apache.kafka.common.PartitionInfo
+import org.apache.kafka.common.{TopicPartition, PartitionInfo}
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.{mutable}
@@ -46,6 +46,20 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         initKafkaUtil(confManager)
         initDefaultOffset(confManager)
 
+
+    }
+
+    /**
+     * 启动
+     */
+    def launch(): Unit = {
+        //定期扫描,以匹配任务启动后创建的topic
+        val timer = new Timer()
+        timer.scheduleAtFixedRate(new TimerTask {
+            override def run(): Unit = {
+                initProcessThreadAuto()
+            }
+        }, 0, 300 * 1000)
     }
 
     /**
@@ -59,17 +73,17 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
     /**
      * 启动数据源读取线程
      */
-    def start(): Unit = {
-        //定期扫描,以匹配任务启动后创建的topic
-        val timer = new Timer()
-        timer.scheduleAtFixedRate(new TimerTask {
-            override def run(): Unit = {
-                LOG.info(s"scan topics. topicRegexs:${topicRegexs}")
-                launch()
+    def start(topic: String = ""): Unit = {
+        if (topic == "") {
+            this.initProcessThreadAuto()
+        } else {
+            var threads = consumerThreads.filter(_.consumerTopic == topic).toSeq
+            if (threads.size == 0) {
+                threads = initProcessThread(Array(topic))
             }
-        }, 300 * 1000, 300 * 1000)
+            threads.head.start()
+        }
     }
-
 
     /**
      * 停止全部或特定数据源读取线程
@@ -90,44 +104,20 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         offsetInfo.map(item => {
             val topic = item._1
             val offset = item._2
-            val ret = kafkaUtil.setFetchOffset(topic, groupId, offset)
-            LOG.info(s"set fetch offset:$topic,$groupId,${offset.mkString(",")},${ret}")
-            val currOffset = kafkaUtil.getFetchOffset(topic, groupId)
-            LOG.info(s"current offset:${topic},${currOffset}")
-        })
-    }
+            consumerThreads.filter(_.consumerTopic == topic).foreach(thread => {
+                val consumer = thread.kafkaConsumer
+                //如果线程没有启动,则consumer可能尚未绑定任何分区,此时执行一次poll来解决
+                if(!thread.isStarted){
+                    consumer.poll(1000)
+                }
+                offset.filter(item => consumer.assignment().exists(_.partition() == item._1))
+                    .foreach(item => {
+                    consumer.seek(new TopicPartition(topic, item._1), item._2)
+                    LOG.info(s"seek offset:[($topic,${item._1}),${item._2}]")
+                })
+            })
 
-    /**
-     * 获取默认偏移值，如果没有设置则返回空Map
-     * @param topic
-     * @return
-     */
-    def getDefaultOffset(topic: String): Map[Int, Long] = {
-        if (topicPartitions.get(topic).isEmpty) {
-            return Map[Int, Long]()
-        }
-        val partitions = topicPartitions.get(topic).get
-        partitions.flatMap(item => {
-            val partition = item.partition()
-            val matched =
-                defaultOffset.map(item => {
-                    var regStr = item._1
-                    if (!regStr.startsWith("^")) regStr = "^" + regStr
-                    if (!regStr.endsWith("$")) regStr = regStr + "$"
-                    if (regStr.r.findFirstMatchIn(topic + "-" + partition).isDefined) {
-                        (0, item)
-                    } else if (regStr.r.findFirstMatchIn(topic).isDefined) {
-                        (1, item)
-                    } else {
-                        (-1, null)
-                    }
-                }).filter(_._1 >= 0).toArray.sortBy(_._1)
-            if (matched.size == 0) {
-                None
-            } else {
-                Array((partition, matched(0)._2._2))
-            }
-        }).toMap
+        })
     }
 
     /**
@@ -155,37 +145,24 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         msgQueueMap.toMap
     }
 
+    //扫描配置项匹配的topic,如果topic没有初始化相应的处理线程,则创建并通知监听者
+    private def initProcessThreadAuto(): Seq[MsgConsumerThread] = {
+        LOG.info(s"scan topics. topicRegexs:${topicRegexs}")
+        val topics = kafkaUtil.getTopics().filter(topic => {
+            (topic.startsWith("__") == false
+                && topicRegexs.count(reg => reg.findFirstMatchIn(topic).isDefined) > 0)
+        })
+        initProcessThread(topics)
+    }
 
-    //为每个topic启动一个读线程
-    private def launch(): Unit = {
+    //为每个topic初始化一个读线程,并通知监听者,返回本次初始化的线程
+    private def initProcessThread(topics: Seq[String]): Seq[MsgConsumerThread] = {
         this.synchronized {
-            //通过正则表达式过滤需要订阅的topic列表
-            val allTopic = kafkaUtil.getTopics()
-            topics = allTopic.filter(topic => {
-                (topic.startsWith("__") == false
-                    && consumerThreads.exists(thread => thread.consumerTopic == topic) == false
-                    && topicRegexs.count(reg => reg.findFirstMatchIn(topic).isDefined) > 0)
-            })
-            if (topics.length == 0) {
-                return
-            }
-
-            LOG.info(s"topics:${topics.mkString}")
-            val validTopics = topics.map(topic => {
+            var index = consumerThreads.size
+            val threads = topics.filter(topic => !consumerThreads.exists(thread => thread.consumerTopic == topic)
+            ).map(topic => {
                 val partitionInfo = kafkaUtil.getPartitionInfo(topic)
-                if (partitionInfo.size == 0) {
-                    ""
-                } else {
-                    topicPartitions.put(topic, partitionInfo)
-                    topic
-                }
-            }).filter(topic => topic != "")
-            if (validTopics.length == 0) {
-                return
-            }
-
-            var index = 0
-            val threads = validTopics.map(topic => {
+                topicPartitions.put(topic, partitionInfo)
                 val consumer = new KafkaConsumer[Array[Byte], Array[Byte]](consumerConf)
                 consumer.subscribe(topic :: Nil)
                 index = index + 1
@@ -194,28 +171,19 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
                 new MsgConsumerThread(topic, index, queue, consumer)
             })
 
-            val threadCount = threads.length
-            if (threadCount == 0) {
-                return
+            if (threads.length > 0) {
+                consumerThreads = consumerThreads ++ threads
+                //通知监听者
+                if (msgQueueAddedListeners.size > 0) {
+                    val events = threads.map(thread => (thread.consumerTopic, thread.msgQueue))
+                    msgQueueAddedListeners.foreach(listener => {
+                        listener(events)
+                    })
+                }
+                threads
+            } else {
+                new Array[MsgConsumerThread](0)
             }
-
-            val latch = new CountDownLatch(threadCount)
-            threads.foreach(item => {
-                item.start()
-                LOG.info(s"MsgConsumerThread[${item.getName}] started.")
-                latch.countDown()
-            })
-            consumerThreads = consumerThreads ++ threads
-            latch.await()
-
-            //通知监听者
-            if (msgQueueAddedListeners.size > 0) {
-                val events = threads.map(thread => (thread.consumerTopic, thread.msgQueue))
-                msgQueueAddedListeners.foreach(listener => {
-                    listener(events)
-                })
-            }
-
         }
     }
 
@@ -251,20 +219,21 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
     private var defaultOffset: Map[String, Long] = null
     private var queueCapacity: Int = defaultQueueCapacity
 
-
     private val topicPartitions: mutable.Map[String, List[PartitionInfo]] = new mutable.HashMap[String, List[PartitionInfo]]()
     private val msgQueueMap: mutable.Map[String, LinkedBlockingQueue[KafkaMessage]] = new mutable.HashMap[String, LinkedBlockingQueue[KafkaMessage]]()
     private var consumerThreads: ArrayBuffer[MsgConsumerThread] = new ArrayBuffer[MsgConsumerThread]
-    private var msgQueueAddedListeners: ArrayBuffer[MsgQueueAddedListener] = new ArrayBuffer[MsgQueueAddedListener]
+    private val msgQueueAddedListeners: ArrayBuffer[MsgQueueAddedListener] = new ArrayBuffer[MsgQueueAddedListener]
 
 
-    class MsgConsumerThread(topic: String, index: Int, queue: LinkedBlockingQueue[KafkaMessage], stream: KafkaConsumer[Array[Byte], Array[Byte]]) extends Thread {
+    class MsgConsumerThread(topic: String, index: Int, queue: LinkedBlockingQueue[KafkaMessage], consumer: KafkaConsumer[Array[Byte], Array[Byte]]) extends Thread {
 
         @volatile private var keepRunning: Boolean = true
+        @volatile var isStarted = false
+        @volatile var msgCount = 0
 
         val consumerTopic = topic
-
         val msgQueue = queue
+        val kafkaConsumer = consumer
 
         this.setName(s"consumer-${topic}")
 
@@ -276,20 +245,21 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
         override def run(): Unit = {
             this.setName(s"${topic}/${index}")
-            var count = 0
+            this.isStarted = true
+
             LOG.info(s"MsgConsumerThread[${this.getName}] started")
             while (keepRunning) {
                 try {
                     var timeout = 100
-                    val records = stream.poll(timeout)
+                    val records = consumer.poll(timeout)
                     if (records.count() > 0) {
                         records.foreach(record => {
                             msgQueue.put(record)
                         })
                         timeout = 100
-                        count = count + 1
-                        if (count % logPerMsgCount == 0) {
-                            LOG.info(s"MsgConsumerThread[${this.getName}] msgCount: ${count}")
+                        msgCount = msgCount + 1
+                        if (msgCount % logPerMsgCount == 0) {
+                            LOG.info(s"MsgConsumerThread[${this.getName}] msgCount: ${msgCount}")
                         }
                     } else {
                         timeout = 1000

@@ -222,7 +222,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
     def testKafkaUtil_setFetchOffset: Unit = {
         val topic = "test"
         val util = getKafkaUtil()
-        val consumer = util.getConsumer(groupId)
+        val consumer = util.createConsumer(groupId)
         val partitions = util.getPartitionInfo(topic)
         val offsets = partitions.map(item => (item.partition(), 200000L)).toMap
         util.setFetchOffset(topic, groupId, offsets, consumer)

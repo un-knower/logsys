@@ -23,24 +23,18 @@ class MsgBatchManagerTest extends LogTrait {
     @Test
     def testBatch: Unit = {
 
-        //resetOffset
-
-        val confManager = new ConfManager(Array("MsgBatchManager.xml"))
+        val confManager = new ConfManager(Array("MsgBatchManager.xml", "settings.properties"))
         val batchManager = new MsgBatchManager()
         batchManager.init(confManager)
         batchManager.start()
 
-
-        val topics = batchManager.consumingTopics
-        if (topics.size > 0) {
-            LOG.info(s"keep running,consumedTopic:${batchManager.consumingTopics}")
-            Thread.sleep(1000 * 3)
+        while (true) {
+            val topics = batchManager.consumingTopics
+            if (topics.size > 0) {
+                LOG.info(s"keep running,consumedTopic:${batchManager.consumingTopics}")
+            }
+            Thread.sleep(5000)
         }
-
-
-        //batchManager.shutdown(true)
-
-        Thread.sleep(1000 * 3000)
 
         LOG.info("test completed.")
 

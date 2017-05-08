@@ -6,11 +6,11 @@ import com.alibaba.fastjson.{JSONArray, JSONObject}
  * Created by fj on 17/5/2.
  */
 class MsgBodyEntity(from: JSONObject) extends JSONObject(from) {
-    val host: String = {
+    def host(): String = {
         this.getString(MsgBodyEntity.KEY_SVR_HOST)
     }
 
-    val url: String = {
+    def url(): String = {
         this.getString(MsgBodyEntity.KEY_SVR_REQ_URL)
     }
 
@@ -18,20 +18,20 @@ class MsgBodyEntity(from: JSONObject) extends JSONObject(from) {
         this.put(MsgBodyEntity.KEY_SVR_REQ_URL, value)
     }
 
-    val method: String = {
+    def method(): String = {
         this.getString(MsgBodyEntity.KEY_SVR_REQ_METHOD)
     }
 
-    val contentType: String = {
+    def contentType(): String = {
         this.getString(MsgBodyEntity.KEY_SVR_CONTENT_TYPE)
     }
 
-    val receiveTime: Long = {
+    def receiveTime(): Long = {
         this.getLong(MsgBodyEntity.KEY_SVR_RECEIVE_TIME)
     }
 
     def body(): Object = {
-        this.getJSONObject(MsgBodyEntity.KEY_BODY)
+        this.get(MsgBodyEntity.KEY_BODY)
     }
 
     def setBody(value: Object): Unit = {
@@ -49,8 +49,8 @@ class MsgBodyEntity(from: JSONObject) extends JSONObject(from) {
             this.remove(MsgBodyEntity.KEY_BODY)
             Array(this)
         } else if (body.isInstanceOf[JSONArray]) {
-            this.remove(MsgBodyEntity.KEY_BODY)
             val array = body.asInstanceOf[JSONArray]
+            this.remove(MsgBodyEntity.KEY_BODY)
             for (i <- 0 to array.size() - 1) yield {
                 val item = array.get(i).asInstanceOf[JSONObject]
                 item.asInstanceOf[java.util.Map[String, Object]].putAll(this)

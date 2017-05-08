@@ -13,6 +13,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Created by fj on 16/10/30.
@@ -47,7 +48,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
      */
     def start(): Unit = {
         msgSource.addMsgQueueAddedListener(this.msgQueueAddedFn)
-        msgSource.start()
+        msgSource.launch()
     }
 
     /**
@@ -65,7 +66,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         //关闭消息处理线程池
         procThreadPool.shutdown()
         procThreadPool.awaitTermination(30, TimeUnit.SECONDS)
-        processThreads = Array[BatchProcessThread]()
+        processThreads.clear()
     }
 
     /**
@@ -74,88 +75,6 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
      */
     def consumingTopics: Seq[String] = {
         processThreads.filter(item => !item.isWaiting).map(item => item.consumerTopic)
-    }
-
-    def msgQueueAddedFn(topicAndQueue: Seq[(String, LinkedBlockingQueue[KafkaMessage])]): Unit = {
-
-        val offsetMap = new mutable.HashMap[String, Map[Int, Long]]()
-
-        //默认offset
-        topicAndQueue.foreach(item => {
-            val offset = msgSource.getDefaultOffset(item._1)
-            offsetMap.put(item._1, offset)
-        })
-
-        //从目标topic恢复offset
-        if (recoverSourceOffsetFromSink == 1) {
-            //获取topic的最后处理offset
-            topicAndQueue.foreach(item => {
-                val topic = item._1
-                val sourceLatestOffset = msgSource.getLatestOffset(topic)
-                //从目标中获取源topic的offset信息, 存在源topic已被监听,但尚未创建的情况,此时分区数为0
-                val partitions = msgSource.getTopicPartitions(topic)
-                if (partitions.isDefined) {
-                    //理论上源topic的partition是均衡分布的，那么在目标topic中读取一批的处理数据，
-                    //就能恢复源topic每个partition的offset，设置为2倍，以保留一定的余量
-                    //如果源topic的partition数据不均衡，那么可能存在部分源topic的partition的offset信息不能恢复
-                    //这些partition的offset依然沿用kafka的自动offset管理的值
-                    val msgCount = (batchSize / partitions.get.size) * 2
-                    val info = msgSink.getTopicLastOffset(topic, sourceLatestOffset, msgCount)
-                    LOG.info(s"getTopicLastOffset[${topic},${msgCount}]:${info.mkString(",")}")
-
-                    val offset: Map[Int, Long] = info.groupBy(arrItem => arrItem._1)
-                        .map(arrItem => {
-                        (arrItem._1, arrItem._2.maxBy(_._2)._2)
-                    })
-                    LOG.info(s"offsetInfo:[${offset.mkString(",")}]")
-
-                    //合并默认offset
-                    val defaultOffset = offsetMap.get(topic)
-                    if (defaultOffset.isDefined) {
-                        val newMap = new mutable.HashMap[Int, Long]()
-                        newMap.putAll(defaultOffset.get)
-                        newMap.putAll(offset)
-                        offsetMap.put(topic, newMap.toMap)
-                    } else {
-                        offsetMap.put(topic, offset)
-                    }
-                }
-            })
-        }
-
-        if (offsetMap.size > 0) {
-            LOG.info(s"commitOffset:${offsetMap}")
-            msgSource.commitOffset(offsetMap.toMap)
-        } else {
-            LOG.info(s"commitOffset:None")
-        }
-
-        msgSource.start()
-        //等待1s，以便msgSource对消息队列进行初始填充
-        Thread.sleep(1000)
-
-
-        //处理线程异常回调函数，如果返回false，则线程应该退出
-        val exF = (thread: BatchProcessThread, ex: Throwable) => {
-            LOG.error(s"${thread.getName},throw exception", ex)
-            //停止相应topic数据源线程的读取
-            msgSource.stop(thread.consumerTopic)
-            //错误计数，如果全部线程都出错，则shutdown
-            processThreadErr = processThreadErr + 1
-            if (processThreadErr >= processThreads.length) {
-                LOG.error("all thread throw exception.task exit...")
-                shutdown(false)
-            }
-            false
-        }
-
-        //对每个topic启动一个处理线程
-        processThreads = topicAndQueue.map(item => {
-            new BatchProcessThread(item._1, item._2, exF)
-        })
-
-        processThreads.foreach(item => item.start())
-
     }
 
     /**
@@ -246,7 +165,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                 val listSize = list.size()
 
                 //分批次提交消息处理任务,利用多线程加快处理进度
-                val callableCount: Int = Math.ceil(listSize / callableSize).toInt
+                val callableCount: Int = Math.max(1, Math.ceil(listSize / callableSize).toInt)
                 val futures =
                     for (i <- 0 to callableCount - 1) yield {
                         callId = callId + 1
@@ -395,6 +314,78 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         }
     }
 
+    //消息源队列增加监听函数
+    private def msgQueueAddedFn(topicAndQueue: Seq[(String, LinkedBlockingQueue[KafkaMessage])]): Unit = {
+
+        val offsetMap = new mutable.HashMap[String, Map[Int, Long]]()
+
+        //从目标topic恢复offset
+        if (recoverSourceOffsetFromSink == 1) {
+            //获取topic的最后处理offset
+            topicAndQueue.foreach(item => {
+                val topic = item._1
+                val sourceLatestOffset =  msgSource.getLatestOffset(topic)
+                //从目标中获取源topic的offset信息, 存在源topic已被监听,但尚未创建的情况,此时分区数为0
+                val partitions = msgSource.getTopicPartitions(topic)
+                if (partitions.isDefined) {
+                    //理论上源topic的partition是均衡分布的，那么在目标topic中读取一批的处理数据，
+                    //就能恢复源topic每个partition的offset，设置为2倍，以保留一定的余量
+                    //如果源topic的partition数据不均衡，那么可能存在部分源topic的partition的offset信息不能恢复
+                    //这些partition的offset依然沿用kafka的自动offset管理的值
+                    val msgCount = (batchSize / partitions.get.size) * 2
+                    val info = msgSink.getTopicLastOffset(topic, sourceLatestOffset, msgCount)
+                    LOG.info(s"getTopicLastOffset[${topic},${msgCount}]:${info.mkString(",")}")
+
+                    val offset: Map[Int, Long] = info.groupBy(arrItem => arrItem._1)
+                        .map(arrItem => {
+                        (arrItem._1, arrItem._2.maxBy(_._2)._2)
+                    })
+                    LOG.info(s"offsetInfo:[${offset.mkString(",")}]")
+                    offsetMap.put(topic, offset)
+                }
+            })
+        }
+
+        if (offsetMap.size > 0) {
+            LOG.info(s"commitOffset:${offsetMap}")
+            msgSource.commitOffset(offsetMap.toMap)
+        } else {
+            LOG.info(s"commitOffset:None")
+        }
+
+        //启动消费线程
+        topicAndQueue.foreach(item => {
+            val topic = item._1
+            msgSource.start(topic)
+        })
+
+        //等待1s，以便msgSource对消息队列进行初始填充
+        Thread.sleep(1000)
+
+        //处理线程异常回调函数，如果返回false，则线程应该退出
+        val exF = (thread: BatchProcessThread, ex: Throwable) => {
+            LOG.error(s"${thread.getName},throw exception", ex)
+            //停止相应topic数据源线程的读取
+            msgSource.stop(thread.consumerTopic)
+            //错误计数，如果全部线程都出错，则shutdown
+            processThreadErr = processThreadErr + 1
+            if (processThreadErr >= processThreads.length) {
+                LOG.error("all thread throw exception.task exit...")
+                shutdown(false)
+            }
+            false
+        }
+
+        //对每个topic启动一个处理线程
+        topicAndQueue.map(item => {
+            val thread = new BatchProcessThread(item._1, item._2, exF)
+            thread.start()
+            processThreads.add(thread)
+        })
+
+    }
+
+    //打印错误日志
     private def logMsgProcChainErr[T <: AnyRef](message: KafkaMessage, procResult: ProcessResult[T]): Unit = {
 
         if (!procResult.ex.isDefined || !procResult.ex.get.isInstanceOf[ProcessorChainException[AnyRef]]) {
@@ -418,11 +409,10 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         })
     }
 
-
     //消息处理线程池
     private val procThreadPool = Executors.newCachedThreadPool()
     //处理线程，每个topic一个线程
-    private var processThreads: Seq[BatchProcessThread] = null
+    private var processThreads: ArrayBuffer[BatchProcessThread] = new ArrayBuffer[BatchProcessThread]()
     //处理线程计数，如果所有处理线程均出错，则应该退出
     private var processThreadErr: Int = 0
     //是否从消息目标系统中恢复消息源系统的offset
@@ -433,91 +423,5 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     private var batchSize: Int = 4000
     //每次消息处理过程调用所处理的消息数量
     private var callableSize: Int = 2000
-
-    //消息队列增加事件处理器
-    private val msgQueueAddedProcessor = (topicAndQueue: Seq[(String, LinkedBlockingQueue[KafkaMessage])]) => {
-
-        LOG.info(s"process event MsgQueueAdded[topic:${topicAndQueue.map(_._1).mkString(",")}]")
-
-        val offsetMap = new mutable.HashMap[String, Map[Int, Long]]()
-
-        //默认offset
-        topicAndQueue.foreach(item => {
-            val offset = msgSource.getDefaultOffset(item._1)
-            offsetMap.put(item._1, offset)
-        })
-
-        //从目标topic恢复offset
-        if (recoverSourceOffsetFromSink == 1) {
-            //获取topic的最后处理offset
-            topicAndQueue.foreach(item => {
-                val topic = item._1
-                val sourceLatestOffset = msgSource.getLatestOffset(topic)
-                //从目标中获取源topic的offset信息, 存在源topic已被监听,但尚未创建的情况,此时分区数为0
-                val partitions = msgSource.getTopicPartitions(topic)
-                if (partitions.isDefined) {
-                    //理论上源topic的partition是均衡分布的，那么在目标topic中读取一批的处理数据，
-                    //就能恢复源topic每个partition的offset，设置为2倍，以保留一定的余量
-                    //如果源topic的partition数据不均衡，那么可能存在部分源topic的partition的offset信息不能恢复
-                    //这些partition的offset依然沿用kafka的自动offset管理的值
-                    val msgCount = (batchSize / partitions.get.size) * 2
-                    val info = msgSink.getTopicLastOffset(topic, sourceLatestOffset, msgCount)
-                    LOG.info(s"getTopicLastOffset[${topic},${msgCount}]:${info.mkString(",")}")
-
-                    val offset: Map[Int, Long] = info.groupBy(arrItem => arrItem._1)
-                        .map(arrItem => {
-                        (arrItem._1, arrItem._2.maxBy(_._2)._2)
-                    })
-                    LOG.info(s"offsetInfo:[${offset.mkString(",")}]")
-
-                    //合并默认offset
-                    val defaultOffset = offsetMap.get(topic)
-                    if (defaultOffset.isDefined) {
-                        val newMap = new mutable.HashMap[Int, Long]()
-                        newMap.putAll(defaultOffset.get)
-                        newMap.putAll(offset)
-                        offsetMap.put(topic, newMap.toMap)
-                    } else {
-                        offsetMap.put(topic, offset)
-                    }
-                }
-            })
-        }
-
-        if (offsetMap.size > 0) {
-            LOG.info(s"commitOffset:${offsetMap}")
-            msgSource.commitOffset(offsetMap.toMap)
-        } else {
-            LOG.info(s"commitOffset:None")
-        }
-
-        msgSource.start()
-        //等待1s，以便msgSource对消息队列进行初始填充
-        Thread.sleep(1000)
-
-
-        //处理线程异常回调函数，如果返回false，则线程应该退出
-        val exF = (thread: BatchProcessThread, ex: Throwable) => {
-            LOG.error(s"${thread.getName},throw exception", ex)
-            //停止相应topic数据源线程的读取
-            msgSource.stop(thread.consumerTopic)
-            //错误计数，如果全部线程都出错，则shutdown
-            processThreadErr = processThreadErr + 1
-            if (processThreadErr >= processThreads.length) {
-                LOG.error("all thread throw exception.task exit...")
-                shutdown(false)
-            }
-            false
-        }
-
-        //对每个topic启动一个处理线程
-        processThreads = topicAndQueue.map(item => {
-            new BatchProcessThread(item._1, item._2, exF)
-        })
-
-        processThreads.foreach(item => item.start())
-
-    }
-
 
 }

@@ -70,39 +70,27 @@ class LogEntity(from: MsgEntity) extends MsgEntity(from) {
 
     //格式平展化
     def normalize(): Seq[LogEntity] = {
-        //提升公共字段
-        popFrom(msgBody, LogEntity.KEY_APP_ID)
-        popFrom(msgBody, LogEntity.KEY_LOG_VERSION)
-        popFrom(msgBody, LogEntity.KEY_LOG_SIGN_FLAG)
-        popFrom(msgBody, LogEntity.KEY_LOG_TIME)
-
         //展开msgBody
-        this.removeMsgBody
         val normalizeMsgBody = normalizeMsgBodyObj()
+        this.removeMsgBody
         val size = normalizeMsgBody.size
         for (i <- 0 to size - 1) yield {
-            //只有一个消息体则不可避免一次不必要的复制
+            //只有一个消息体则可避免一次不必要的复制
             val entity = if (i == 0) this else LogEntity.copy(this)
             val logId = this.msgId + StringUtil.fixLeftLen(Integer.toHexString(i), '0', 4)
             entity.updateLogId(logId)
             entity.updateLogBody(normalizeMsgBody(0))
+
+            //提升公共字段
+            MsgEntity.translateProp(entity.logBody, LogEntity.KEY_APP_ID, entity, LogEntity.KEY_APP_ID)
+            MsgEntity.translateProp(entity.logBody, LogEntity.KEY_LOG_VERSION, entity, LogEntity.KEY_LOG_VERSION)
+            MsgEntity.translateProp(entity.logBody, LogEntity.KEY_LOG_SIGN_FLAG, entity, LogEntity.KEY_LOG_SIGN_FLAG)
+            MsgEntity.translateProp(entity.logBody, LogEntity.KEY_LOG_TIME, entity, LogEntity.KEY_LOG_TIME)
+
             entity
         }
-    }
 
-    //从msgBody弹出特定属性到顶层,如果顶层属性已经存在,则进行覆盖
-    def popFrom(fromObj: JSONObject, fromKey: String): Unit = {
-        val toKey = fromKey
-        popFrom(fromObj, fromKey, toKey)
     }
-
-    def popFrom(fromObj: JSONObject, fromKey: String, toKey: String): Unit = {
-        if (msgBody.containsKey(fromKey)) {
-            this.put(toKey, msgBody.get(fromKey))
-            msgBody.remove(fromKey)
-        }
-    }
-
 
 }
 
@@ -124,7 +112,7 @@ object LogEntity {
     }
 
     def copy(obj: JSONObject): LogEntity = {
-        new LogEntity(MsgEntity.copy(new JSONObject()))
+        new LogEntity(MsgEntity.copy(obj))
     }
 
 }
