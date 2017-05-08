@@ -59,7 +59,7 @@ trait MsgSinkTrait {
         } else if (!keyObj.containsKey("oriTopic")) {
             keyObj.put("oriTopic", source.timestamp())
             keyObj.put("oriParId", source.partition())
-            keyObj.put("oriOffset", source.topic())
+            keyObj.put("oriOffset", source.offset())
         }
         keyObj
     }

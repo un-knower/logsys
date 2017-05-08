@@ -107,7 +107,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
             consumerThreads.filter(_.consumerTopic == topic).foreach(thread => {
                 val consumer = thread.kafkaConsumer
                 //如果线程没有启动,则consumer可能尚未绑定任何分区,此时执行一次poll来解决
-                if(!thread.isStarted){
+                if (!thread.isStarted) {
                     consumer.poll(1000)
                 }
                 offset.filter(item => consumer.assignment().exists(_.partition() == item._1))
@@ -115,6 +115,21 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
                     consumer.seek(new TopicPartition(topic, item._1), item._2)
                     LOG.info(s"seek offset:[($topic,${item._1}),${item._2}]")
                 })
+                //对不在offset之中的分区设置默认offset
+                if (defaultOffset.contains(topic)) {
+                    consumer.assignment().filter(item => !offset.contains(item.partition()))
+                        .foreach(item => {
+                        val defaultValue = defaultOffset.get(topic).get
+                        if (defaultValue == -2) {
+                            consumer.seekToBeginning(new TopicPartition(topic, item.partition()) :: Nil)
+                        } else if (defaultValue == -1) {
+                            consumer.seekToEnd(new TopicPartition(topic, item.partition()) :: Nil)
+                        } else {
+                            require(defaultValue >= 0)
+                            consumer.seek(new TopicPartition(topic, item.partition()), defaultValue)
+                        }
+                    })
+                }
             })
 
         })

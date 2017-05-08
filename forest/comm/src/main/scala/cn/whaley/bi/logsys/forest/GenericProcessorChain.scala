@@ -14,7 +14,7 @@ class GenericProcessorChain extends InitialTrait with LogTrait with NameTrait {
 
     var msgDecoder: MsgDecodeTrait = null
 
-    var msgProcessor: MsgProcessorTrait = null
+        var msgProcessor: MsgProcessorTrait = null
 
     var logProcessor: LogProcessorTrait = null
 
