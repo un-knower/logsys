@@ -20,7 +20,9 @@ class LogOriginProcessorChain extends GenericProcessorChain {
     override def process(bytes: Array[Byte]): ProcessResult[Seq[LogEntity]] = {
         val jsonObj = JSON.parseObject(new String(bytes))
         val logEntity = LogEntity.create(jsonObj)
-        logEntity.put("odsTs", System.currentTimeMillis())
+        if (logEntity.containsKey("_sync")) {
+            logEntity.getJSONObject("_sync").put("odsTs", System.currentTimeMillis())
+        }
         val logs = logEntity :: Nil
         new ProcessResult(this.name, ProcessResultCode.processed, "", Some(logs))
     }

@@ -58,12 +58,7 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
      */
     override def getTopicLastOffset(sourceTopic: String, sourceLatestOffset: Map[Int, Long], maxMsgCount: Int): Map[Int, Long] = {
         val offsetMap = new mutable.HashMap[Int, Long]
-        val appId = if (sourceTopic.startsWith("log-raw-")) {
-            sourceTopic.substring("log-raw-".length)
-        } else {
-            sourceTopic
-        }
-        val topicPrefix = s"${targetTopicPrefix}-${appId}"
+        val topicPrefix = getTargetTopic(sourceTopic,null)
         val targetTopics = kafkaUtil.getTopics().filter(topic => topic.startsWith(topicPrefix))
         LOG.info("get sourceTopic offset from :{}", targetTopics.mkString(","))
 

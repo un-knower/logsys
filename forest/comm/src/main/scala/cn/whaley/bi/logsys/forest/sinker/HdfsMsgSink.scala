@@ -14,6 +14,7 @@ import cn.whaley.bi.logsys.forest.entity.LogEntity
 import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, Path, FileSystem}
+import org.apache.hadoop.io.compress.CompressionCodec
 import org.apache.hadoop.io.{IOUtils, Writable, SequenceFile, Text}
 import org.apache.hadoop.util.ReflectionUtils
 import scala.collection.JavaConversions._
@@ -194,17 +195,19 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         groups.foreach(group => {
             val topic = group._1._1
             val parId = group._1._2
-            val filePath = new Path(s"${errRootDir}/${topic}_${parId}.json")
             val items = group._2
-            fs.createNewFile(filePath)
             val writer = {
                 try {
+                    val filePath = s"${errRootDir}/${topic}_${parId}.json"
+                    val path = new Path(filePath)
                     LOG.info(s"append file:${filePath}")
-                    fs.append(filePath)
+                    fs.append(path)
                 } catch {
                     case ex: Throwable => {
+                        val filePath = s"${errRootDir}/${topic}_${parId}_${System.currentTimeMillis()}.json"
+                        val path = new Path(filePath)
                         LOG.warn(s"append not supported. create file: ${filePath}")
-                        fs.create(filePath, true)
+                        fs.create(path, true)
                     }
                 }
             }
@@ -229,17 +232,19 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         val interval = if (commitTimeMillSec > 0) commitTimeMillSec else 300 * 1000
         timer.scheduleAtFixedRate(new TimerTask {
             override def run(): Unit = {
-                LOG.info("launch committer.")
                 val entries = logWriterCache.entrySet().toList
+                var count = 0
                 entries.foreach(entry => {
                     val value = entry.getValue
                     if (commitTimeMillSec > 0 && System.currentTimeMillis() - value.lastOpTs > commitTimeMillSec) {
                         value.readyForCommit.set(true)
                     }
                     if (value.readyForCommit.get()) {
-                        commitLogFileIf(entry.getKey)
+                        val committed = commitLogFileIf(entry.getKey)
+                        count = count + (if (committed) 1 else 0)
                     }
                 })
+                LOG.info(s"launch committer.${count} files committed.")
             }
         }, new Date(System.currentTimeMillis() + interval), interval)
     }
@@ -259,12 +264,19 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             val fs = FileSystem.get(hdfsConf)
             cacheItem.writer.close()
             val source = new Path(cacheItem.filePath)
+            val gzSource = new Path(cacheItem.filePath + ".gz")
+
             val keyAppIdPar = s"key_appId=${fileKey.appId}"
             val keyDayPar = s"key_day=${fileKey.timeKey.substring(0, 8)}"
             val keyHourPar = s"key_hour=${fileKey.timeKey.substring(8, 10)}"
-            val target = new Path(s"${commitRootDir}/${keyAppIdPar}/${keyDayPar}/${keyHourPar}/${cacheItem.fileName}")
-            fs.rename(source, target)
-            LOG.info(s"commit file [ OpCount=${cacheItem.OpCount}, OpBytes=${cacheItem.OpBytes},lastOpTime:${new Date(cacheItem.lastOpTs)} ]: ${source} -> ${target}")
+            val target = new Path(s"${commitRootDir}/${keyAppIdPar}/${keyDayPar}/${keyHourPar}/${cacheItem.fileName}.gz")
+
+            //压缩文件后移动到目标目录
+            compressGzFile(source, gzSource)
+            fs.rename(gzSource, target)
+            fs.delete(source, false)
+
+            LOG.info(s"commit file [ OpCount=${cacheItem.OpCount}, OpBytes=${cacheItem.OpBytes},lastOpTime:${new Date(cacheItem.lastOpTs)} ]: ${gzSource} -> ${target}")
             logWriterCache.remove(fileKey)
             cacheItem.isCommitted.set(true)
             true
@@ -272,6 +284,20 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             cacheItem.writeLock.unlock()
         }
 
+    }
+
+    //压缩文件
+    private def compressGzFile(srcFilePath: Path, targetFilePath: Path): Unit = {
+        val codecClass = Class.forName("org.apache.hadoop.io.compress.GzipCodec")
+        val fs = FileSystem.get(hdfsConf);
+        val codec = ReflectionUtils.newInstance(codecClass, hdfsConf).asInstanceOf[CompressionCodec];
+
+        val outputStream = fs.create(targetFilePath);
+        val in = fs.open(srcFilePath);
+        val out = codec.createOutputStream(outputStream);
+        IOUtils.copyBytes(in, out, hdfsConf);
+        IOUtils.closeStream(in);
+        IOUtils.closeStream(out);
     }
 
     //获取日志数据文件writer对象
