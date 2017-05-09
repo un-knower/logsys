@@ -232,6 +232,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         val interval = if (commitTimeMillSec > 0) commitTimeMillSec else 300 * 1000
         timer.scheduleAtFixedRate(new TimerTask {
             override def run(): Unit = {
+                //缓存中的满足提交条件的文件
                 val entries = logWriterCache.entrySet().toList
                 var count = 0
                 entries.foreach(entry => {
@@ -247,6 +248,30 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                 if (count > 0) {
                     LOG.info(s"launch committer.${count} files committed.")
                 }
+
+                //不在缓存中的文件,可能之前的任务异常退出而遗留的文件
+                val fs = FileSystem.get(hdfsConf)
+                val statuses = fs.globStatus(new Path(s"${tmpRootDir}/*.json"))
+                statuses.foreach(status => {
+                    val pathStr = status.getPath.toUri.getPath
+                    val reg = ".*/([a-zA-Z0-9]{32})_(\\d{10})_(\\w+)_(\\d+)_(\\d+).json".r
+                    val matched = reg.findFirstMatchIn(pathStr)
+                    if (matched.isDefined && status.getLen > 0) {
+                        val appId = matched.get.group(1)
+                        val timeKey = matched.get.group(2)
+                        val fileFlag = matched.get.group(3)
+                        val parId = matched.get.group(4).toInt
+                        val cacheKey = LogWriteCacheKey(appId, timeKey, fileFlag, parId)
+                        if (!logWriterCache.containsKey(cacheKey)) {
+                            val srcFileName = status.getPath.getName
+                            val source = status.getPath
+                            val target = cacheKey.getTargetFilePath(srcFileName)
+                            compressGzFile(source, target)
+                            fs.delete(source, false)
+                            LOG.info(s"process remaining file: ${source} -> ${target}")
+                        }
+                    }
+                })
             }
         }, new Date(System.currentTimeMillis() + interval), interval / 2)
     }
@@ -266,19 +291,12 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             val fs = FileSystem.get(hdfsConf)
             cacheItem.writer.close()
             val source = new Path(cacheItem.filePath)
-            val gzSource = new Path(cacheItem.filePath + ".gz")
+            val target = fileKey.getTargetFilePath(cacheItem.fileName)
 
-            val keyAppIdPar = s"key_appId=${fileKey.appId}"
-            val keyDayPar = s"key_day=${fileKey.timeKey.substring(0, 8)}"
-            val keyHourPar = s"key_hour=${fileKey.timeKey.substring(8, 10)}"
-            val target = new Path(s"${commitRootDir}/${keyAppIdPar}/${keyDayPar}/${keyHourPar}/${cacheItem.fileName}.gz")
-
-            //压缩文件后移动到目标目录
-            compressGzFile(source, gzSource)
-            fs.rename(gzSource, target)
+            compressGzFile(source, target)
             fs.delete(source, false)
 
-            LOG.info(s"commit file [ OpCount=${cacheItem.OpCount}, OpBytes=${cacheItem.OpBytes},lastOpTime:${new Date(cacheItem.lastOpTs)} ]: ${gzSource} -> ${target}")
+            LOG.info(s"commit file [ OpCount=${cacheItem.OpCount}, OpBytes=${cacheItem.OpBytes},lastOpTime:${new Date(cacheItem.lastOpTs)} ]: ${source} -> ${target}")
             logWriterCache.remove(fileKey)
             cacheItem.isCommitted.set(true)
             true
@@ -287,6 +305,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         }
 
     }
+
 
     //压缩文件
     private def compressGzFile(srcFilePath: Path, targetFilePath: Path): Unit = {
@@ -297,9 +316,21 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         val outputStream = fs.create(targetFilePath);
         val in = fs.open(srcFilePath);
         val out = codec.createOutputStream(outputStream);
-        IOUtils.copyBytes(in, out, hdfsConf);
-        IOUtils.closeStream(in);
-        IOUtils.closeStream(out);
+        try {
+            IOUtils.copyBytes(in, out, hdfsConf);
+            IOUtils.closeStream(out);
+        } catch {
+            case ex: Throwable => {
+                //防止残留无效文件
+                if (fs.exists(targetFilePath)) {
+                    fs.delete(targetFilePath, false)
+                }
+                throw ex
+            }
+        } finally {
+            IOUtils.closeStream(in);
+        }
+
     }
 
     //获取日志数据文件writer对象
@@ -372,8 +403,16 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
     //缓存
     private val logWriterCache: java.util.concurrent.ConcurrentHashMap[LogWriteCacheKey, LogWriteCacheItem] = new java.util.concurrent.ConcurrentHashMap[LogWriteCacheKey, LogWriteCacheItem]()
 
+
     case class LogWriteCacheKey(appId: String, timeKey: String, fileFlag: String, parId: Int) {
         val fileNamePrefix = s"${appId}_${timeKey}_${fileFlag}_${parId}"
+
+        def getTargetFilePath(srcfileName: String): Path = {
+            val keyAppIdPar = s"key_appId=${appId}"
+            val keyDayPar = s"key_day=${timeKey.substring(0, 8)}"
+            val keyHourPar = s"key_hour=${timeKey.substring(8, 10)}"
+            new Path(s"${commitRootDir}/${keyAppIdPar}/${keyDayPar}/${keyHourPar}/${srcfileName}.gz")
+        }
 
         override def equals(that: Any): Boolean = {
             if (that == null) {
@@ -395,14 +434,14 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         var lastOpTs: Long = pLastOpTs
         var OpBytes: Long = 0
         var OpCount: Long = 0
+        val readyForCommit = new AtomicBoolean(false)
+        var isCommitted = new AtomicBoolean(false)
+        val writeLock = new ReentrantReadWriteLock().writeLock()
+
         val fileName: String = {
             val idx = pFilePath.lastIndexOf('/')
             pFilePath.substring(idx + 1)
         }
-        val readyForCommit = new AtomicBoolean(false)
-        var isCommitted = new AtomicBoolean(false)
-
-        val writeLock = new ReentrantReadWriteLock().writeLock()
 
         //记录更改,且如条件满足则设置提交标致
         def changeOpBytes(byteCount: Int): Unit = {

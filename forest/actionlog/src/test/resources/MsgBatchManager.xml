@@ -30,8 +30,12 @@
         <value>cn.whaley.bi.logsys.forest.KafkaMsgSource</value>
     </property>
     <property>
-        <name>KafkaMsgSource.topics</name>
-        <value>${prop.KafkaMsgSource.topics}</value>
+        <name>KafkaMsgSource.topicRegex</name>
+        <value>${prop.KafkaMsgSource.topicRegex}</value>
+    </property>
+    <property>
+        <name>KafkaMsgSource.topicScanIntervalSec</name>
+        <value>${prop.KafkaMsgSource.topicScanIntervalSec}</value>
     </property>
     <property>
         <name>KafkaMsgSource.defaultOffset</name>

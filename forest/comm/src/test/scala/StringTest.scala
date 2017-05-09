@@ -31,8 +31,21 @@ class StringTest {
         val value = StringTest.byteArrayToInt(bytes);
         println(value)
 
-        println(Integer.parseInt("80",16))
+        println(Integer.parseInt("80", 16))
         println(Integer.toBinaryString(128))
+
+    }
+
+    @Test
+    def test4: Unit = {
+        val reg = ".*/([a-zA-Z0-9]{32})_(\\d{10})_(\\w+)_(\\d+)_(\\d+).json".r
+        val path = "/data_warehouse/ods_origin.db/tmp_log_origin/boikgpokn78sb95kjhfrendoj8ilnoi7_2017050718_raw_0_536.json"
+        val matched = reg.findFirstMatchIn(path).get
+        println(matched.group(1))
+        println(matched.group(2))
+        println(matched.group(3))
+        println(matched.group(4))
+        println(matched.group(5))
 
     }
 

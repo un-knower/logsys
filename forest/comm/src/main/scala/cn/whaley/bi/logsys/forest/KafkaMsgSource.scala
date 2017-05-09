@@ -2,7 +2,7 @@ package cn.whaley.bi.logsys.forest
 
 
 import java.util.{TimerTask, Timer, Properties}
-import java.util.concurrent.{CountDownLatch, LinkedBlockingQueue}
+import java.util.concurrent.{LinkedBlockingQueue}
 
 import cn.whaley.bi.logsys.common.{KafkaUtil, ConfManager}
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
@@ -39,7 +39,8 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         this.consumerConf = confManager.getAllConf("kafka-consumer", true)
 
         groupId = consumerConf.getProperty("group.id")
-        topicRegexs = StringUtil.splitStr(confManager.getConf(this.name, "topics"), ",").map(item => item.r)
+        topicRegex = confManager.getConf(this.name, "topicRegex").r
+        topicScanIntervalSec = confManager.getConfOrElseValue(this.name, "topicScanIntervalSec", topicScanIntervalSec.toString).toInt
         queueCapacity = confManager.getConfOrElseValue(this.name, "queueCapacity", defaultQueueCapacity.toString).toInt
         logPerMsgCount = confManager.getConfOrElseValue(this.name, "logPerMsgCount", "500").toInt
 
@@ -53,13 +54,17 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
      * 启动
      */
     def launch(): Unit = {
-        //定期扫描,以匹配任务启动后创建的topic
-        val timer = new Timer()
-        timer.scheduleAtFixedRate(new TimerTask {
-            override def run(): Unit = {
-                initProcessThreadAuto()
-            }
-        }, 0, 300 * 1000)
+        if (topicScanIntervalSec > 0) {
+            //定期扫描,以匹配任务启动后创建的topic
+            val timer = new Timer()
+            timer.scheduleAtFixedRate(new TimerTask {
+                override def run(): Unit = {
+                    initProcessThreadAuto()
+                }
+            }, 0, topicScanIntervalSec * 1000)
+        } else {
+            initProcessThreadAuto()
+        }
     }
 
     /**
@@ -162,11 +167,9 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
     //扫描配置项匹配的topic,如果topic没有初始化相应的处理线程,则创建并通知监听者
     private def initProcessThreadAuto(): Seq[MsgConsumerThread] = {
-        LOG.info(s"scan topics. topicRegexs:${topicRegexs}")
-        val topics = kafkaUtil.getTopics().filter(topic => {
-            (topic.startsWith("__") == false
-                && topicRegexs.count(reg => reg.findFirstMatchIn(topic).isDefined) > 0)
-        })
+        LOG.info(s"scan topics. topicRegex:${topicRegex}")
+        val topics = kafkaUtil.getTopics()
+            .filter(topic => (topic.startsWith("__") == false && topicRegex.findFirstMatchIn(topic).isDefined))
         initProcessThread(topics)
     }
 
@@ -228,10 +231,12 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
     private var groupId: String = null
 
     private var kafkaUtil: KafkaUtil = null
-    private var topicRegexs: Seq[Regex] = null
-    private var topics: Seq[String] = null
+    private var topicRegex: Regex = null
+    //topic定期扫描间隔(秒),以监听新创建的且匹配topicRegex的topic,如果小于等于0,则不进行扫描
+    private var topicScanIntervalSec: Int = 0
     private var logPerMsgCount = 100
     private var defaultOffset: Map[String, Long] = null
+
     private var queueCapacity: Int = defaultQueueCapacity
 
     private val topicPartitions: mutable.Map[String, List[PartitionInfo]] = new mutable.HashMap[String, List[PartitionInfo]]()
