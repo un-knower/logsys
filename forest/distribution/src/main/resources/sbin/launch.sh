@@ -16,12 +16,14 @@ load_args $*
 case "$task" in
     #--f 逗号分隔的配置文件清单
     # 每个配置文件支持的形式为： resource://{resourcePath};  file://{filePath}; /{filePath}; {resourcePath}
-    forest_actionlog_start)
-        export taskName=forest_actionlog
-        ../bin/forest_actionlog.sh start --f MsgBatchManager.xml
+    forest_whaleytv_wui2.0_start)
+        export taskName=forest_boikgpokn78sb95kjhfrendoj8ilnoi7
+        ../bin/forest_actionlog.sh start --f MsgBatchManager.xml \
+            --c prop.HdfsMsgSink.commitTimeMillSec=10000 \
+            --c prop.KafkaMsgSource.topics=^log-raw-boikgpokn78sb95kjhfrendoj8ilnoi7$
     ;;
-    forest_actionlog_stop)
-        export taskName=forest_actionlog
+    forest_whaleytv_wui2.0_stop)
+        export taskName=forest_boikgpokn78sb95kjhfrendoj8ilnoi7
         ../bin/forest_actionlog.sh stop
     ;;
     *)

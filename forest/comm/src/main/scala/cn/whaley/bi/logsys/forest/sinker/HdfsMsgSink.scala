@@ -244,9 +244,11 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                         count = count + (if (committed) 1 else 0)
                     }
                 })
-                LOG.info(s"launch committer.${count} files committed.")
+                if (count > 0) {
+                    LOG.info(s"launch committer.${count} files committed.")
+                }
             }
-        }, new Date(System.currentTimeMillis() + interval), interval)
+        }, new Date(System.currentTimeMillis() + interval), interval / 2)
     }
 
     //如有必要则提交文件,并清理相关缓存项

@@ -30,7 +30,7 @@ case $1 in
         touch $pwd/../logs/forest_actionlog_gc.log
         echo "log file: ${log4j_file_out_path}"
 
-        nohup java -Xmx512m -Xms256m -server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC \
+        nohup java -Xmx1024m -Xms256m -server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC \
          -XX:+CMSClassUnloadingEnabled -XX:+CMSScavengeBeforeRemark \
          -XX:+DisableExplicitGC -Djava.awt.headless=true \
          -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCDateStamps \
