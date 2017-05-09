@@ -2,9 +2,8 @@ package cn.whaley.bi.logsys.forest
 
 import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
-import cn.whaley.bi.logsys.forest.entity.{MsgEntity, LogEntity}
+import cn.whaley.bi.logsys.forest.entity.{LogEntity}
 import cn.whaley.bi.logsys.forest.processor._
-import com.alibaba.fastjson.JSONObject
 
 
 /**

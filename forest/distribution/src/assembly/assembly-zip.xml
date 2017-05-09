@@ -8,7 +8,7 @@
     <formats>
         <format>zip</format>
     </formats>
-    <includeBaseDirectory>false</includeBaseDirectory>
+    <includeBaseDirectory>true</includeBaseDirectory>
     <moduleSets>
         <moduleSet>
             <useAllReactorProjects>true</useAllReactorProjects>
@@ -24,7 +24,6 @@
                         <includes>
                             <include>*.properties</include>
                             <include>*.xml</include>
-                            <include>no_ott.parquet</include>
                         </includes>
                         <excludes>
                             <exclude>log4j.properties</exclude>
@@ -55,6 +54,13 @@
         <fileSet>
             <directory>${project.basedir}/src/main/resources/</directory>
             <outputDirectory>/</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>target</directory>
+            <outputDirectory>logs</outputDirectory>
+            <excludes>
+                <exclude>**/*</exclude>
+            </excludes>
         </fileSet>
     </fileSets>
 

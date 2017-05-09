@@ -43,7 +43,7 @@
     </property>
     <property>
         <name>KafkaMsgSource.include</name>
-        <value>kafka-consumer.xml,kafka.properties</value>
+        <value>kafka-consumer.xml</value>
     </property>
     <!-- KafkaMsgSink -->
     <property>
