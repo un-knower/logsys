@@ -39,7 +39,7 @@
     </dependencies>
 
     <build>
-        <finalName>forest-${version}</finalName>
+        <finalName>forest-dist</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
