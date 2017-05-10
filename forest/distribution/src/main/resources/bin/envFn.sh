@@ -6,10 +6,12 @@ load_args()
     do
         if [[ $x == --*=*  ]]
         then
-            x=`echo $x|tr -d '\n'|tr -d '\r'|tr -d '-'`
+            x=`echo $x|tr -d '\n'|tr -d '\r'`
             arr=(${x/=/ })
+            propN=${arr[0]}
             propV=${arr[1]}
-            eval ${arr[0]//./_}="'$propV'"
+            propN=`echo $propN|tr -d '-'`
+            eval "$propN"="'$propV'"
             echo arg: ${arr[0]//./_}=${arr[1]}
         fi
     done
