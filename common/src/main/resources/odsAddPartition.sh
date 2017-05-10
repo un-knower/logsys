@@ -7,6 +7,14 @@
 #   hour format HH
 #
 ####################################################################################
+
+if [ $# -ne 3 ]
+then
+  echo "usage:
+  ./odsAddPartition.sh appId day hour";
+  exit 1;
+fi
+
 appId=$1
 day=$2
 hour=$3
