@@ -167,10 +167,13 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
 
     //扫描配置项匹配的topic,如果topic没有初始化相应的处理线程,则创建并通知监听者
     private def initProcessThreadAuto(): Seq[MsgConsumerThread] = {
-        LOG.info(s"scan topics. topicRegex:${topicRegex}")
         val topics = kafkaUtil.getTopics()
             .filter(topic => (topic.startsWith("__") == false && topicRegex.findFirstMatchIn(topic).isDefined))
-        initProcessThread(topics)
+        val threads = initProcessThread(topics)
+        if (threads.length > 0) {
+            LOG.info(s"scan topics. topicRegex:${topicRegex}, new consumer thread: ${threads.map(_.consumerTopic).mkString(",")}.")
+        }
+        threads
     }
 
     //为每个topic初始化一个读线程,并通知监听者,返回本次初始化的线程

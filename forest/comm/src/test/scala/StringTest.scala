@@ -49,6 +49,14 @@ class StringTest {
 
     }
 
+    @Test
+    def test5: Unit = {
+        val topicRegex = "(^log-raw-boikgpokn78sb95ktmsc1bnk.*$)|(^log-raw-boikgpokn78sb95kjtihcg26.*$)".r
+        val topics = Array("log-raw-boikgpokn78sb95ktmsc1bnk","log-raw-boikgpokn78sb95kjtihcg26")
+        topics.filter(topic => (topic.startsWith("__") == false && topicRegex.findFirstMatchIn(topic).isDefined)).foreach(println)
+
+    }
+
 
 }
 
