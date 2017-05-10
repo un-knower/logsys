@@ -1,11 +1,5 @@
 #!/bin/bash
 
-#################################################################
-# whaleytv_wui2.0: boikgpokn78sb95kjhfrendoj8ilnoi7
-#   ./launch_msgproc.sh start --appId=boikgpokn78sb95kjhfrendoj8ilnoi7
-#   ./launch_msgproc.sh stop --appId=boikgpokn78sb95kjhfrendoj8ilnoi7
-#################################################################
-
 cd `dirname $0`
 pwd=`pwd`
 
@@ -16,14 +10,24 @@ shift
 
 load_args $*
 
-if [ -z "$appId" ]; then
-    echo "appId required."
+if [ "$cmd" != "start" ] && [ "$cmd" != "stop" ]; then
+    echo "invalid cmd: $cmd"
     exit 1
 fi
 
-export pidFile=${pwd}/../logs/${appId}.pid
-export logFile=/data/logs/forest/msgproc_${appId}.log
-export gcFile=/data/logs/forest/gc_msgproc_${appId}.log
+if [ -z "$taskName" ]; then
+    echo "taskName required."
+    exit 1
+fi
+
+if [ -z "$topicRegex" ] && [ "$cmd" == "start" ] ; then
+    echo "topicRegex required."
+    exit 1
+fi
+
+export pidFile=${pwd}/../logs/${taskName}.pid
+export logFile=/data/logs/forest/msgproc_${taskName}.log
+export gcFile=/data/logs/forest/gc_msgproc_${taskName}.log
 
 
 echo "pid file: ${pidFile}"
@@ -42,11 +46,10 @@ case "$cmd" in
           fi
         fi
 
-        topics="^log-raw-${appId}$"
         set -x
         nohup ../bin/launch_executor.sh MsgProcExecutor \
             --f MsgBatchManager.xml,settings.properties \
-            --c prop.KafkaMsgSource.topics=$topics \
+            --c prop.KafkaMsgSource.topicRegex=$topicRegex \
             >> ${logFile} 2>&1 &
         set +x
     ;;

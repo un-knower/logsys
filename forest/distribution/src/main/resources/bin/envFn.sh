@@ -8,7 +8,8 @@ load_args()
         then
             x=`echo $x|tr -d '\n'|tr -d '\r'|tr -d '-'`
             arr=(${x/=/ })
-            eval ${arr[0]//./_}=${arr[1]}
+            propV=${arr[1]}
+            eval ${arr[0]//./_}="'$propV'"
             echo arg: ${arr[0]//./_}=${arr[1]}
         fi
     done
