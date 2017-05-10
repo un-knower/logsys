@@ -40,10 +40,19 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
     }
 
     /**
+     * 停止服务
+     */
+    override def stop(): Unit = {
+        if (kafkaProducer != null) {
+            kafkaProducer.close()
+        }
+    }
+
+    /**
      * 保存处理后的数据
      * @param procResults
      */
-    override def saveProcMsg(procResults: Seq[(KafkaMessage, ProcessResult[Seq[LogEntity]])]): (Int,Int) = {
+    override def saveProcMsg(procResults: Seq[(KafkaMessage, ProcessResult[Seq[LogEntity]])]): (Int, Int) = {
         val success = procResults.filter(result => result._2.hasErr == false)
         val error = procResults.filter(result => result._2.hasErr == true)
         (saveSuccess(success), saveError(error))
@@ -58,7 +67,7 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
      */
     override def getTopicLastOffset(sourceTopic: String, sourceLatestOffset: Map[Int, Long], maxMsgCount: Int): Map[Int, Long] = {
         val offsetMap = new mutable.HashMap[Int, Long]
-        val topicPrefix = getTargetTopic(sourceTopic,null)
+        val topicPrefix = getTargetTopic(sourceTopic, null)
         val targetTopics = kafkaUtil.getTopics().filter(topic => topic.startsWith(topicPrefix))
         LOG.info("get sourceTopic offset from :{}", targetTopics.mkString(","))
 

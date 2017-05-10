@@ -16,6 +16,11 @@ trait MsgSinkTrait {
     type KafkaMessage = ConsumerRecord[Array[Byte], Array[Byte]]
 
     /**
+     * 停止服务
+     */
+    def stop():Unit
+
+    /**
      * 保存处理后的数据
      * @param procResults
      * @return (SuccCount,ErrCount)

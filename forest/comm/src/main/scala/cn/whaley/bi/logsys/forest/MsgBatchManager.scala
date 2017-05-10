@@ -58,6 +58,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     def shutdown(waiting: Boolean): Unit = {
         //停止数据源读取操作
         msgSource.stop()
+
         //停止消息处理线程
         processThreads.foreach(item => {
             item.stopProcess(waiting)
@@ -67,6 +68,9 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         procThreadPool.shutdown()
         procThreadPool.awaitTermination(30, TimeUnit.SECONDS)
         processThreads.clear()
+
+        //停止数据写入操作
+        msgSink.stop()
     }
 
     /**
