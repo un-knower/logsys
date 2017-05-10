@@ -47,7 +47,7 @@ case "$cmd" in
         nohup ../bin/launch_executor.sh MsgProcExecutor \
             --f MsgBatchManager.xml,settings.properties \
             --c prop.KafkaMsgSource.topics=$topics \
-           &
+            >> ${logFile} 2>&1 &
         set +x
     ;;
     stop)
