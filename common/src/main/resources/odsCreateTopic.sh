@@ -11,7 +11,9 @@ ZookeeperServer="bigdata-appsvr-130-1:2183,bigdata-appsvr-130-2:2183,bigdata-app
 if [ $# -ne 2 ]
 then
   echo "usage:
-  ./odsCreateTopic.sh topicName partitionNum";
+  ./odsCreateTopic.sh topicName partitionNum
+example:
+  ./odsCreateTopic.sh log-raw-boikgpokn78sb95kjhfrendo 12";
   exit 1;
 fi
 
