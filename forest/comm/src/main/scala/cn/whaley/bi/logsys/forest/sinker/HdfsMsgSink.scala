@@ -2,7 +2,7 @@ package cn.whaley.bi.logsys.forest.sinker
 
 
 import java.text.SimpleDateFormat
-import java.util.{TimerTask, Date}
+import java.util.{Timer, TimerTask, Date}
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.{ReentrantReadWriteLock}
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
@@ -49,6 +49,15 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
 
         launchTimeCommitter()
 
+    }
+
+    /**
+     * 停止服务
+     */
+    override def stop(): Unit = {
+        if (commitTimer != null) {
+            commitTimer.cancel()
+        }
     }
 
     /**
@@ -228,9 +237,9 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
 
     //启动定期提交扫描线程,提交已经提交就绪的文件
     private def launchTimeCommitter(): Unit = {
-        val timer = new java.util.Timer()
+        commitTimer = new java.util.Timer()
         val interval = if (commitTimeMillSec > 0) commitTimeMillSec else 300 * 1000
-        timer.scheduleAtFixedRate(new TimerTask {
+        commitTimer.scheduleAtFixedRate(new TimerTask {
             override def run(): Unit = {
                 //缓存中的满足提交条件的文件
                 val entries = logWriterCache.entrySet().toList
@@ -386,6 +395,9 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         })
         buf.toArray
     }
+
+    //文件提交定时器
+    private var commitTimer: Timer = null;
 
     private val hdfsConf: Configuration = new Configuration()
     //错误数据根目录
