@@ -70,7 +70,11 @@ object URLParser {
                         queryString.substring(lastAmpersandIndex);
                     }
                 val firstEQ = subStr.indexOf('=')
-                param = subStr.substring(0, firstEQ);
+                param = if (firstEQ <= 0) {
+                    subStr
+                } else {
+                    subStr.substring(0, firstEQ)
+                }
                 value = if (firstEQ <= 0 || firstEQ == subStr.length - 1) {
                     ""
                 } else {

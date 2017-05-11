@@ -57,13 +57,15 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
      * @param waiting 指示是否在处理线程完全停止后才返回
      */
     def shutdown(waiting: Boolean): Unit = {
+
         //停止数据源读取操作
         msgSource.stop()
+        println("## stop msgSource.")
 
         //停止消息处理线程
         processThreads.foreach(item => {
             item.stopProcess(waiting)
-            LOG.info(s"${item.getName} shutdown")
+            LOG.info(s"## ${item.getName} shutdown")
         })
         //关闭消息处理线程池
         procThreadPool.shutdown()
@@ -72,9 +74,12 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
         //停止数据写入操作
         msgSink.stop()
+        println("## stop msgSink.")
 
-        //强制退出
-        System.exit(1)
+
+
+
+        shutdownLatch.countDown()
     }
 
     /**
@@ -151,13 +156,10 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                         LOG.info(s"queue[${topic}] is empty.total ${msgCount} message processed. ts:${ts} .taking...")
                         try {
                             val probeObj = queue.take()
-                            Thread.sleep(100)
                             list.add(probeObj)
                         } catch {
                             case e: InterruptedException => {
-                                runningLatch.countDown()
                                 LOG.info(s"${this.getName} is interrupted. keepRunning:${keepRunning}")
-                                return
                             }
                         }
                         pIsWaiting = false
@@ -171,6 +173,11 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                 }
 
                 val listSize = list.size()
+
+                if (listSize == 0) {
+                    LOG.info("message list is empty.")
+                    return
+                }
 
                 //分批次提交消息处理任务,利用多线程加快处理进度
                 val callableCount: Int = Math.max(1, Math.ceil(listSize / callableSize).toInt)
@@ -195,7 +202,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
                 //发送处理成功的数据
                 val ret = msgSink.saveProcMsg(procResults)
-                LOG.info(s"${topic}-ProcMsg(${ret._1},${ret._2}):${monitor.checkStep()}")
+                LOG.info(s"${topic}-msgSave(${ret._1},${ret._2}):${monitor.checkStep()}")
 
                 //打印错误日志
                 var errorCount = 0
@@ -224,6 +231,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
             while (keepRunning || (!keepRunning && queue.peek() != null)) {
                 try {
+                    Thread.`yield`()
                     processFn()
                 } catch {
                     case e: Throwable => {
@@ -356,7 +364,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
         if (offsetMap.size > 0) {
             LOG.info(s"commitOffset:${offsetMap}")
-            msgSource.commitOffset(offsetMap.toMap)
+            msgSource.seekOffset(offsetMap.toMap)
         } else {
             LOG.info(s"commitOffset:None")
         }
@@ -431,5 +439,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     private var batchSize: Int = 4000
     //每次消息处理过程调用所处理的消息数量
     private var callableSize: Int = 2000
+
+    val shutdownLatch=new CountDownLatch(1)
+
 
 }

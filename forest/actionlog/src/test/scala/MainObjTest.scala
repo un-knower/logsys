@@ -20,7 +20,7 @@ class MainObjTest extends LogTrait{
         val args = Array("")
         val executor = new MsgProcExecutor()
         executor.execute(args)
-        executor.shutdownOnCompleted()
+        executor.shutdown(true)
         LOG.info("test completed.")
     }
 

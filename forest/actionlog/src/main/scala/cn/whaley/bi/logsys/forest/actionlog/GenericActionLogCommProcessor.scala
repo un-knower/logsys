@@ -84,18 +84,27 @@ class GenericActionLogCommProcessor extends LogProcessorTrait with LogTrait {
     }
 
     private def logTimeProc(log: LogEntity): LogEntity = {
-        if(log.logBody==null){
+        if (log.logBody == null) {
             return log
         }
         val receiveTime = log.logBody.getLong(MsgBodyEntity.KEY_SVR_RECEIVE_TIME)
         val logTime = if (log.logBody.containsKey(KEY_HAPPEN_TIME)) {
-            val happenTime = log.logBody.getLong(KEY_HAPPEN_TIME)
+            val happenTime = try {
+                log.logBody.getLong(KEY_HAPPEN_TIME)
+            } catch {
+                case ex: Throwable => {
+                    null
+                }
+            }
             if (happenTime != null && Math.abs(receiveTime - happenTime) <= happenTimeDeviationMillSec) {
                 happenTime
             } else {
                 receiveTime
             }
-        } else {
+
+        }
+
+        else {
             receiveTime
         }
         log.updateLogTime(logTime)

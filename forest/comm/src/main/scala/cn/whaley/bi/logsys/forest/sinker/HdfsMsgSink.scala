@@ -6,21 +6,20 @@ import java.text.SimpleDateFormat
 import java.util.{Timer, TimerTask, Date}
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.{ReentrantReadWriteLock}
-import java.util.concurrent.{Executors, ConcurrentHashMap, ConcurrentMap}
+import java.util.concurrent.{CountDownLatch, Executors}
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.forest.{ProcessResultCode, ProcessResult}
+import cn.whaley.bi.logsys.forest.{ ProcessResult}
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
 import cn.whaley.bi.logsys.forest.entity.LogEntity
-import com.alibaba.fastjson.{JSON, JSONObject}
+import com.alibaba.fastjson.{JSON}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, Path, FileSystem}
 import org.apache.hadoop.io.compress.CompressionCodec
-import org.apache.hadoop.io.{IOUtils, Writable, SequenceFile, Text}
+import org.apache.hadoop.io.{IOUtils, SequenceFile, Text}
 import org.apache.hadoop.util.ReflectionUtils
 import scala.collection.JavaConversions._
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 /**
  * Created by fj on 17/5/3.
@@ -59,6 +58,19 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         if (commitTimer != null) {
             commitTimer.cancel()
         }
+        if (saveProcLatch != null) {
+            saveProcLatch.await()
+        }
+        //关闭所有文件流
+        logWriterCache.keySet.foreach(key => {
+            val item = logWriterCache.get(key)
+            item.writeLock.lock()
+            IOUtils.closeStream(item.writer)
+            commitFile(key)
+            LOG.info(s"clean file: ${item.fileName}")
+            item.writeLock.unlock()
+        })
+
     }
 
     /**
@@ -66,9 +78,15 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
      * @param procResults
      */
     override def saveProcMsg(procResults: Seq[(KafkaMessage, ProcessResult[Seq[LogEntity]])]): (Int, Int) = {
-        val success = procResults.filter(result => result._2.hasErr == false)
-        val error = procResults.filter(result => result._2.hasErr == true)
-        (saveSuccess(success), saveError(error))
+        try {
+            saveProcLatch = new CountDownLatch(1)
+            val success = procResults.filter(result => result._2.hasErr == false)
+            val error = procResults.filter(result => result._2.hasErr == true)
+            (saveSuccess(success), saveError(error))
+        }
+        finally {
+            saveProcLatch.countDown()
+        }
     }
 
 
@@ -167,14 +185,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             try {
                 cacheItem.writeLock.lock()
                 items.foreach(item => {
-                    val message = item._1
-                    val logJson = item._2.toJSONString
-                    val syncInfo = buildSyncInfo(message)
-                    val syncInfoJsonStr = syncInfo.toJSONString
-                    val rowBytes = combineSyncInfo(syncInfoJsonStr, logJson.getBytes())
-                    cacheItem.writer.write(rowBytes)
-                    cacheItem.writer.write('\n')
-                    cacheItem.changeOpBytes(rowBytes.length)
+                    writeEntity(cacheItem, filePath, item)
                     count = count + 1
                 })
                 commitLogFileIf(fileKey)
@@ -182,10 +193,28 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             finally {
                 cacheItem.writeLock.unlock()
             }
-
         })
-
         count
+    }
+
+    def writeEntity(cacheItem: LogWriteCacheItem, filePath: String, item: (KafkaMessage, LogEntity)) = {
+        val message = item._1
+        val msgBody = item._2.toJSONString.trim.substring(1).getBytes
+        val bytes = ("{\"_sync\":" + buildSyncInfo(message).toJSONString + "," + msgBody + '\n').getBytes
+        try {
+            cacheItem.writer.write(bytes)
+        }
+        catch {
+            case ex: java.nio.channels.ClosedChannelException => {
+                //文件系统关闭的情况下重新打开文件
+                LOG.warn("FileChannel closed.open file again. " + filePath)
+                val ret = createFileWriter(filePath)
+                cacheItem.filePath = ret._1
+                cacheItem.writer = ret._2
+                cacheItem.writer.write(bytes)
+            }
+        }
+        cacheItem.changeOpBytes(bytes.length)
     }
 
 
@@ -258,34 +287,6 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                 if (count > 0) {
                     LOG.info(s"launch committer.${count} files committed.")
                 }
-
-                //不在缓存中的文件,可能之前的任务异常退出而遗留的文件
-                //[不完全的操作,无法判断不在缓存中的文件是否由其他进程打开]
-                /*
-                val fs = FileSystem.get(hdfsConf)
-                val statuses = fs.globStatus(new Path(s"${tmpRootDir}/*.json"))
-                statuses.foreach(status => {
-                    val pathStr = status.getPath.toUri.getPath
-                    val reg = ".*/([a-zA-Z0-9]{32})_(\\d{10})_(\\w+)_(\\d+)_(\\d+).json".r
-                    val matched = reg.findFirstMatchIn(pathStr)
-                    if (matched.isDefined && status.getLen > 0) {
-
-                        val appId = matched.get.group(1)
-                        val timeKey = matched.get.group(2)
-                        val fileFlag = matched.get.group(3)
-                        val parId = matched.get.group(4).toInt
-                        val cacheKey = LogWriteCacheKey(appId, timeKey, fileFlag, parId)
-                        if (!logWriterCache.containsKey(cacheKey)) {
-                            val srcFileName = status.getPath.getName
-                            val source = status.getPath
-                            val target = cacheKey.getTargetFilePath(srcFileName)
-                            compressGzFile(source, target)
-                            fs.delete(source, false)
-                            LOG.info(s"process remaining file: ${source} -> ${target}")
-                        }
-                    }
-                })
-                */
             }
         }, new Date(System.currentTimeMillis() + interval), interval / 2)
     }
@@ -303,16 +304,9 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             }
             procThreadPool.submit(new Runnable {
                 override def run(): Unit = {
-                    cacheItem.writer.close()
-                    val source = new Path(cacheItem.filePath)
-                    val target = fileKey.getTargetFilePath(cacheItem.fileName)
-                    val fs = FileSystem.get(hdfsConf)
-                    compressGzFile(source, target)
-                    val sourceLen = fs.getContentSummary(source).getLength
-                    val targetLen = fs.getContentSummary(target).getLength
-                    LOG.info(s"commit file [ OpCount=${cacheItem.OpCount}, OpBytes=${cacheItem.OpBytes},lastOpTime:${new Date(cacheItem.lastOpTs)} ]: ${source.getName}[${sourceLen}] -> ${target.getName}[${targetLen}]")
+                    IOUtils.closeStream(cacheItem.writer)
+                    commitFile(fileKey)
                     logWriterCache.remove(fileKey)
-                    fs.delete(source, false)
                 }
             })
             cacheItem.isCommitted.set(true)
@@ -321,6 +315,17 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             cacheItem.writeLock.unlock()
         }
 
+    }
+
+    private def commitFile(fileKey: LogWriteCacheKey): Unit = {
+        val cacheItem = logWriterCache.get(fileKey)
+        val source = new Path(cacheItem.filePath)
+        val target = fileKey.getTargetFilePath(cacheItem.fileName)
+        val fs = FileSystem.get(hdfsConf)
+        compressGzFile(source, target)
+        val sourceLen = fs.getContentSummary(source).getLength
+        val targetLen = fs.getContentSummary(target).getLength
+        LOG.info(s"commit file ${source}[${sourceLen}] -> ${target}[${targetLen}] [ OpCount=${cacheItem.OpCount}, OpBytes=${cacheItem.OpBytes},lastOpTime:${new Date(cacheItem.lastOpTs)} ]")
     }
 
 
@@ -364,13 +369,19 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                 item.writeLock.unlock()
             }
         }
+        val ret = createFileWriter(filePath)
+        val newItem = new LogWriteCacheItem(ret._1, ret._2, System.currentTimeMillis())
+        logWriterCache.put(fileKey, newItem)
+        LOG.info(s"create item ${filePath}")
+        newItem
+    }
 
+    private def createFileWriter(filePath: String): (String, FSDataOutputStream) = {
         //如果不存在,则新建缓存项
         var targetFilePath = filePath
         var path = new Path(targetFilePath)
         val fs = FileSystem.get(hdfsConf)
         val ts = System.currentTimeMillis()
-
         val writer = try {
             fs.create(path, false)
         } catch {
@@ -383,28 +394,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                 fs.create(path, false)
             }
         }
-        val newItem = new LogWriteCacheItem(targetFilePath, writer, ts)
-        logWriterCache.put(fileKey, newItem)
-        LOG.info(s"create item ${filePath}")
-        newItem
-    }
-
-
-    //将同步信息合并到消息体中
-    private def combineSyncInfo(syncInfoJsonStr: String, messageBody: Array[Byte]): Array[Byte] = {
-        val buf = new ArrayBuffer[Byte]()
-        var exists = false
-        messageBody.foreach(b => {
-            if (exists == false && b == '{') {
-                exists = true
-                buf.append('{')
-                val str = "\"_sync\":" + syncInfoJsonStr + ","
-                buf.appendAll(str.getBytes)
-            } else {
-                buf.append(b)
-            }
-        })
-        buf.toArray
+        (targetFilePath, writer)
     }
 
     //文件提交定时器
@@ -428,6 +418,9 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
     private var commitTimeMillSec: Long = 300 * 1000
     //缓存
     private val logWriterCache: java.util.concurrent.ConcurrentHashMap[LogWriteCacheKey, LogWriteCacheItem] = new java.util.concurrent.ConcurrentHashMap[LogWriteCacheKey, LogWriteCacheItem]()
+
+    //保存操作Latch
+    private var saveProcLatch: CountDownLatch = null;
 
 
     case class LogWriteCacheKey(appId: String, timeKey: String, fileFlag: String, parId: Int) {

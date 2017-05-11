@@ -37,7 +37,7 @@ fi
 
 javaXmx=${javaXmx:-4096m}
 javaXms=${javaXmx:-1024m}
-java -Xmx${javaXms} -Xms${javaXms} -server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC \
+java -Xmx${javaXmx} -Xms${javaXms} -server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC \
  -XX:+CMSClassUnloadingEnabled -XX:+CMSScavengeBeforeRemark \
  -XX:+DisableExplicitGC -Djava.awt.headless=true \
  -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCDateStamps \

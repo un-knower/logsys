@@ -7,4 +7,6 @@ package cn.whaley.bi.logsys.forest.Traits
  */
 trait ExecutedTrait {
     def execute(args: Array[String]): Unit
+
+    def shutdown(wait:Boolean=true):Unit
 }

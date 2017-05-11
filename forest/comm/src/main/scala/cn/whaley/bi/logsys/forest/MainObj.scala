@@ -1,6 +1,8 @@
 package cn.whaley.bi.logsys.forest
 
 import cn.whaley.bi.logsys.forest.Traits.ExecutedTrait
+import org.apache.commons.lang.exception.ExceptionUtils
+import sun.misc.{SignalHandler, Signal}
 
 /**
  * Created by fj on 16/10/30.
@@ -33,8 +35,50 @@ object MainObj {
         val clz = Class.forName(clsQualityName)
         val executedTrait = clz.newInstance().asInstanceOf[ExecutedTrait]
 
+        Runtime.getRuntime().addShutdownHook(
+            new Thread() {
+                override def run(): Unit = {
+                    try {
+                        println(s"## stopping the executor ${clsQualityName}");
+                        executedTrait.shutdown(true);
+                        println(s"## stopped the executor ${clsQualityName}");
+                    } catch {
+                        case ex: Throwable => {
+                            println(s"## something goes wrong when stopping executor ${clsQualityName}");
+                        }
+                    } finally {
+                        println(s"## executor ${clsQualityName} is down.");
+                    }
+                }
+            }
+        );
+
         val execArgs = args.toList.tail.toArray
         executedTrait.execute(execArgs)
+    }
+
+    /*
+     //TERM（kill -15）、USR1（kill -10）、USR2（kill -12）
+        //kill -l 查看linux下的kill信号
+        val handler = new SignalHandler {
+            override def handle(signal: Signal): Unit = {
+                println(s"${signal.getName} is received. shutdown...");
+                executedTrait.shutdown(true);
+            }
+        }
+        registerSignalHandler(new Signal("TERM"), handler);
+        registerSignalHandler(new Signal("USR1"), handler);
+        registerSignalHandler(new Signal("USR2"), handler);
+     */
+    def registerSignalHandler(signal: Signal, handler: SignalHandler): Unit = {
+        try {
+            Signal.handle(signal, handler);
+            println(s"register signal handler [${signal.getName}].")
+        } catch {
+            case ex: Throwable => {
+                println(s"cann't register signal handler [${signal.getName}]. ${ex.getMessage}")
+            }
+        }
     }
 
 }
