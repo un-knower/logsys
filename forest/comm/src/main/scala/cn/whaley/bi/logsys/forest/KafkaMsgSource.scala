@@ -263,6 +263,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         def stopProcess(): Unit = {
             keepRunning = false
             this.interrupt()
+            kafkaConsumer.close()
             LOG.info(s"MsgConsumerThread[${this.getName}] stopped")
         }
 
