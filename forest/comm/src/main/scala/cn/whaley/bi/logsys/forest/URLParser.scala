@@ -32,7 +32,13 @@ object URLParser {
      * @return
      */
     def parseHttpURL(url: String, needDecode: Boolean = true): HttpURL = {
-        val decodedUrl = URLDecoder.decode(url, "utf-8")
+        val decodedUrl = try {
+            URLDecoder.decode(url, "utf-8")
+        } catch {
+            case ex: Throwable => {
+                url
+            }
+        }
         val indexQuery = decodedUrl.indexOf('?')
 
         if (indexQuery >= 0) {
@@ -63,12 +69,12 @@ object URLParser {
                     } else {
                         queryString.substring(lastAmpersandIndex);
                     }
-                val paramPair = subStr.split("=");
-                param = paramPair(0);
-                value = if (paramPair.length == 1) {
+                val firstEQ = subStr.indexOf('=')
+                param = subStr.substring(0, firstEQ);
+                value = if (firstEQ <= 0 || firstEQ == subStr.length - 1) {
                     ""
                 } else {
-                    paramPair(1)
+                    subStr.substring(firstEQ + 1)
                 }
                 val obj = queryObj.get(param)
                 if (obj != null) {

@@ -121,16 +121,20 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
      * @return
      */
     def process(log: LogEntity): ProcessResult[Seq[LogEntity]] = {
-
         val actionLogEntity = new ActionLogPostEntity(log)
+        if (actionLogEntity.msgBody == null) {
+            return ProcessResult(this.name, ProcessResultCode.skipped, "msgBody is null", None)
+        }
+        val method=actionLogEntity.msgBodyObj.method
+        if (method == null) {
+            return ProcessResult(this.name, ProcessResultCode.skipped, "msgBodyObj.method is null", None)
+        }
+        if(method!="GET" && method!="POST"){
+            return ProcessResult(this.name, ProcessResultCode.discard, s"invalid method ${method}", None)
+        }
         val postObj = actionLogEntity.postMsgBodyObj;
-        if (postObj == null) {
-            return ProcessResult(this.name, ProcessResultCode.skipped, "postObj is null", None)
-        }
-        if (postObj.method == null) {
-            return ProcessResult(this.name, ProcessResultCode.skipped, "postObj.method is null", None)
-        }
         try {
+
             if (!postObj.method.equalsIgnoreCase("POST")) {
                 return ProcessResult(this.name, ProcessResultCode.skipped, "", None)
             }

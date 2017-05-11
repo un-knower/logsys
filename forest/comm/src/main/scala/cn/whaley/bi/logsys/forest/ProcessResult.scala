@@ -46,5 +46,10 @@ object ProcessResultCode extends Enumeration {
      * 消息处理过程被中断，下游处理器应当停止处理
      */
     val break = Value(3)
+
+    /**
+     * 消息被丢弃，并且不会交由下游处理器处理,且提示下游处理应当静默处理不留日志信息
+     */
+    val silence = Value(4)
 }
 

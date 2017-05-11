@@ -1,6 +1,7 @@
 package cn.whaley.bi.logsys.forest.sinker
 
 
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.{Timer, TimerTask, Date}
 import java.util.concurrent.atomic.AtomicBoolean
@@ -362,21 +363,23 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         }
 
         //如果不存在,则新建缓存项
-        val path = new Path(filePath)
+        val targetFilePath = filePath
+        var path = new Path(targetFilePath)
         val fs = FileSystem.get(hdfsConf)
-        fs.createNewFile(path)
-        val writer = {
-            try {
-                LOG.info(s"append file:${path}")
-                fs.append(path)
-            } catch {
-                case ex: Throwable => {
-                    LOG.warn(s"append not supported. create file: ${path}")
-                    fs.create(path, true)
-                }
+        val ts = System.currentTimeMillis()
+        val writer = try {
+            fs.create(path, false)
+        } catch {
+            case ex: IOException => {
+                val idx = filePath.lastIndexOf('.')
+                val pref = filePath.substring(0, idx)
+                val ext = filePath.substring(idx + 1)
+                val targetFilePath = s"${pref}-${ts}.${ext}"
+                path = new Path(targetFilePath)
+                fs.create(path, false)
             }
         }
-        val newItem = new LogWriteCacheItem(filePath, writer, System.currentTimeMillis())
+        val newItem = new LogWriteCacheItem(targetFilePath, writer, ts)
         logWriterCache.put(fileKey, newItem)
         LOG.info(s"create item ${filePath}")
         newItem

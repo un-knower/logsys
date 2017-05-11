@@ -8,11 +8,23 @@ topicRegex='^log-raw-boikgpokn78sb95ktmsc1bnk.*$'
 tail -f /data/logs/forest/msgproc_medusa.log
 ./sbin/launch_msgproc.sh stop --taskName=medusa
 
+
 ### boikgpokn78sb95kjhfrendo	whaley	whaleytv
 topicRegex='^log-raw-boikgpokn78sb95kjhfrendo.*$'
 ./sbin/launch_msgproc.sh start --taskName=whaleytv --topicRegex=$topicRegex
 tail -f /data/logs/forest/msgproc_whaleytv.log
 ./sbin/launch_msgproc.sh stop  --taskName=whaleytv
+
+topicRegex='^log-raw-boikgpokn78sb95kjhfrendo.*$'
+./sbin/launch_msgproc.sh start --taskName=whaleytv2 --topicRegex=$topicRegex
+tail -f /data/logs/forest/msgproc_whaleytv2.log
+./sbin/launch_msgproc.sh stop  --taskName=whaleytv2
+
+topicRegex='^log-raw-boikgpokn78sb95kjhfrendo.*$'
+./sbin/launch_msgproc.sh start --taskName=whaleytv3 --topicRegex=$topicRegex
+tail -f /data/logs/forest/msgproc_whaleytv3.log
+./sbin/launch_msgproc.sh stop  --taskName=whaleytv3
+
 
 ### boikgpokn78sb95kbqei6cc9	whaley	whaleyvr
 ### boikgpokn78sb95kicggqhbk	whaley	orca

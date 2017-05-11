@@ -62,12 +62,16 @@ class GenericLogProcessor extends LogProcessorTrait {
                 if (result.hasErr) {
                     return new ProcessResult(route.mkString("->"), result.code, result.message, None, result.ex)
                 }
-                if (result.code != ProcessResultCode.discard) {
+                if (result.code != ProcessResultCode.discard && result.code != ProcessResultCode.silence) {
                     //当前处理器跳过的消息，继续交由下游处理器
                     if (result.code == ProcessResultCode.skipped) {
                         currLogs.append(curr)
                     } else {
                         currLogs ++= result.result.get
+                    }
+                } else {
+                    if (result.code != ProcessResultCode.silence) {
+                        println(s"discard log [${result.message}}]: " + curr.toJSONString)
                     }
                 }
                 if (result.code != ProcessResultCode.break) {

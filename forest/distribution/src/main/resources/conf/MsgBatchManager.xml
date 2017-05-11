@@ -42,6 +42,10 @@
         <value>${prop.KafkaMsgSource.defaultOffset}</value>
     </property>
     <property>
+        <name>KafkaMsgSource.queueCapacity</name>
+        <value>${prop.KafkaMsgSource.queueCapacity}</value>
+    </property>
+    <property>
         <name>KafkaMsgSource.logPerMsgCount</name>
         <value>${prop.KafkaMsgSource.logPerMsgCount}</value>
     </property>

@@ -50,6 +50,7 @@ case "$cmd" in
         nohup ../bin/launch_executor.sh MsgProcExecutor \
             --f MsgBatchManager.xml,settings.properties \
             --c prop.KafkaMsgSource.topicRegex=$topicRegex \
+            --c prop.kafka-consumer.group.id=forest-dist-${taskName}
             >> ${logFile} 2>&1 &
         set +x
     ;;

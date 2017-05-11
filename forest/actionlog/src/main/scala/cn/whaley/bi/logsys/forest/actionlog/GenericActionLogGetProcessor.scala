@@ -36,11 +36,18 @@ class GenericActionLogGetProcessor extends LogProcessorTrait with LogTrait {
      */
     def process(log: LogEntity): ProcessResult[Seq[LogEntity]] = {
         val actionLogEntity = new ActionLogGetEntity(log)
-        if (actionLogEntity.msgBodyObj == null) {
+        if (actionLogEntity.msgBody == null) {
             return ProcessResult(this.name, ProcessResultCode.skipped, "msgBodyObj is null", None)
         }
-        if (actionLogEntity.msgBodyObj.method == null) {
+        val method = actionLogEntity.msgBodyObj.method
+        if (method == null) {
             return ProcessResult(this.name, ProcessResultCode.skipped, "msgBodyObj.method is null", None)
+        }
+        if (actionLogEntity.msgBodyObj.url == "/favicon.ico") {
+            return ProcessResult(this.name, ProcessResultCode.silence, "", None)
+        }
+        if (method != "GET" && method != "POST") {
+            return ProcessResult(this.name, ProcessResultCode.discard, s"invalid method ${method}", None)
         }
         try {
             //跳过非GET方法提交的数据
