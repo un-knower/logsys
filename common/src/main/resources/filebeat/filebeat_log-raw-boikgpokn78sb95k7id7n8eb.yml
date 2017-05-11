@@ -31,8 +31,7 @@ filebeat.prospectors:
   # For each file found under this path, a harvester is started.
   # Make sure not file is defined twice as this can lead to unexpected behaviour.
   paths:
-    - /data/logs/nginx/boikgpokn78sb95kjhfrendo*.log
-    - /data/logs/nginx/boikgpokn78sb95ktmsc1bnkklf477ap.log
+    - /data/logs/nginx/boikgpokn78sb95k7id7n8eb*.log
     #- c:\programdata\elasticsearch\logs\*
 
   # Configure the file encoding for reading files with international characters
@@ -232,7 +231,7 @@ filebeat.prospectors:
 
 # Name of the registry file. If a relative path is used, it is considered relative to the
 # data path.
-filebeat.registry_file: ${path.data}/log-raw-boikgpokn78sb95kjhfrendo.registry
+filebeat.registry_file: ${path.data}/log-raw-boikgpokn78sb95k7id7n8eb.registry
 
 #
 # These config files must have the full filebeat config part inside, but only
@@ -509,7 +508,7 @@ output.kafka:
 
   # The Kafka topic used for produced events. The setting can be a format string
   # using any event field. To set the topic from document type use `%{[type]}`.
-  topic: log-raw-boikgpokn78sb95kjhfrendo
+  topic: log-raw-boikgpokn78sb95k7id7n8eb
 
   # The Kafka event key setting. Use format string to create unique event key.
   # By default no event key will be generated.
@@ -743,7 +742,7 @@ output.file:
 
   # Name of the generated files. The default is `filebeat` and it generates
   # files: `filebeat`, `filebeat.1`, `filebeat.2`, etc.
-  filename: log-raw-boikgpokn78sb95kjhfrendo.debug
+  filename: log-raw-boikgpokn78sb95k7id7n8eb.debug
 
   # Maximum size in kilobytes of each file. When this size is reached, and on
   # every filebeat restart, the files are rotated. The default value is 10240
@@ -828,7 +827,7 @@ logging.files:
   path: ${path.logs}
 
   # The name of the files where the logs are written to.
-  name: log-raw-boikgpokn78sb95kjhfrendo.log
+  name: log-raw-boikgpokn78sb95k7id7n8eb.log
 
   # Configure log file size limit. If limit is reached, log file will be
   # automatically rotated
