@@ -195,7 +195,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
                 //发送处理成功的数据
                 val ret = msgSink.saveProcMsg(procResults)
-                LOG.info(s"${topic}-ProcMsg(${ret._1},${ret._2}}):${monitor.checkStep()}")
+                LOG.info(s"${topic}-ProcMsg(${ret._1},${ret._2}):${monitor.checkStep()}")
 
                 //打印错误日志
                 var errorCount = 0

@@ -11,19 +11,17 @@ tail -f /data/logs/forest/msgproc_medusa.log
 
 ### boikgpokn78sb95kjhfrendo	whaley	whaleytv
 topicRegex='^log-raw-boikgpokn78sb95kjhfrendo.*$'
-./sbin/launch_msgproc.sh start --taskName=whaleytv --topicRegex=$topicRegex
+./sbin/launch_msgproc.sh start --groupId=forest-dist-whaleytv --taskName=whaleytv --topicRegex=$topicRegex
+./sbin/launch_msgproc.sh start --groupId=forest-dist-whaleytv --taskName=whaleytv2 --topicRegex=$topicRegex
+./sbin/launch_msgproc.sh start --groupId=forest-dist-whaleytv --taskName=whaleytv3 --topicRegex=$topicRegex
 tail -f /data/logs/forest/msgproc_whaleytv.log
-./sbin/launch_msgproc.sh stop  --taskName=whaleytv
-
-topicRegex='^log-raw-boikgpokn78sb95kjhfrendo.*$'
-./sbin/launch_msgproc.sh start --taskName=whaleytv2 --topicRegex=$topicRegex
 tail -f /data/logs/forest/msgproc_whaleytv2.log
-./sbin/launch_msgproc.sh stop  --taskName=whaleytv2
-
-topicRegex='^log-raw-boikgpokn78sb95kjhfrendo.*$'
-./sbin/launch_msgproc.sh start --taskName=whaleytv3 --topicRegex=$topicRegex
 tail -f /data/logs/forest/msgproc_whaleytv3.log
+./sbin/launch_msgproc.sh stop  --taskName=whaleytv
+./sbin/launch_msgproc.sh stop  --taskName=whaleytv2
 ./sbin/launch_msgproc.sh stop  --taskName=whaleytv3
+
+
 
 
 ### boikgpokn78sb95kbqei6cc9	whaley	whaleyvr

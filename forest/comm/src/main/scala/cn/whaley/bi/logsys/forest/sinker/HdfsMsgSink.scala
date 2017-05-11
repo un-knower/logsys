@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat
 import java.util.{Timer, TimerTask, Date}
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.{ReentrantReadWriteLock}
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
+import java.util.concurrent.{Executors, ConcurrentHashMap, ConcurrentMap}
 
 import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.forest.{ProcessResultCode, ProcessResult}
@@ -177,7 +177,6 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                     cacheItem.changeOpBytes(rowBytes.length)
                     count = count + 1
                 })
-                cacheItem.writer.hsync()
                 commitLogFileIf(fileKey)
             }
             finally {
@@ -211,6 +210,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                     val filePath = s"${errRootDir}/${topic}_${parId}.json"
                     val path = new Path(filePath)
                     LOG.info(s"append file:${filePath}")
+                    fs.createNewFile(path)
                     fs.append(path)
                 } catch {
                     case ex: Throwable => {
@@ -301,17 +301,20 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             if (cacheItem.isCommitted.get()) {
                 return false
             }
-
-            val fs = FileSystem.get(hdfsConf)
-            cacheItem.writer.close()
-            val source = new Path(cacheItem.filePath)
-            val target = fileKey.getTargetFilePath(cacheItem.fileName)
-
-            compressGzFile(source, target)
-            fs.delete(source, false)
-
-            LOG.info(s"commit file [ OpCount=${cacheItem.OpCount}, OpBytes=${cacheItem.OpBytes},lastOpTime:${new Date(cacheItem.lastOpTs)} ]: ${source} -> ${target}")
-            logWriterCache.remove(fileKey)
+            procThreadPool.submit(new Runnable {
+                override def run(): Unit = {
+                    cacheItem.writer.close()
+                    val source = new Path(cacheItem.filePath)
+                    val target = fileKey.getTargetFilePath(cacheItem.fileName)
+                    val fs = FileSystem.get(hdfsConf)
+                    compressGzFile(source, target)
+                    val sourceLen = fs.getContentSummary(source).getLength
+                    val targetLen = fs.getContentSummary(target).getLength
+                    LOG.info(s"commit file [ OpCount=${cacheItem.OpCount}, OpBytes=${cacheItem.OpBytes},lastOpTime:${new Date(cacheItem.lastOpTs)} ]: ${source.getName}[${sourceLen}] -> ${target.getName}[${targetLen}]")
+                    logWriterCache.remove(fileKey)
+                    fs.delete(source, false)
+                }
+            })
             cacheItem.isCommitted.set(true)
             true
         } finally {
@@ -363,10 +366,11 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         }
 
         //如果不存在,则新建缓存项
-        val targetFilePath = filePath
+        var targetFilePath = filePath
         var path = new Path(targetFilePath)
         val fs = FileSystem.get(hdfsConf)
         val ts = System.currentTimeMillis()
+
         val writer = try {
             fs.create(path, false)
         } catch {
@@ -374,7 +378,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                 val idx = filePath.lastIndexOf('.')
                 val pref = filePath.substring(0, idx)
                 val ext = filePath.substring(idx + 1)
-                val targetFilePath = s"${pref}-${ts}.${ext}"
+                targetFilePath = s"${pref}_${ts}.${ext}"
                 path = new Path(targetFilePath)
                 fs.create(path, false)
             }
@@ -405,6 +409,9 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
 
     //文件提交定时器
     private var commitTimer: Timer = null;
+
+    //文件提交线程池
+    private val procThreadPool = Executors.newCachedThreadPool()
 
     private val hdfsConf: Configuration = new Configuration()
     //错误数据根目录

@@ -71,7 +71,7 @@ class GenericLogProcessor extends LogProcessorTrait {
                     }
                 } else {
                     if (result.code != ProcessResultCode.silence) {
-                        println(s"discard log [${result.message}}]: " + curr.toJSONString)
+                        println(s"discard log [${result.message}]: " + curr.toJSONString)
                     }
                 }
                 if (result.code != ProcessResultCode.break) {

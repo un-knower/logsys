@@ -25,6 +25,11 @@ if [ -z "$topicRegex" ] && [ "$cmd" == "start" ] ; then
     exit 1
 fi
 
+
+if [ -z "$groupId" ]; then
+    groupId="forest-dist-${taskName}"
+fi
+
 export pidFile=${pwd}/../logs/${taskName}.pid
 export logFile=/data/logs/forest/msgproc_${taskName}.log
 export gcFile=/data/logs/forest/gc_msgproc_${taskName}.log
@@ -33,6 +38,8 @@ export gcFile=/data/logs/forest/gc_msgproc_${taskName}.log
 echo "pid file: ${pidFile}"
 echo "log file: ${logFile}"
 echo "gc file: ${gcFile}"
+echo "groupId: ${groupId}"
+
 
 case "$cmd" in
     start)
@@ -50,7 +57,7 @@ case "$cmd" in
         nohup ../bin/launch_executor.sh MsgProcExecutor \
             --f MsgBatchManager.xml,settings.properties \
             --c prop.KafkaMsgSource.topicRegex=$topicRegex \
-            --c prop.kafka-consumer.group.id=forest-dist-${taskName}
+            --c prop.kafka-consumer.group.id=${groupId}
             >> ${logFile} 2>&1 &
         set +x
     ;;
