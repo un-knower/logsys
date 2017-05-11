@@ -259,6 +259,8 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                 }
 
                 //不在缓存中的文件,可能之前的任务异常退出而遗留的文件
+                //[不完全的操作,无法判断不在缓存中的文件是否由其他进程打开]
+                /*
                 val fs = FileSystem.get(hdfsConf)
                 val statuses = fs.globStatus(new Path(s"${tmpRootDir}/*.json"))
                 statuses.foreach(status => {
@@ -266,6 +268,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                     val reg = ".*/([a-zA-Z0-9]{32})_(\\d{10})_(\\w+)_(\\d+)_(\\d+).json".r
                     val matched = reg.findFirstMatchIn(pathStr)
                     if (matched.isDefined && status.getLen > 0) {
+
                         val appId = matched.get.group(1)
                         val timeKey = matched.get.group(2)
                         val fileFlag = matched.get.group(3)
@@ -281,6 +284,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                         }
                     }
                 })
+                */
             }
         }, new Date(System.currentTimeMillis() + interval), interval / 2)
     }

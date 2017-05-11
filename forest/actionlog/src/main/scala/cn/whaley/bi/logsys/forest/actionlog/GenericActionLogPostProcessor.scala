@@ -124,6 +124,12 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
 
         val actionLogEntity = new ActionLogPostEntity(log)
         val postObj = actionLogEntity.postMsgBodyObj;
+        if (postObj == null) {
+            return ProcessResult(this.name, ProcessResultCode.skipped, "postObj is null", None)
+        }
+        if (postObj.method == null) {
+            return ProcessResult(this.name, ProcessResultCode.skipped, "postObj.method is null", None)
+        }
         try {
             if (!postObj.method.equalsIgnoreCase("POST")) {
                 return ProcessResult(this.name, ProcessResultCode.skipped, "", None)
@@ -175,9 +181,9 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
                         log.asInstanceOf[java.util.Map[String, Object]].putAll(bodyObj)
                         array.add(log)
                     }
-                    if(array.size==1){
+                    if (array.size == 1) {
                         postObj.setBody(array.get(0))
-                    }else{
+                    } else {
                         postObj.setBody(array)
                     }
                 }

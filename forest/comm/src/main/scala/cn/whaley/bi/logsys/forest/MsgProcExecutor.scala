@@ -60,7 +60,7 @@ class MsgProcExecutor extends ExecutedTrait with LogTrait {
         val parser = new BasicParser
         val options = new Options
 
-        //统计起始日期
+        //配置文件清单
         OptionBuilder.withLongOpt("confFiles")
         OptionBuilder.withDescription("逗号分隔的配置文件列表，默认为MsgBatchManager.xml")
         OptionBuilder.hasArg(true)
