@@ -9,6 +9,7 @@ import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
 import cn.whaley.bi.logsys.forest.entity.{LogEntity}
 import cn.whaley.bi.logsys.forest.sinker.MsgSinkTrait
+import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
 import scala.collection.JavaConversions._
@@ -71,6 +72,9 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
         //停止数据写入操作
         msgSink.stop()
+
+        //强制退出
+        System.exit(1)
     }
 
     /**
@@ -328,7 +332,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
             //获取topic的最后处理offset
             topicAndQueue.foreach(item => {
                 val topic = item._1
-                val sourceLatestOffset =  msgSource.getLatestOffset(topic)
+                val sourceLatestOffset = msgSource.getLatestOffset(topic)
                 //从目标中获取源topic的offset信息, 存在源topic已被监听,但尚未创建的情况,此时分区数为0
                 val partitions = msgSource.getTopicPartitions(topic)
                 if (partitions.isDefined) {
@@ -406,7 +410,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         results.foreach(item => {
             val info = s"process result[$msgId]:\t${item.source}\t${item.code}\t${item.message}]"
             if (item.ex.isDefined) {
-                LOG.error(info, item.ex.get)
+                LOG.error(info + ":\n" + ExceptionUtils.getFullStackTrace(item.ex.get))
             } else {
                 LOG.error(info)
             }
@@ -416,7 +420,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     //消息处理线程池
     private val procThreadPool = Executors.newCachedThreadPool()
     //处理线程，每个topic一个线程
-    private var processThreads: ArrayBuffer[BatchProcessThread] = new ArrayBuffer[BatchProcessThread]()
+    private val processThreads: ArrayBuffer[BatchProcessThread] = new ArrayBuffer[BatchProcessThread]()
     //处理线程计数，如果所有处理线程均出错，则应该退出
     private var processThreadErr: Int = 0
     //是否从消息目标系统中恢复消息源系统的offset

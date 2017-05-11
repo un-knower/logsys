@@ -1,3 +1,7 @@
+###kill all######
+ps -ef|grep MsgProc|awk '{print $2}'|grep -v grep|xargs kill
+ps -ef|grep MsgProc
+
 ### boikgpokn78sb95ktmsc1bnk	whaley	medusa
 topicRegex='^log-raw-boikgpokn78sb95ktmsc1bnk.*$'
 ./sbin/launch_msgproc.sh start --taskName=medusa --topicRegex=$topicRegex
