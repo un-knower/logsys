@@ -21,13 +21,35 @@ if [ -z "$taskName" ]; then
 fi
 
 if [ -z "$topicRegex" ] && [ "$cmd" == "start" ] ; then
-    echo "topicRegex required."
-    exit 1
+    case "$taskName" in
+        medusa)
+            topicRegex='^log-raw-boikgpokn78sb95ktmsc1bnk.*$'
+        ;;
+        whaleytv)
+            topicRegex='^log-raw-boikgpokn78sb95kjhfrendo.*$'
+        ;;
+        whaleyvr_orca)
+            topicRegex='(^log-raw-boikgpokn78sb95kbqei6cc9.*$)|(^log-raw-boikgpokn78sb95kicggqhbk.*$)'
+        ;;
+        eagle_mobilehelper)
+            topicRegex='(^log-raw-boikgpokn78sb95k7id7n8eb.*$)|(^log-raw-boikgpokn78sb95kjtihcg26.*$)'
+        ;;
+        crawler)
+            topicRegex='^log-raw-boikgpokn78sb95kkls3bhmt.*$'
+        ;;
+        *)
+            echo invalid taskName $taskName
+            exit 1
+    ;;
+    esac
 fi
 
 
 if [ -z "$groupId" ]; then
     groupId="forest-dist-${taskName}"
+fi
+if [ -n "$taskId" ]; then
+    taskName="${taskName}${taskId}"
 fi
 
 export pidFile=${pwd}/../logs/${taskName}.pid
@@ -39,6 +61,8 @@ echo "pid file: ${pidFile}"
 echo "log file: ${logFile}"
 echo "gc file: ${gcFile}"
 echo "groupId: ${groupId}"
+
+
 
 
 case "$cmd" in

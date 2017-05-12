@@ -36,7 +36,7 @@ else
 fi
 
 javaXmx=${javaXmx:-4096m}
-javaXms=${javaXmx:-1024m}
+javaXms=${javaXms:-1024m}
 java -Xmx${javaXmx} -Xms${javaXms} -server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC \
  -XX:+CMSClassUnloadingEnabled -XX:+CMSScavengeBeforeRemark \
  -XX:+DisableExplicitGC -Djava.awt.headless=true \
