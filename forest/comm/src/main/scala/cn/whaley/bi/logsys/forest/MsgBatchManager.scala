@@ -405,8 +405,9 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     private def logMsgProcChainErr[T <: AnyRef](message: KafkaMessage, procResult: ProcessResult[T]): Unit = {
 
         if (!procResult.ex.isDefined || !procResult.ex.get.isInstanceOf[ProcessorChainException[AnyRef]]) {
-            val info = s"process error (${message.topic},${message.partition},${message.offset}):${procResult}"
-            LOG.error(info, procResult.ex.getOrElse(null))
+            val info = s"process error (${message.topic},${message.partition},${message.offset})"
+            LOG.error(info)
+            LOG.debug(s"ERROR:${procResult}")
             return
         }
 
@@ -414,14 +415,12 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         val msgId = chainException.msgIdAndInfo._1
         val msgInfo = chainException.msgIdAndInfo._2
         val results = chainException.results
-        LOG.error(s"process error[$msgId](${message.topic},${message.partition},${message.offset}):\t${procResult.message}\t${msgInfo}")
+        LOG.error(s"process error[$msgId](${message.topic},${message.partition},${message.offset})")
+        LOG.debug(s"ERROR:${procResult.message}\t${msgInfo}")
         results.foreach(item => {
-            val info = s"process result[$msgId]:\t${item.source}\t${item.code}\t${item.message}]"
-            if (item.ex.isDefined) {
-                LOG.error(info + ":\n" + ExceptionUtils.getFullStackTrace(item.ex.get))
-            } else {
-                LOG.error(info)
-            }
+            val info = s"process result[$msgId]:\t${item.source}\t${item.code}\t]"
+            LOG.error(info)
+            LOG.debug(s"ERROR:${item.message}")
         })
     }
 
@@ -440,7 +439,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     //每次消息处理过程调用所处理的消息数量
     private var callableSize: Int = 2000
 
-    val shutdownLatch=new CountDownLatch(1)
+    val shutdownLatch = new CountDownLatch(1)
 
 
 }
