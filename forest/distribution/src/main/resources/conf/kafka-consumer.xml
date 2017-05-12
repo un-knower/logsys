@@ -13,6 +13,10 @@
         <value>true</value>
     </property>
     <property>
+        <name>kafka-consumer.rebalance.timeout.ms</name>
+        <value>${prop.kafka-consumer.rebalance.timeout.ms}</value>
+    </property>
+    <property>
         <name>kafka-consumer.key.deserializer</name>
         <value>org.apache.kafka.common.serialization.ByteArrayDeserializer</value>
     </property>

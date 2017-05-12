@@ -14,18 +14,64 @@
     </property>
     <property>
         <name>hadoop.tmp.dir</name>
-        <value>/hadoopecosystem/hadoop/tmp</value>
+        <value>/tmp/hadoop</value>
     </property>
     <property>
         <name>topology.script.file.name</name>
-        <value>/hadoopecosystem/hadoop/etc/hadoop/getRack.py</value>
+        <value>/opt/hadoop/etc/hadoop/getRack.py</value>
     </property>
     <property>
         <name>net.topology.script.number.args</name>
-        <value>24</value>
+        <value>8</value>
     </property>
     <property>
         <name>ha.zookeeper.quorum</name>
-        <value>bigdata-computing-02-015:2182,bigdata-computing-02-016:2182,bigdata-computing-02-017:2182,bigdata-computing-02-018:2182,bigdata-computing-02-019:2182</value>
+        <value>bigdata-cmpt-128-1:2181,bigdata-cmpt-128-13:2181,bigdata-cmpt-128-25:2181</value>
     </property>
+
+    <property>
+        <name>hadoop.proxyuser.moretv.groups</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.moretv.hosts</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.hadoop.groups</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.hadoop.hosts</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.yarn.groups</name>
+        <value>*</value>
+    </property>
+
+    <property>
+        <name>hadoop.proxyuser.yarn.hosts</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.hdfs.groups</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.hdfs.hosts</name>
+        <value>*</value>
+    </property>
+
+    <property>
+        <name>fs.trash.interval</name>
+        <value>10080</value>
+        <description>保留7天</description>
+    </property>
+
+    <property>
+        <name>dfs.hosts.exclude</name>
+        <value>/opt/hadoop/etc/hadoop/excludes</value>
+    </property>
+
 </configuration>

@@ -13,7 +13,6 @@ class MsgProcExecutor extends ExecutedTrait with LogTrait {
 
     case class Parameters(confValues: Properties, confFiles: Seq[String])
 
-
     override def execute(args: Array[String]): Unit = {
         //参数解析
         val parsed = parseCmd(args)
@@ -36,13 +35,9 @@ class MsgProcExecutor extends ExecutedTrait with LogTrait {
 
     }
 
-    def shutdownOnCompleted(): Unit = {
-        val topics = batchManager.consumingTopics
-        if (topics.size > 0) {
-            Thread.sleep(1000 * 3)
-        } else {
-            batchManager.shutdown(true)
-        }
+    override def shutdown(wait: Boolean = true): Unit = {
+        batchManager.shutdown(wait)
+        batchManager.shutdownLatch.await()
     }
 
 

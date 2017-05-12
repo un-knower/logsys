@@ -101,11 +101,17 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         })
     }
 
+    def commitOffset(topic: String = ""): Unit = {
+        consumerThreads.filter(topic == "" || _.consumerTopic == topic).foreach(thread => {
+            thread.kafkaConsumer.commitSync()
+        })
+    }
+
     /**
      * 提交偏移信息
      * @param offsetInfo
      */
-    def commitOffset(offsetInfo: Map[String, Map[Int, Long]]): Unit = {
+    def seekOffset(offsetInfo: Map[String, Map[Int, Long]]): Unit = {
         offsetInfo.map(item => {
             val topic = item._1
             val offset = item._2
@@ -263,12 +269,10 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         def stopProcess(): Unit = {
             keepRunning = false
             this.interrupt()
-            kafkaConsumer.close()
             LOG.info(s"MsgConsumerThread[${this.getName}] stopped")
         }
 
         override def run(): Unit = {
-            this.setName(s"${topic}/${index}")
             this.isStarted = true
 
             LOG.info(s"MsgConsumerThread[${this.getName}] started")
@@ -290,6 +294,10 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
                     }
                 } catch {
                     case e: InterruptedException => {
+                        if (keepRunning == false) {
+                            kafkaConsumer.commitSync()
+                            kafkaConsumer.close()
+                        }
                         LOG.info(s"${this.getName} is interrupted. keepRunning:${keepRunning}")
                         return
                     }

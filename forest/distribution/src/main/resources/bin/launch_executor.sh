@@ -35,9 +35,9 @@ else
    classpath="$path"
 fi
 
-javaXmx=${javaXmx:-1024m}
-javaXms=${javaXmx:-256m}
-java -Xmx${javaXms} -Xms${javaXms} -server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC \
+javaXmx=${javaXmx:-4096m}
+javaXms=${javaXms:-1024m}
+java -Xmx${javaXmx} -Xms${javaXms} -server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC \
  -XX:+CMSClassUnloadingEnabled -XX:+CMSScavengeBeforeRemark \
  -XX:+DisableExplicitGC -Djava.awt.headless=true \
  -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCDateStamps \
