@@ -7,7 +7,7 @@
 ####################################################################################
 HIVE_HOME=/opt/hive
 
-$HIVE_HOME/bin/hive -e "CREATE EXTERNAL TABLE log_origin(
+$HIVE_HOME/bin/hive -e "CREATE EXTERNAL TABLE ods_origin.log_origin(
      \`_sync\` map<string,string>,
      msgId string,
      msgVersion string,
