@@ -504,7 +504,7 @@ output.kafka:
   # The list of Kafka broker addresses from where to fetch the cluster metadata.
   # The cluster metadata contain the actual Kafka brokers events are published
   # to.
-  hosts: ["10.10.1.1:9092","10.10.1.3:9092","10.10.1.4:9092"]
+  hosts: ["bigdata-appsvr-130-1:9094","bigdata-appsvr-130-2:9094","bigdata-appsvr-130-3:9094","bigdata-appsvr-130-4:9094","bigdata-appsvr-130-5:9094","bigdata-appsvr-130-6:9094"]
 
   # The Kafka topic used for produced events. The setting can be a format string
   # using any event field. To set the topic from document type use `%{[type]}`.

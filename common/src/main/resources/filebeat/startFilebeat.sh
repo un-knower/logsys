@@ -3,9 +3,9 @@
 if [ $# -ne 1 ]
 then
   echo "usage:
-  ./star_filebeat.sh configFileName
+  ./startFilebeat.sh configFileName
 example:
-  ./star_filebeat.sh filebeat_log-raw-boikgpokn78sb95kjhfrendo.yml";
+  ./startFilebeat.sh filebeat_log-raw-boikgpokn78sb95kjhfrendo.yml";
   exit 1;
 fi
 
@@ -20,5 +20,5 @@ if [ ${pro_num} -gt 0 ]; then
   ps -ef|grep $configFileName |grep -v grep|grep -v $0
   exit 1
 else
-  nohup $FileBeatHome/filebeat -c $FileBeatHome/conf/$configFileName >> /data/logs/filebeat/$logFileName.log 2>&1 &
+  nohup $FileBeatHome/filebeat -c $FileBeatHome/conf/$configFileName >> /data/logs/filebeat_v5/$logFileName.log 2>&1 &
 fi
