@@ -2,6 +2,8 @@ import java.util.Scanner
 import java.util.concurrent.ArrayBlockingQueue
 
 import com.alibaba.fastjson.{JSONArray, JSON, JSONObject}
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{Path, FileSystem}
 import org.junit.Test
 
 import scalaj.http.{Http, HttpRequest}
@@ -45,13 +47,13 @@ class otherTest {
 
     @Test
     def testBlockQueueStop: Unit = {
-        val queue=new ArrayBlockingQueue[String](10)
+        val queue = new ArrayBlockingQueue[String](10)
         val t = new Thread {
             override def run(): Unit = {
-                try{
+                try {
                     queue.take()
-                }catch {
-                    case e:InterruptedException=>{
+                } catch {
+                    case e: InterruptedException => {
                         println("thread interrupted.")
                     }
                 }
@@ -67,21 +69,40 @@ class otherTest {
     }
 
     @Test
-    def testJsonObj():Unit={
-        val msg=new JSONObject()
-        msg.put("msg_key1","msg_val1")
-        msg.put("msg_key2","msg_val2")
-        val msg2=new JSONObject(msg)
+    def testJsonObj(): Unit = {
+        val msg = new JSONObject()
+        msg.put("msg_key1", "msg_val1")
+        msg.put("msg_key2", "msg_val2")
+        val msg2 = new JSONObject(msg)
 
         println(msg.toJSONString)
         println(msg2.toJSONString)
 
-        msg.put("msg_key1","msg_val1_1")
-        msg.put("msg_key3","msg_val3")
+        msg.put("msg_key1", "msg_val1_1")
+        msg.put("msg_key3", "msg_val3")
 
         println(msg.toJSONString)
         println(msg2.toJSONString)
 
     }
 
+    @Test
+    def testHDFSAppend(): Unit = {
+        val config = new Configuration()
+        val fs = FileSystem.get(config)
+        val path = new Path("hdfs:///data_warehouse/ods_origin.db/err_log_origin/log-raw-boikgpokn78sb95ktmsc1bnk_4_1495222373613.json")
+        val stream = fs.append(path)
+        stream.write("test".getBytes())
+        stream.close()
+        fs.close()
+        Thread.sleep(3000)
+        println("OK")
+
+    }
+
+    @Test
+    def testX():Unit={
+        val dd=("dsf","dddd")
+        println(dd.toString())
+    }
 }

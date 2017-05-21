@@ -3,10 +3,11 @@ package cn.whaley.bi.logsys.forest.sinker
 
 import java.util
 
-import cn.whaley.bi.logsys.forest.ProcessResult
+import cn.whaley.bi.logsys.forest.{ProcessorChainException, ProcessResultCode, ProcessResult}
 import cn.whaley.bi.logsys.forest.entity.LogEntity
 import com.alibaba.fastjson.serializer.SerializeFilter
 import com.alibaba.fastjson.{JSON, JSONObject}
+import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
 /**
@@ -84,8 +85,24 @@ trait MsgSinkTrait {
         if (message.key() != null) {
             errData.put("msg_key", new String(message.key()))
         }
-        errData.put("msg_value", new String(message.value()))
-        errData.put("msg_err", JSON.toJSONString(errResult, new Array[SerializeFilter](0)))
+
+        val msgErr = new JSONObject()
+        msgErr.put("source", errResult.source)
+        msgErr.put("code", errResult.code.toString)
+        msgErr.put("message", errResult.message)
+
+        if (errResult.ex.isDefined && errResult.ex.get != null) {
+            val ex=errResult.ex.get
+            msgErr.put("ex", ex.getMessage)
+            if(ex.getClass.getName.indexOf("ProcessorChainException")>=0){
+                val msgValue=ex.asInstanceOf[ProcessorChainException[AnyRef]].msgIdAndInfo.toString()
+                errData.put("msg_value",msgValue)
+            }
+        }
+        if(!errData.containsKey("msg_value")){
+            errData.put("msg_value", new String(message.value()))
+        }
+        errData.put("msg_err", msgErr.toJSONString)
         errData
     }
 

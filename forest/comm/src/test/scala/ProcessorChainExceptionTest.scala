@@ -15,4 +15,9 @@ class ProcessorChainExceptionTest {
 
         println("test completed")
     }
+
+    @Test
+    def testHDFSAppend():Unit={
+
+    }
 }

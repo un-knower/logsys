@@ -6,7 +6,7 @@
 <configuration>
     <property>
         <name>fs.defaultFS</name>
-        <value>file:///</value>
+        <value>hdfs://hans</value>
     </property>
     <property>
         <name>io.file.buffer.size</name>

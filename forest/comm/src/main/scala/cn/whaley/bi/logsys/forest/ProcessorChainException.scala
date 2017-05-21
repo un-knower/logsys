@@ -16,5 +16,8 @@ import cn.whaley.bi.logsys.forest.entity.{LogEntity, MsgEntity}
  * @tparam A
  */
 case class ProcessorChainException[A <: AnyRef](msgIdAndInfo: (String, String), results: Seq[ProcessResult[A]]) extends Exception {
-
+    override def getMessage(): String = {
+        var msg=""
+        results.map(result=>s"[${result.source};${result.code.toString};${result.message}]").mkString("|")
+    }
 }
