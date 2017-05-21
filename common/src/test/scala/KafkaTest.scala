@@ -180,6 +180,23 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
         }
     }
 
+    @Test
+    def testProducer3: Unit = {
+        val producer = getKafkaProducer[Array[Byte], Array[Byte]]
+
+        val topic = "test"
+        val source = scala.io.Source.fromFile("/Users/fj/workspace/whaley/projects/WhaleyLogSys/forest/actionlog/src/test/resources/data/boikgpokn78sb95kjhfrendoj8ilnoi7.log-2017050718-bigdata-extsvr-log1")
+        val filelines = source.getLines().toArray
+
+        for (i <- 1 to filelines.length - 1) {
+            val key: Array[Byte] = i.toString.getBytes
+            val value: Array[Byte] = filelines(i).getBytes()
+            val record: ProducerRecord[Array[Byte], Array[Byte]] = new ProducerRecord[Array[Byte], Array[Byte]](topic, key, value)
+            val future: Future[RecordMetadata] = producer.send(record)
+            future.get()
+        }
+    }
+
 
     @Test
     def testKafkaUtil_getOffset: Unit = {
@@ -253,7 +270,7 @@ class KafkaTest extends LogTrait with TimeConsumeTrait {
                 val valueBytes = record.value()
                 val key = new String(keyBytes)
                 val value = new String(valueBytes)
-                println(s"[${partiton}:${count}:${record.offset}}]:${key}:${value}")
+                println(s"[${partiton}:${count}:${record.offset}]:${key}:${value}")
             })
         })
 

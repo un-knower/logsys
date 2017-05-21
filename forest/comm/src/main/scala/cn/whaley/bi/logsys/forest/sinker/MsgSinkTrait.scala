@@ -18,7 +18,7 @@ trait MsgSinkTrait {
     /**
      * 停止服务
      */
-    def stop():Unit
+    def stop(): Unit
 
     /**
      * 保存处理后的数据
@@ -58,13 +58,15 @@ trait MsgSinkTrait {
             }
         }
         if (!keyObj.containsKey("rawTopic")) {
-            keyObj.put("rawTopic", source.timestamp())
+            keyObj.put("rawTopic", source.topic())
             keyObj.put("rawParId", source.partition())
-            keyObj.put("rawOffset", source.topic())
+            keyObj.put("rawOffset", source.offset())
+            keyObj.put("rawTs", source.timestamp())
         } else if (!keyObj.containsKey("oriTopic")) {
-            keyObj.put("oriTopic", source.timestamp())
+            keyObj.put("oriTopic", source.topic())
             keyObj.put("oriParId", source.partition())
             keyObj.put("oriOffset", source.offset())
+            keyObj.put("oriTs", source.timestamp())
         }
         keyObj
     }

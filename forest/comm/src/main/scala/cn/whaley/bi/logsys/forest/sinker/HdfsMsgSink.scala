@@ -9,7 +9,7 @@ import java.util.concurrent.locks.{ReentrantReadWriteLock}
 import java.util.concurrent.{CountDownLatch, Executors}
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.forest.{ ProcessResult}
+import cn.whaley.bi.logsys.forest.{ProcessResult}
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
 import cn.whaley.bi.logsys.forest.entity.LogEntity
 import com.alibaba.fastjson.{JSON}
@@ -199,10 +199,13 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
 
     def writeEntity(cacheItem: LogWriteCacheItem, filePath: String, item: (KafkaMessage, LogEntity)) = {
         val message = item._1
-        val msgBody = item._2.toJSONString.trim.substring(1).getBytes
-        val bytes = ("{\"_sync\":" + buildSyncInfo(message).toJSONString + "," + msgBody + '\n').getBytes
+        val msgBody = item._2
+        val syncInfo = buildSyncInfo(message)
+        msgBody.put("_sync", syncInfo)
+        val bytes = msgBody.toJSONString.getBytes
         try {
             cacheItem.writer.write(bytes)
+            cacheItem.writer.write('\n')
         }
         catch {
             case ex: java.nio.channels.ClosedChannelException => {
@@ -294,27 +297,27 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
     //如有必要则提交文件,并清理相关缓存项
     private def commitLogFileIf(fileKey: LogWriteCacheKey): Boolean = {
         val cacheItem = logWriterCache.get(fileKey)
-        if (cacheItem == null || cacheItem.readyForCommit.get() == false) {
+        if (cacheItem == null || cacheItem.readyForCommit.get() == false || cacheItem.isCommitted.get() == true) {
             return false
         }
-        try {
-            cacheItem.writeLock.lock()
-            if (cacheItem.isCommitted.get()) {
-                return false
-            }
-            procThreadPool.submit(new Runnable {
-                override def run(): Unit = {
+        procThreadPool.submit(new Runnable {
+            override def run(): Unit = {
+                try {
+                    cacheItem.writeLock.lock()
+                    if (cacheItem.isCommitted.get() == true) {
+                        return
+                    }
                     IOUtils.closeStream(cacheItem.writer)
                     commitFile(fileKey)
                     logWriterCache.remove(fileKey)
+                    cacheItem.isCommitted.set(true)
+                } finally {
+                    cacheItem.writeLock.unlock()
                 }
-            })
-            cacheItem.isCommitted.set(true)
-            true
-        } finally {
-            cacheItem.writeLock.unlock()
-        }
+            }
+        })
 
+        true
     }
 
     private def commitFile(fileKey: LogWriteCacheKey): Unit = {

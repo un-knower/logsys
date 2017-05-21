@@ -205,13 +205,15 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                 LOG.info(s"${topic}-msgSave(${ret._1},${ret._2}):${monitor.checkStep()}")
 
                 //打印错误日志
-                var errorCount = 0
-                procResults
-                    .filter(result => result._2.hasErr == true)
-                    .foreach(err => {
-                    errorCount = errorCount + 1
-                    logMsgProcChainErr(err._1, err._2)
-                })
+                val errorResults=procResults.filter(result => result._2.hasErr == true).toList
+                val errorCount = errorResults.size
+                if(errorCount > 0){
+                    LOG.error(s"${errorCount} messages processed failure.")
+                    errorResults.foreach(err => {
+                        logMsgProcChainErr(err._1, err._2)
+                    })
+                }
+
 
                 //打印offset日志信息
                 val offset = procResults.map(result => {
@@ -406,7 +408,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
         if (!procResult.ex.isDefined || !procResult.ex.get.isInstanceOf[ProcessorChainException[AnyRef]]) {
             val info = s"process error (${message.topic},${message.partition},${message.offset})"
-            LOG.error(info)
+            LOG.debug(info)
             LOG.debug(s"ERROR:${procResult}")
             return
         }
@@ -415,11 +417,11 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         val msgId = chainException.msgIdAndInfo._1
         val msgInfo = chainException.msgIdAndInfo._2
         val results = chainException.results
-        LOG.error(s"process error[$msgId](${message.topic},${message.partition},${message.offset})")
+        LOG.debug(s"process error[$msgId](${message.topic},${message.partition},${message.offset})")
         LOG.debug(s"ERROR:${procResult.message}\t${msgInfo}")
         results.foreach(item => {
             val info = s"process result[$msgId]:\t${item.source}\t${item.code}\t]"
-            LOG.error(info)
+            LOG.debug(info)
             LOG.debug(s"ERROR:${item.message}")
         })
     }

@@ -1,4 +1,5 @@
 import cn.whaley.bi.logsys.forest.StringUtil
+import com.alibaba.fastjson.JSON
 import org.junit.Test
 
 /**
@@ -52,11 +53,18 @@ class StringTest {
     @Test
     def test5: Unit = {
         val topicRegex = "(^log-raw-boikgpokn78sb95ktmsc1bnk.*$)|(^log-raw-boikgpokn78sb95kjtihcg26.*$)".r
-        val topics = Array("log-raw-boikgpokn78sb95ktmsc1bnk","log-raw-boikgpokn78sb95kjtihcg26")
+        val topics = Array("log-raw-boikgpokn78sb95ktmsc1bnk", "log-raw-boikgpokn78sb95kjtihcg26")
         topics.filter(topic => (topic.startsWith("__") == false && topicRegex.findFirstMatchIn(topic).isDefined)).foreach(println)
 
     }
 
+    @Test
+    def test6: Unit = {
+        val str = "{\"msgSignFlag\":0,\"msgId\":\"AAABXCEVLd0KEy3gHpSAvwAB\",\"msgFormat\":\"json\",\"_sync\":{\"rawTopic\":\"log-raw-boikgpokn78sb95ktmsc1bnk\",\"rawTs\":1495203655995,\"odsTs\":1495203656568,\"rawOffset\n\":100857814,\"rawParId\":8},\"logTime\":1495203655133,\"logBody\":{\"logType\":\"playview\",\"productModel\":\"INPHIC_I9H\",\"svr_host\":\"log.tvmore.com.cn\",\"weatherCode\":\"101020100\",\"svr_remote_a\nddr\":\"10.10.251.81\",\"groupId\":\"75\",\"pathSub\":\"\",\"buildDate\":\"20160618\",\"duration\":\"11\",\"searchText\":\"1110000\",\"promotionChannel\":\"dangbei\",\"apkVersion\":\"3.0.6\",\"retrieval\":\"\",\"svr_\nreq_url\":\"/medusalog/\",\"event\":\"playview\",\"contentType\":\"zongyi\",\"episodeSid\":\"5irsjlcdhjgh\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"uploadTime\":\"20170519222054\",\"userId\":\"bddaad7b31\n40f1bf839a7a73627492d5\",\"versionCode\":\"306\",\"pathMain\":\"home*classification*zongyi-zongyi*最强笑点\",\"accountId\":\"\",\"svr_content_type\":\"-\",\"svr_forwarded_for\":\"42.177.67.87\",\"videoS\nid\":\"fhfh3ehi23l7\",\"pathSpecial\":\"\",\"svr_receive_time\":1495203655133,\"svr_fb_Time\":\"2017-05-19T14:20:55.995Z\",\"svr_req_method\":\"GET\"},\"logSignFlag\":0,\"appId\":\"boikgpokn78sb95ktmsc1\nbnkechpgj9l\",\"logId\":\"AAABXCEVLd0KEy3gHpSAvwAB0000\",\"logVersion\":\"01\",\"msgSource\":\"ngx_log\",\"msgVersion\":\"1.0\",\"msgSite\":\"10.19.45.224\"}"
+
+        val json = JSON.parseObject(str)
+        println(json.toJSONString)
+    }
 
 }
 
