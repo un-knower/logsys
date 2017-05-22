@@ -37,6 +37,9 @@ if [ -z "$topicRegex" ] && [ "$cmd" == "start" ] ; then
         crawler)
             topicRegex='^log-raw-boikgpokn78sb95kkls3bhmt.*$'
         ;;
+        whaley_other)
+            topicRegex='^log-raw-boikgpokn78sb95k0+$'
+        ;;
         *)
             echo invalid taskName $taskName
             exit 1
