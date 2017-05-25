@@ -91,7 +91,9 @@ example:
     exit 1;
 fi
 
-HIVE_HOME=/opt/hive
+if [ ${#hiveSql} -gt 52 ]; then
+    HIVE_HOME=/opt/hive
 
-$HIVE_HOME/bin/hive -e "$hiveSql"
+    $HIVE_HOME/bin/hive -e "$hiveSql"
 
+fi
