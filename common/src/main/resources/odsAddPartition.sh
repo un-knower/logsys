@@ -59,25 +59,20 @@ if [ -n "$appId" -a -n "$day" -a -n "$hour" ]; then
         hiveSql=" PARTITION(key_appId='$appId',key_day='$day',key_hour='$hour') LOCATION '/data_warehouse/ods_origin.db/log_origin/key_appId=$appId/key_day=$day/key_hour=$hour' ";
     fi
 elif [ -z "$appId" -a -n "$day" -a -n "$hour" ]; then
-    for appIdLocation in `$HADOOP_HOME/bin/hadoop fs -ls "/data_warehouse/ods_origin.db/log_origin/" | awk '{print $8}'`
+    for appIdLocation in `$HADOOP_HOME/bin/hadoop fs -ls "/data_warehouse/ods_origin.db/log_origin/key_appId=*/key_day=$day/key_hour=$hour" | awk '{print $8}'`
     do
-        appId=${appIdLocation##*=};
+        appId=${appIdLocation:51:32};
+        hiveSql=$hiveSql" PARTITION(key_appId='$appId',key_day='$day',key_hour='$hour') LOCATION '/data_warehouse/ods_origin.db/log_origin/key_appId=$appId/key_day=$day/key_hour=$hour' ";
 
-        $HADOOP_HOME/bin/hadoop fs -test -e "/data_warehouse/ods_origin.db/log_origin/key_appId=$appId/key_day=$day/key_hour=$hour"
-        if [ $? -eq 0 ]; then
-            hiveSql=$hiveSql" PARTITION(key_appId='$appId',key_day='$day',key_hour='$hour') LOCATION '/data_warehouse/ods_origin.db/log_origin/key_appId=$appId/key_day=$day/key_hour=$hour' ";
-        fi
     done
 elif [ -z "$appId" -a -n "$day" -a -z "$hour" ]; then
-    for appIdLocation in `$HADOOP_HOME/bin/hadoop fs -ls "/data_warehouse/ods_origin.db/log_origin/" | awk '{print $8}'`
+    for appIdLocation in `$HADOOP_HOME/bin/hadoop fs -ls -d  "/data_warehouse/ods_origin.db/log_origin/key_appId=*/key_day=$day/key_hour=*" | awk '{print $8}'`
     do
-        appId=${appIdLocation##*=};
+        appId=${appIdLocation:51:32};
+        hour=${appIdLocation:110:2};
 
-        for hourLocation in `$HADOOP_HOME/bin/hadoop fs -ls "/data_warehouse/ods_origin.db/log_origin/key_appId=$appId/key_day=$day" | awk '{print $8}'`
-        do
-            hour=${hourLocation##*=}
-            hiveSql=$hiveSql" PARTITION(key_appId='$appId',key_day='$day',key_hour='$hour') LOCATION '/data_warehouse/ods_origin.db/log_origin/key_appId=$appId/key_day=$day/key_hour=$hour' ";
-        done
+        hiveSql=$hiveSql" PARTITION(key_appId='$appId',key_day='$day',key_hour='$hour') LOCATION '/data_warehouse/ods_origin.db/log_origin/key_appId=$appId/key_day=$day/key_hour=$hour' ";
+
     done
 else
     echo "usage:
