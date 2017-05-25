@@ -71,7 +71,7 @@
     </property>
     <property>
         <name>GenericActionLogCommProcessor.happenTime.deviation.sec</name>
-        <value>3600</value>
+        <value>${prop.GenericActionLogCommProcessor.happenTime.deviation.sec}</value>
     </property>
     <!--
     <property>
