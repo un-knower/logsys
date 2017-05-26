@@ -102,7 +102,7 @@ class otherTest {
 
     @Test
     def testX():Unit={
-        val dd=("dsf","dddd")
-        println(dd.toString())
+        val dd="^log-raw-boikgpokn78sb95k0+$".r
+        println(dd.findPrefixMatchOf("log-raw-boikgpokn78sb95k0000000000000000"))
     }
 }

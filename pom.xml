@@ -11,15 +11,14 @@
 
     <modules>
         <module>forest</module>
-        <module>distribution</module>
         <module>common</module>
-        <module>backupper</module>
-        <!--
         <module>gathersys</module>
-        -->
-        <!--
-        <module>hadoop-support</module>
-        -->
+        <module>azkaban-support</module>
+        <module>test</module>
+        <module>log2parquet</module>
+        <module>ods-origin-metadata</module>
+        <module>ods-view-metadata</module>
+
     </modules>
 
     <properties>

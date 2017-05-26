@@ -127,7 +127,7 @@ object MsgEntity {
         from.remove(fromKey)
 
         //如果fromProp为空,则不做任何处理
-        if (fromProp == null) {
+        if (fromProp == null || (fromProp.isInstanceOf[String] && fromProp.asInstanceOf[String].isEmpty)) {
             return to
         }
 
