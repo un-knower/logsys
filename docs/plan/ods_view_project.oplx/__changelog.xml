@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <changelog xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2">
   <version>2.1</version>
   <task-change-set user="fj" date="2017-05-26T06:16:45.589Z" timestamp="2017-05-26T06:16:45.589Z">
@@ -240,9 +240,22 @@
       <change idref="t34" attribute="title" type="string" to="字段黑白名单初始化填充"/>
     </change>
   </task-change-set>
+  <task-change-set user="fj" date="2017-05-27T02:21:40.634Z" timestamp="2017-05-27T02:21:40.634Z">
+    <change idref="t49" to="t2" to-position="1">
+      <change idref="t49" attribute="internalAssignments" type="string" from="" to="2"/>
+      <change idref="t49" attribute="noEarlierThanConstraintDate" type="date" to="2017-06-08T00:00:00.000Z"/>
+      <change idref="t49" attribute="title" type="string" to="原始层分区加载脚本整合"/>
+    </change>
+    <change idref="t34" attribute="internalAssignments" type="string" from="" to="2"/>
+    <change idref="t38" attribute="internalAssignments" type="string" from="" to="2"/>
+    <change idref="t39" attribute="internalAssignments" type="string" from="" to="2"/>
+    <change idref="t40" attribute="internalAssignments" type="string" from="" to="2"/>
+    <change idref="t41" attribute="internalAssignments" type="string" from="" to="2"/>
+    <change idref="t47" attribute="internalAssignments" type="string" from="" to="2"/>
+  </task-change-set>
   <resource-change-set user="fj" date="2017-05-26T07:10:38.892Z" timestamp="2017-05-26T07:10:38.892Z">
     <change idref="r2" to="r-1" to-position="1" resolved="yes">
-      <change idref="r2" attribute="name" type="string" from="" to="连凯"/>
+      <change idref="r2" attribute="name" type="string" to="连凯"/>
     </change>
     <change idref="r1" attribute="name" type="string" from="资源 1" to="冯进" resolved="yes"/>
   </resource-change-set>
@@ -250,16 +263,56 @@
     <change idref="m1" attribute="fixedDate" type="date" from="2007-01-01T20:00:00.000Z" to="2017-05-26T00:00:00.000Z" resolved="yes"/>
   </metadata-change-set>
   <metadata-change-set user="fj" date="2017-05-26T06:42:00.729Z" timestamp="2017-05-26T06:42:00.729Z">
-    <change idref="m1" attribute="baselineInfo" type="dict" from="{&#10;    info =     (&#10;    );&#10;}" to="{&#10;    info =     (&#10;                {&#10;            name = &quot;\U57fa\U7ebf 17/6/5&quot;;&#10;            uuid = eWt65IVo6vE;&#10;        }&#10;    );&#10;}" resolved="yes"/>
+    <change idref="m1" attribute="baselineInfo" type="dict" from="{
+    info =     (
+    );
+}" to="{
+    info =     (
+                {
+            name = &quot;\U57fa\U7ebf 17/6/5&quot;;
+            uuid = eWt65IVo6vE;
+        }
+    );
+}" resolved="yes"/>
   </metadata-change-set>
   <metadata-change-set user="fj" date="2017-05-26T06:43:28.747Z" timestamp="2017-05-26T06:43:28.747Z">
-    <change idref="m1" attribute="baselineInfo" type="dict" from="{&#10;    info =     (&#10;                {&#10;            name = &quot;\U57fa\U7ebf 17/6/5&quot;;&#10;            uuid = eWt65IVo6vE;&#10;        }&#10;    );&#10;}" to="{&#10;    info =     (&#10;    );&#10;}" resolved="yes"/>
+    <change idref="m1" attribute="baselineInfo" type="dict" from="{
+    info =     (
+                {
+            name = &quot;\U57fa\U7ebf 17/6/5&quot;;
+            uuid = eWt65IVo6vE;
+        }
+    );
+}" to="{
+    info =     (
+    );
+}" resolved="yes"/>
   </metadata-change-set>
   <metadata-change-set user="fj" date="2017-05-26T06:43:41.637Z" timestamp="2017-05-26T06:43:41.637Z">
-    <change idref="m1" attribute="baselineInfo" type="dict" from="{&#10;    info =     (&#10;    );&#10;}" to="{&#10;    info =     (&#10;                {&#10;            name = &quot;\U57fa\U7ebf 17/6/5&quot;;&#10;            uuid = &quot;cb_b-r71EqQ&quot;;&#10;        }&#10;    );&#10;}" resolved="yes"/>
+    <change idref="m1" attribute="baselineInfo" type="dict" from="{
+    info =     (
+    );
+}" to="{
+    info =     (
+                {
+            name = &quot;\U57fa\U7ebf 17/6/5&quot;;
+            uuid = &quot;cb_b-r71EqQ&quot;;
+        }
+    );
+}" resolved="yes"/>
   </metadata-change-set>
   <metadata-change-set user="fj" date="2017-05-26T06:57:33.215Z" timestamp="2017-05-26T06:57:33.215Z">
-    <change idref="m1" attribute="baselineInfo" type="dict" from="{&#10;    info =     (&#10;                {&#10;            name = &quot;\U57fa\U7ebf 17/6/5&quot;;&#10;            uuid = &quot;cb_b-r71EqQ&quot;;&#10;        }&#10;    );&#10;}" to="{&#10;    info =     (&#10;    );&#10;}" resolved="yes"/>
+    <change idref="m1" attribute="baselineInfo" type="dict" from="{
+    info =     (
+                {
+            name = &quot;\U57fa\U7ebf 17/6/5&quot;;
+            uuid = &quot;cb_b-r71EqQ&quot;;
+        }
+    );
+}" to="{
+    info =     (
+    );
+}" resolved="yes"/>
   </metadata-change-set>
   <metadata-change-set user="fj" date="2017-05-26T07:34:34.409Z" timestamp="2017-05-26T07:34:34.409Z">
     <change idref="m1" attribute="scheduleGranularity" type="real" from="0" to="2" resolved="yes"/>
