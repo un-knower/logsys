@@ -1,24 +1,24 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <omniplan xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2" xmlns:opnx="http://www.omnigroup.com/namespace/OmniPlan/v2">
-  <window x="0" y="41" w="1280" h="736">
+  <window x="48" y="123" w="1280" h="736">
     <editing-scenario>fNCCQuKBo2i</editing-scenario>
     <view>task</view>
     <change-tracking/>
     <status-display>basic</status-display>
     <task-view>
-      <split-view-divider-position>709</split-view-divider-position>
-      <outline x="0" y="0" w="709" h="652">
+      <split-view-divider-position>659</split-view-divider-position>
+      <outline x="0" y="0" w="659" h="653">
         <column name="Violations" width="20"/>
         <column name="Notes" width="20"/>
-        <column name="Title" width="306"/>
+        <column name="Title" width="253"/>
         <column name="Effort" width="84"/>
         <column name="Assigned" width="100"/>
         <column name="Start" width="82"/>
         <column name="End" width="92"/>
-        <expanded-items idrefs="t3 t17 t4"/>
-        <selected-items-at-filter-time idrefs="t21 t13 t26 t18 t2 t30 t22 t14 t3 t27 t19 t4 t31 t23 t15 t5 t28 t11 t32 t24 t16 t29 t20 t12 t25 t17"/>
+        <expanded-items idrefs="t1 t4 t17 t3 t2"/>
+        <selected-items-at-filter-time idrefs="t46 t38 t21 t13 t42 t34 t26 t2 t39 t47 t22 t14 t3 t43 t35 t48 t4 t23 t15 t44 t36 t40 t24 t45 t37 t20 t12 t41 t33 t25 t17"/>
       </outline>
-      <gantt-view x="874.5" y="0" w="569" h="652">
+      <gantt-view x="1355.5" y="0" w="619" h="653">
         <view-mode>actual</view-mode>
         <critical-path/>
         <dependency-lines/>
@@ -140,7 +140,7 @@ End:</group-table-style>
     </network-view>
   </window>
   <project>
-    <next-task-id>33</next-task-id>
+    <next-task-id>49</next-task-id>
     <next-resource-id>3</next-resource-id>
     <scenario id="fNCCQuKBo2i" name="Actual" filename="Actual.xml"/>
     <date-display dates="true" times="false" seconds="false"/>
@@ -203,10 +203,10 @@ End:</group-table-style>
     <printinfo-dictionary>
       <key>OPPrintSettingPrintOption</key>
       <integer>0</integer>
-      <key>NSTopMargin</key>
-      <real>90</real>
-      <key>NSBottomMargin</key>
-      <real>90</real>
+      <key>NSScalingFactor</key>
+      <real>0.200040340423584</real>
+      <key>NSPrinterName</key>
+      <string>172.16.9.100</string>
       <key>NSRightMargin</key>
       <real>72</real>
       <key>NSPaperName</key>
@@ -215,10 +215,10 @@ End:</group-table-style>
       <real>72</real>
       <key>NSOrientation</key>
       <integer>0</integer>
-      <key>NSScalingFactor</key>
-      <real>0.200040340423584</real>
-      <key>NSPrinterName</key>
-      <string>172.16.9.100</string>
+      <key>NSTopMargin</key>
+      <real>90</real>
+      <key>NSBottomMargin</key>
+      <real>90</real>
     </printinfo-dictionary>
     <page-adornment>
       <master-page-headers>
