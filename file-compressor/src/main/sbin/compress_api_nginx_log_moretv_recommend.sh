@@ -40,6 +40,7 @@ do
         nohup sh $pwd/../bin/compressor-mr.sh \
             -D mapreduce.map.memory.mb=${mapreduce_map_memory_mb} \
             -D mapreduce.job.name=${mapreduce_job_name} \
+            -D mapreduce.job.queuename=bi \
             --cmd=compress \
             --srcPath=$srcPath \
             --outPath=$outPath \
@@ -50,6 +51,7 @@ do
         sh $pwd/../bin/compressor-mr.sh \
             -D mapreduce.map.memory.mb=${mapreduce_map_memory_mb} \
             -D mapreduce.job.name=${mapreduce_job_name} \
+            -D mapreduce.job.queuename=bi \
             --cmd=compress \
             --srcPath=$srcPath \
             --outPath=$outPath \
