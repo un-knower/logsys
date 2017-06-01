@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>logsys</artifactId>
+        <groupId>cn.whaley.bi.logsys</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>file-compressor</artifactId>
+
+    <properties>
+        <package-dependency-scope>compile</package-dependency-scope>
+        <package-format>dir</package-format>
+        <package-output-dir>${project.build.directory}</package-output-dir>
+        <package-includeBaseDirectory>true</package-includeBaseDirectory>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <scope>${package-dependency-scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-hdfs</artifactId>
+            <scope>${package-dependency-scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-mapreduce-client-core</artifactId>
+            <scope>${package-dependency-scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
+            <scope>${package-dependency-scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- 如果一个应用的包含多个deploy模块，如果使用同样的包名， 如果把它们复制的一个目录中可能会失败，所以包名加了 artifactId以示区分 -->
+        <finalName>${project.artifactId}-${project.version}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>assemble</id>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <attach>false</attach>
+                    <!-- 发布模式使用的maven assembly插件描述文件 -->
+                    <descriptors>
+                        <descriptor>${basedir}/src/main/assembly/release.xml</descriptor>
+                    </descriptors>
+                    <!-- scm 要求 release 模式打出的包放到顶级目录下的target子目录中 -->
+                    <outputDirectory>${package-output-dir}</outputDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>env</name>
+                    <value>release</value>
+                </property>
+            </activation>
+            <properties>
+                <package-dependency-scope>provided</package-dependency-scope>
+                <package-format>tar.gz</package-format>
+                <package-includeBaseDirectory>true</package-includeBaseDirectory>
+                <package-output-dir>${project.parent.build.directory}</package-output-dir>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>azkaban</id>
+            <activation>
+                <property>
+                    <name>env</name>
+                    <value>release</value>
+                </property>
+            </activation>
+            <properties>
+                <package-dependency-scope>provided</package-dependency-scope>
+                <package-format>dir</package-format>
+                <package-includeBaseDirectory>false</package-includeBaseDirectory>
+                <package-output-dir>${project.parent.basedir}/azkaban-support/src/modules/</package-output-dir>
+            </properties>
+
+        </profile>
+
+    </profiles>
+
+</project>
