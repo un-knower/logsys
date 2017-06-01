@@ -33,9 +33,7 @@ do
     split=${split:-10}
     codec=${codec:-Lz4Codec}
     mapreduce_map_memory_mb=${mapreduce_map_memory_mb:-2048}
-    if [ -z $mapreduce_job_name ]; then
-        mapreduce_job_name="compress_${currDate}_api_nginx_log_moretv_recommend"
-    fi
+    mapreduce_job_name="compress_${currDate}_api_nginx_log_moretv_recommend"
 
     set -x
     if [ "$daemon" == "true"  ]; then
