@@ -1,0 +1,3 @@
+type=command
+dependencies=compress_api_nginx_log_moretv_recommend
+command=echo "compress task is end ..."

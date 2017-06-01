@@ -1,0 +1,3 @@
+type=command
+command=sh ${working.dir}/../sbin/compress_api_nginx_log_moretv_recommend.sh  --startDate=${startDate} --endDate=${endDate}
+
