@@ -158,7 +158,7 @@ public class MapReduceClient {
 
 
 
-        String jobName=conf.get("mapreduce.job.queuename");
+        String jobName=conf.get("mapreduce.job.name");
         if(jobName==null){
             jobName=conf.get("mapred.job.name");
         }

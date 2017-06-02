@@ -1,6 +1,8 @@
 #####################################################
 #  --daemon:  为true时用nohup启动
-#  --startDate: 数据产生日期
+#  --startDate: 数据产生起始日期
+#  --endDate: 数据产生结束日期
+#  --offset: 数据产生起始日期偏移值,如-1为起始日期的T-1日
 #  --split: 数据分片数量
 #  --codec: 压缩格式编码器
 #  --mapreduce_map_memory_mb:  map内存设置
@@ -22,6 +24,10 @@ preDate=`date -d "-1 days " +%Y%m%d`
 startDate=${startDate:-$preDate}
 endDate=${endDate:-$preDate}
 currDate=$startDate
+
+if [ -n $offset ]; then
+    startDate=`date -d "$offset days "$startDate +%Y%m%d`
+fi
 
 echo `date` "startDate is $startDate, endDate is $endDate"
 while [[ $currDate -le $endDate ]]
