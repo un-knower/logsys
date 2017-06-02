@@ -157,16 +157,25 @@ public class MapReduceClient {
         LOG.info("cmd params:" + params.toJSONString());
 
 
-        String cmd = params.getString("cmd");
+
+        String jobName=conf.get("mapreduce.job.queuename");
+        if(jobName==null){
+            jobName=conf.get("mapred.job.name");
+        }
+        if(jobName==null){
+            jobName=params.getString("cmd");
+        }
+
         String workDir = params.getString("workDir");
         String srcPath = params.getString("srcPath");
         String outPath = params.getString("outPath");
         String taskId = new SimpleDateFormat("yyyyMMdd_hhmmss_SSS").format(new Date());
-        String taskIn = workDir + "/" + cmd + "_" + taskId + ".list";
-        String taskOut = workDir + "/" + cmd + "_" + taskId;
+        String taskIn = workDir + "/" + jobName + "_" + taskId + ".list";
+        String taskOut = workDir + "/" + jobName + "_" + taskId;
 
         LOG.info("taskIn:"+taskIn);
-        LOG.info("taskOut:"+taskOut);
+        LOG.info("taskOut:" + taskOut);
+
 
         //产生任务文件
         FileSystem fs = FileSystem.get(conf);
@@ -199,8 +208,10 @@ public class MapReduceClient {
         //删除输出目录
         fs.delete(new Path(taskOut), true);
 
+
         Job job = Job.getInstance(conf);
         job.setJarByClass(MapReduceClient.class);
+
 
         //job执行作业时输入和输出文件的路径
         FileInputFormat.addInputPath(job, new Path(taskIn));
