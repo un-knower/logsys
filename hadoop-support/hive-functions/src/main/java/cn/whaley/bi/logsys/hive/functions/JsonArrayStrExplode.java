@@ -58,7 +58,6 @@ public class JsonArrayStrExplode extends GenericUDTF {
             } else if (chr == '}') {
                 bracket.pop();
                 if (bracket.empty()) {
-                    rowNum++;
                     String objStr = jsonArrayStr.substring(prePosition, i + 1);
                     forward(new Object[]{rowNum++, objStr});
                 }

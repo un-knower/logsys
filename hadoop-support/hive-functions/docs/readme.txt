@@ -18,9 +18,28 @@ select CreateAppId('whaley','whaleyvr','main') as createdId;
 DROP TEMPORARY FUNCTION IF EXISTS JsonArrayStrExplode;
 CREATE TEMPORARY FUNCTION JsonArrayStrExplode AS 'cn.whaley.bi.logsys.hive.functions.JsonArrayStrExplode'
 USING JAR 'hdfs:///libs/common/hive-functions-1.0-SNAPSHOT.jar';
+
 select JsonArrayStrExplode('[{"rowId":"1"},{"rowId":"2"}]');
 select s.*,t.row_num,t.row_value
 from sys.dual s lateral view JsonArrayStrExplode('[{"rowId":"1"},{"rowId":"2"}]') t as row_num,row_value;
+
+explain
+select t.row_num,t.row_value
+from ods_origin.log_origin a
+ lateral view JsonArrayStrExplode(get_json_object(logbody["jsonlog"],'$.playqos')) t as row_num,row_value
+where logbody['logType']='playqos' and key_day='20170601' and key_hour='12'
+    and logId='AAABXGHZqGoKEy3gIXVZYQAB0000'
+;
+
+
+select logId,max(t.row_num) as max_row_num
+from ods_origin.log_origin a
+ lateral view JsonArrayStrExplode(get_json_object(logbody["jsonlog"],'$.playqos')) t as row_num,row_value
+where logbody['logType']='playqos' and key_day='20170601' and key_hour='12'
+group by logId
+order by max_row_num desc
+limit 100;
+
 
 
 ====自动加载====
