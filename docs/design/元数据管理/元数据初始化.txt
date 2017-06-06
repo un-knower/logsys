@@ -1,0 +1,111 @@
+--初始化
+add jar hdfs:///libs/common/hive-functions-1.0-SNAPSHOT.jar;
+DROP TEMPORARY FUNCTION IF EXISTS CreateAppId;
+CREATE TEMPORARY FUNCTION CreateAppId AS 'cn.whaley.bi.logsys.hive.functions.CreateAppId'
+USING JAR 'hdfs:///libs/common/hive-functions-1.0-SNAPSHOT.jar';
+
+
+--app元数据总表
+drop table if exists metadata.app_metadatas;
+CREATE TABLE metadata.app_metadatas(
+  app_id string,
+  metadatas map<string,string>)
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES (
+  'hbase.table.name' = 'metadata.app_metadatas',
+  'hbase.columns.mapping'=':key,a:'
+)
+;
+
+
+--app基础信息表
+drop table if exists metadata.app_metadata_idinfo;
+create external table metadata.app_metadata_idinfo(
+  app_id string,
+  org_code string,
+  product_code string,
+  app_code string,
+  remark string
+)
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES (
+  'hbase.table.name' = 'metadata.app_metadatas',
+  'hbase.columns.mapping'=':key,a:org_code,a:product_code,a:app_code,a:remark'
+)
+;
+
+--app kafka信息表
+drop table if exists metadata.app_metadata_kafka;
+create external table metadata.app_metadata_kafka(
+  app_id string,
+  topic_name string,
+  topic_partition int)
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES (
+  'hbase.table.name' = 'metadata.app_metadatas',
+  'hbase.columns.mapping'=':key,a:topic_name,a:topic_partition'
+)
+;
+
+--app日志文件元数据表
+drop table if exists metadata.app_metadata_logfile;
+create external table metadata.app_metadata_logfile(
+  app_id string,
+  logfile_path string)
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES (
+  'hbase.table.name' = 'metadata.app_metadatas',
+  'hbase.columns.mapping'=':key,a:logfile_path'
+)
+;
+
+--初始化数据
+INSERT INTO metadata.app_metadatas
+    select 'boikgpokn78sb95k0000000000000000',map('org_code','whaley','product_code','','app_code','','remark','系统保留appId,做一些特殊用途,比如未提交到appId下的需要记录的日志','topic_name','log-raw-boikgpokn78sb95k00000000','topic_partition','6')
+    UNION ALL select 'boikgpokn78sb95k7id7n8eb8dc5mlsr',map('org_code','whaley','product_code','eagle','app_code','main','remark','小鹰','topic_name','log-raw-boikgpokn78sb95k7id7n8eb','topic_partition','6')
+    UNION ALL select 'boikgpokn78sb95kbqei6cc98dc5mlsr',map('org_code','whaley','product_code','whaleyvr','app_code','main','remark','VR主程序','topic_name','log-raw-boikgpokn78sb95kbqei6cc9','topic_partition','6')
+    UNION ALL select 'boikgpokn78sb95kicggqhbkepkseljn',map('org_code','whaley','product_code','orca','app_code','global_menu_2','remark','全局菜单2.0(虎鲸）','topic_name','log-raw-boikgpokn78sb95kicggqhbk','topic_partition','6')
+    UNION ALL select 'boikgpokn78sb95kjhfrendo8dc5mlsr',map('org_code','whaley','product_code','whaleytv','app_code','main','remark','微鲸电视主程序','topic_name','log-raw-boikgpokn78sb95kjhfrendo','topic_partition','12')
+    UNION ALL select 'boikgpokn78sb95kjhfrendobgjgjolq',map('org_code','whaley','product_code','whaleytv','app_code','epop','remark','线下店演示用的应用，作用是 保证所有电视播的画面是同步的','topic_name','log-raw-boikgpokn78sb95kjhfrendo','topic_partition','12')
+    UNION ALL select 'boikgpokn78sb95kjhfrendoepkseljn',map('org_code','whaley','product_code','whaleytv','app_code','global_menu_2','remark','全局菜单2.0','topic_name','log-raw-boikgpokn78sb95kjhfrendo','topic_partition','12')
+    UNION ALL select 'boikgpokn78sb95kjhfrendoj8ilnoi7',map('org_code','whaley','product_code','whaleytv','app_code','wui2.0','remark','WUI2.0','topic_name','log-raw-boikgpokn78sb95kjhfrendo','topic_partition','12')
+    UNION ALL select 'boikgpokn78sb95kjhfrendojtihcg26',map('org_code','whaley','product_code','whaleytv','app_code','mobilehelper','remark','微鲸手机助手','topic_name','log-raw-boikgpokn78sb95kjhfrendo','topic_partition','12')
+    UNION ALL select 'boikgpokn78sb95kjhfrendosesh6bmu',map('org_code','whaley','product_code','whaleytv','app_code','webportal','remark','前端web系统提供的各类后端服务入口页应用','topic_name','log-raw-boikgpokn78sb95kjhfrendo','topic_partition','12')
+    UNION ALL select 'boikgpokn78sb95kjtihcg268dc5mlsr',map('org_code','whaley','product_code','mobilehelper','app_code','main','remark','电视猫收集助手','topic_name','log-raw-boikgpokn78sb95kjtihcg26','topic_partition','6')
+    UNION ALL select 'boikgpokn78sb95kkls3bhmtichjhhm8',map('org_code','whaley','product_code','crawler','app_code','cis','remark','爬虫竞品内容情报','topic_name','log-raw-boikgpokn78sb95kkls3bhmt','topic_partition','6')
+    UNION ALL select 'boikgpokn78sb95kkls3bhmtjqosocdj',map('org_code','whaley','product_code','crawler','app_code','price','remark','爬虫竞品价格','topic_name','log-raw-boikgpokn78sb95kkls3bhmt','topic_partition','6')
+    UNION ALL select 'boikgpokn78sb95kpghmafidrled9fm8',map('org_code','whaley','product_code','ai','app_code','recommand_api','remark','大数据AI推荐服务接口','topic_name','','topic_partition','')
+    UNION ALL select 'boikgpokn78sb95ktmsc1bnkbe9pbhgu',map('org_code','whaley','product_code','medusa','app_code','main1.0','remark','电视猫1.0版本主程序','topic_name','log-raw-boikgpokn78sb95ktmsc1bnk','topic_partition','12')
+    UNION ALL select 'boikgpokn78sb95ktmsc1bnkechpgj9l',map('org_code','whaley','product_code','medusa','app_code','main3.x','remark','电视猫3.0版本主程序','topic_name','log-raw-boikgpokn78sb95ktmsc1bnk','topic_partition','12')
+    UNION ALL select 'boikgpokn78sb95ktmsc1bnkeigo5hud',map('org_code','whaley','product_code','medusa','app_code','accountsys','remark','电视猫账号系统','topic_name','log-raw-boikgpokn78sb95ktmsc1bnk','topic_partition','12')
+    UNION ALL select 'boikgpokn78sb95ktmsc1bnken8tuboa',map('org_code','whaley','product_code','medusa','app_code','main2.0','remark','电视猫2.0版本主程序','topic_name','log-raw-boikgpokn78sb95ktmsc1bnk','topic_partition','12')
+    UNION ALL select 'boikgpokn78sb95ktmsc1bnkfipphckl',map('org_code','whaley','product_code','medusa','app_code','kids','remark','电视猫少儿版','topic_name','log-raw-boikgpokn78sb95ktmsc1bnk','topic_partition','12')
+    UNION ALL select 'boikgpokn78sb95ktmsc1bnkklf477ap',map('org_code','whaley','product_code','whaleytv','app_code','wui2.0','remark','WUI2.0','topic_name','log-raw-boikgpokn78sb95kjhfrendo','topic_partition','12')
+;
+
+INSERT INTO metadata.app_metadatas
+  SELECT CreateAppId('whaley','ai','recommand_api'),map('remark','大数据AI推荐服务接口')
+  ;
+
+INSERT INTO metadata.app_metadata_logfile
+  SELECT app_id
+    ,concat('/data_warehouse/ods_origin.db/ngx_raw_log/key_appId=',app_id,'/key_day=#{key_day}')
+  FROM (select CreateAppId('whaley','ai','recommand_api') as app_id) a
+  ;
+
+
+----test------------
+SELECT * FROM metadata.app_metadatas;
+SELECT * FROM metadata.app_metadata_logfile;
+SELECT * FROM metadata.app_metadata_kafka;
+
+SELECT app_id,logfile_path
+FROM metadata.app_metadata_logfile where app_id='boikgpokn78sb95kpghmafidrled9fm8';
+
+SELECT a.*,b.*
+FROM metadata.app_metadata_logfile a
+    inner join metadata.app_metadata_idinfo b on b.product_code='ai'
+;
+
+
+
