@@ -18,9 +18,11 @@ import java.security.NoSuchAlgorithmException;
 @Description(name = "_FUNC_"
         , value = "_FUNC_(orgCode:string,productCode:string,appCode:string," +
         "orgCodeNoise:string[default ''],productCodeNoise:string[default ''],appCodeNoise:string[default '']"
-        , extended = "version:" + PackageConstants.FN_VERSION
+        , extended = "version:" + PackageConstants.FN_VERSION + "." + CreateAppId.BUILD_ID
 )
 public class CreateAppId extends GenericUDF {
+
+    public final static String BUILD_ID = "1";
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -48,9 +50,9 @@ public class CreateAppId extends GenericUDF {
 
     @Override
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
-        String orgCode =  arguments[0].get().toString();
-        String productCode =   arguments[1].get().toString();
-        String appCode =   arguments[2].get().toString();
+        String orgCode = arguments[0].get().toString();
+        String productCode = arguments[1].get().toString();
+        String appCode = arguments[2].get().toString();
         String result = hashCodeForOrgId(orgCode) + hashCodeForProductCode(productCode) + hashCodeForAppCode(appCode);
         return result;
     }

@@ -14,11 +14,13 @@ import java.util.*;
 /**
  * Created by fj on 17/6/6.
  */
-@Description(name = "JsonArrayStrExplode"
-        , value = "JsonArrayStrExplode(jsonArrayStr:String)"
-        , extended = "version:" + PackageConstants.FN_VERSION + ", out fields: row_num:int,row_value:string, example: SELECT JsonArrayStrExplode('[{\"name\":\"name1\"},{\"name\":\"name2\"}]');"
+@Description(name = "_FUNC_"
+        , value = "_FUNC_(jsonArrayStr:String)"
+        , extended = "version:" + PackageConstants.FN_VERSION + "." + JsonArrayStrExplode.BUILD_ID + ", out fields: row_num:int,row_value:string, example: SELECT _FUNC_('[{\"name\":\"name1\"},{\"name\":\"name2\"}]');"
 )
 public class JsonArrayStrExplode extends GenericUDTF {
+
+    public final static String BUILD_ID = "1";
 
     @Override
     public StructObjectInspector initialize(StructObjectInspector argOIs) throws UDFArgumentException {
