@@ -241,14 +241,16 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                 try {
                     val filePath = s"${errRootDir}/${topic}_${parId}.json"
                     val path = new Path(filePath)
-                    LOG.info(s"append file:${filePath}")
-                    fs.createNewFile(path)
+                    if(fs.createNewFile(path)){
+                        LOG.info(s"append file:${filePath}")
+                    }
                     fs.append(path)
                 } catch {
                     case ex: Throwable => {
                         val filePath = s"${errRootDir}/${topic}_${parId}_${System.currentTimeMillis()}.json"
                         val path = new Path(filePath)
                         LOG.warn(s"append not supported. create file: ${filePath}")
+                        LOG.error("append file failure:",ex);
                         fs.create(path, true)
                     }
                 }

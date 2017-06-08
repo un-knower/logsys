@@ -38,9 +38,12 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         val processorChainName = confManager.getConf(this.name, "processorChain")
         processorChain = instanceFrom(confManager, processorChainName).asInstanceOf[GenericProcessorChain]
 
+
         batchSize = confManager.getConfOrElseValue(this.name, "batchSize", "4000").toInt
         callableSize = confManager.getConfOrElseValue(this.name, "callableSize", "2000").toInt
         recoverSourceOffsetFromSink = confManager.getConfOrElseValue(this.name, "recoverSourceOffsetFromSink", "1").toInt
+        callableWaitSize = confManager.getConfOrElseValue(this.name, "callableWaitSize", "100").toInt
+        callableWaitSec = confManager.getConfOrElseValue(this.name, "callableWaitSec", "1").toInt
 
     }
 
@@ -164,7 +167,13 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                         }
                         pIsWaiting = false
                     }
-                    val c = queue.drainTo(list, batchSize)
+                    var c = queue.drainTo(list, batchSize)
+                    if (c <= callableWaitSize) {
+                        Thread.sleep(callableWaitSec * 1000);
+                        val moreC = queue.drainTo(list, batchSize);
+                        LOG.debug(s"tak $c message. wait $callableWaitSec sec, take $moreC message")
+                        c = c + moreC
+                    }
                     LOG.info(s"take $c message.")
                 } else {
                     //在停止之前处理队列中存量数据
@@ -205,9 +214,9 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                 LOG.info(s"${topic}-msgSave(${ret._1},${ret._2}):${monitor.checkStep()}")
 
                 //打印错误日志
-                val errorResults=procResults.filter(result => result._2.hasErr == true).toList
+                val errorResults = procResults.filter(result => result._2.hasErr == true).toList
                 val errorCount = errorResults.size
-                if(errorCount > 0){
+                if (errorCount > 0) {
                     LOG.error(s"${errorCount} messages processed failure.")
                     errorResults.foreach(err => {
                         logMsgProcChainErr(err._1, err._2)
@@ -440,6 +449,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     private var batchSize: Int = 4000
     //每次消息处理过程调用所处理的消息数量
     private var callableSize: Int = 2000
+    private var callableWaitSize: Int = 100
+    private var callableWaitSec: Int = 1
 
     val shutdownLatch = new CountDownLatch(1)
 
