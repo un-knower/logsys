@@ -328,6 +328,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         compressGzFile(source, target)
         val sourceLen = fs.getContentSummary(source).getLength
         val targetLen = fs.getContentSummary(target).getLength
+        fs.delete(source,false);
         LOG.info(s"commit file ${source}[${sourceLen}] -> ${target}[${targetLen}] [ OpCount=${cacheItem.OpCount}, OpBytes=${cacheItem.OpBytes},lastOpTime:${new Date(cacheItem.lastOpTs)} ]")
     }
 
