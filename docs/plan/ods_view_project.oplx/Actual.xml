@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <scenario xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2" xmlns:opns="http://www.omnigroup.com/namespace/OmniPlan/v2" id="fNCCQuKBo2i">
   <start-date>2017-05-26T00:00:00.000Z</start-date>
   <granularity>days</granularity>
@@ -115,132 +115,136 @@
   <task id="t12">
     <title>DDL语句生成模块</title>
     <effort>57600</effort>
-    <start-constraint-date>2017-06-07T00:00:00.000Z</start-constraint-date>
+    <start-constraint-date>2017-06-14T00:00:00.000Z</start-constraint-date>
     <assignment idref="r1"/>
-    <start-no-earlier-than>2017-06-07T00:00:00.000Z</start-no-earlier-than>
+    <start-no-earlier-than>2017-06-14T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t13">
     <title>DML语句生成模块</title>
     <effort>28800</effort>
-    <start-constraint-date>2017-06-09T00:00:00.000Z</start-constraint-date>
+    <start-constraint-date>2017-06-16T00:00:00.000Z</start-constraint-date>
     <assignment idref="r1"/>
-    <start-no-earlier-than>2017-06-09T00:00:00.000Z</start-no-earlier-than>
+    <start-no-earlier-than>2017-06-16T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t14">
     <title>HIVE执行模块</title>
+    <effort>57600</effort>
+    <start-constraint-date>2017-06-19T00:00:00.000Z</start-constraint-date>
+    <assignment idref="r1"/>
+    <start-no-earlier-than>2017-06-19T00:00:00.000Z</start-no-earlier-than>
+  </task>
+  <task id="t15">
+    <title>任务执行脚本开发</title>
+    <effort>28800</effort>
+    <start-constraint-date>2017-06-21T00:00:00.000Z</start-constraint-date>
+    <assignment idref="r1"/>
+    <start-no-earlier-than>2017-06-21T00:00:00.000Z</start-no-earlier-than>
+  </task>
+  <task id="t17">
+    <title>表字段合并模块</title>
     <effort>57600</effort>
     <start-constraint-date>2017-06-12T00:00:00.000Z</start-constraint-date>
     <assignment idref="r1"/>
     <start-no-earlier-than>2017-06-12T00:00:00.000Z</start-no-earlier-than>
   </task>
-  <task id="t15">
-    <title>任务执行脚本开发</title>
-    <effort>28800</effort>
-    <start-constraint-date>2017-06-14T00:00:00.000Z</start-constraint-date>
-    <assignment idref="r1"/>
-    <start-no-earlier-than>2017-06-14T00:00:00.000Z</start-no-earlier-than>
-  </task>
-  <task id="t17">
-    <title>表字段合并模块</title>
-    <effort>57600</effort>
-    <start-constraint-date>2017-06-05T00:00:00.000Z</start-constraint-date>
-    <assignment idref="r1"/>
-    <start-no-earlier-than>2017-06-05T00:00:00.000Z</start-no-earlier-than>
-  </task>
   <task id="t20">
     <title>集成测试</title>
     <effort>57600</effort>
-    <start-constraint-date>2017-06-15T00:00:00.000Z</start-constraint-date>
+    <start-constraint-date>2017-06-22T00:00:00.000Z</start-constraint-date>
     <assignment idref="r1"/>
-    <start-no-earlier-than>2017-06-15T00:00:00.000Z</start-no-earlier-than>
+    <start-no-earlier-than>2017-06-22T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t21">
     <title>项目打包脚本开发</title>
     <effort>28800</effort>
+    <start-constraint-date>2017-06-26T00:00:00.000Z</start-constraint-date>
     <assignment idref="r1"/>
+    <start-no-earlier-than>2017-06-26T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t22">
     <title>log2parquet-job相关脚本开发</title>
     <effort>28800</effort>
-    <start-constraint-date>2017-06-19T00:00:00.000Z</start-constraint-date>
+    <start-constraint-date>2017-06-26T00:00:00.000Z</start-constraint-date>
     <assignment idref="r2"/>
-    <start-no-earlier-than>2017-06-19T00:00:00.000Z</start-no-earlier-than>
+    <start-no-earlier-than>2017-06-26T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t23">
     <title>ods-origin-metadata-job相关脚本开发</title>
     <effort>28800</effort>
-    <start-constraint-date>2017-06-20T00:00:00.000Z</start-constraint-date>
+    <start-constraint-date>2017-06-27T00:00:00.000Z</start-constraint-date>
     <assignment idref="r2"/>
-    <start-no-earlier-than>2017-06-20T00:00:00.000Z</start-no-earlier-than>
+    <start-no-earlier-than>2017-06-27T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t24">
     <title>ods-view-metadata-job相关脚本开发</title>
     <effort>28800</effort>
-    <start-constraint-date>2017-06-20T00:00:00.000Z</start-constraint-date>
+    <start-constraint-date>2017-06-27T00:00:00.000Z</start-constraint-date>
     <assignment idref="r1"/>
-    <start-no-earlier-than>2017-06-20T00:00:00.000Z</start-no-earlier-than>
+    <start-no-earlier-than>2017-06-27T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t25">
     <title>workflow相关脚本开发</title>
     <effort>28800</effort>
-    <start-constraint-date>2017-06-21T00:00:00.000Z</start-constraint-date>
+    <start-constraint-date>2017-06-28T00:00:00.000Z</start-constraint-date>
     <assignment idref="r1"/>
-    <start-no-earlier-than>2017-06-21T00:00:00.000Z</start-no-earlier-than>
+    <start-no-earlier-than>2017-06-28T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t26">
     <title>集成测试</title>
     <effort>115200</effort>
-    <start-constraint-date>2017-06-22T00:00:00.000Z</start-constraint-date>
+    <start-constraint-date>2017-06-29T00:00:00.000Z</start-constraint-date>
     <assignment idref="r1"/>
     <assignment idref="r2"/>
-    <start-no-earlier-than>2017-06-22T00:00:00.000Z</start-no-earlier-than>
+    <start-no-earlier-than>2017-06-29T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t34">
     <title>字段黑白名单初始化填充</title>
     <effort>57600</effort>
+    <start-constraint-date>2017-06-13T00:00:00.000Z</start-constraint-date>
     <assignment idref="r2"/>
+    <start-no-earlier-than>2017-06-13T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t38">
     <title>与元数据管理交互模块</title>
     <effort>57600</effort>
-    <start-constraint-date>2017-06-08T00:00:00.000Z</start-constraint-date>
-    <assignment idref="r2"/>
-    <start-no-earlier-than>2017-06-08T00:00:00.000Z</start-no-earlier-than>
-  </task>
-  <task id="t39">
-    <title>黑白名单初始化与更新模块</title>
-    <effort>57600</effort>
-    <start-constraint-date>2017-06-12T07:00:00.000Z</start-constraint-date>
-    <assignment idref="r2"/>
-    <start-no-earlier-than>2017-06-12T07:00:00.000Z</start-no-earlier-than>
-  </task>
-  <task id="t40">
-    <title>处理链框架与数据处理器模块</title>
-    <effort>86400</effort>
     <start-constraint-date>2017-06-15T00:00:00.000Z</start-constraint-date>
     <assignment idref="r2"/>
     <start-no-earlier-than>2017-06-15T00:00:00.000Z</start-no-earlier-than>
   </task>
+  <task id="t39">
+    <title>黑白名单初始化与更新模块</title>
+    <effort>57600</effort>
+    <start-constraint-date>2017-06-19T07:00:00.000Z</start-constraint-date>
+    <assignment idref="r2"/>
+    <start-no-earlier-than>2017-06-19T07:00:00.000Z</start-no-earlier-than>
+  </task>
+  <task id="t40">
+    <title>处理链框架与数据处理器模块</title>
+    <effort>86400</effort>
+    <start-constraint-date>2017-06-22T00:00:00.000Z</start-constraint-date>
+    <assignment idref="r2"/>
+    <start-no-earlier-than>2017-06-22T00:00:00.000Z</start-no-earlier-than>
+  </task>
   <task id="t41">
     <title>处理流程脚本开发</title>
     <effort>28800</effort>
-    <start-constraint-date>2017-06-20T00:00:00.000Z</start-constraint-date>
+    <start-constraint-date>2017-06-27T00:00:00.000Z</start-constraint-date>
     <assignment idref="r2"/>
-    <start-no-earlier-than>2017-06-20T00:00:00.000Z</start-no-earlier-than>
+    <start-no-earlier-than>2017-06-27T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t47">
     <title>集成测试</title>
     <effort>57600</effort>
-    <start-constraint-date>2017-06-21T00:00:00.000Z</start-constraint-date>
+    <start-constraint-date>2017-06-28T00:00:00.000Z</start-constraint-date>
     <assignment idref="r2"/>
-    <start-no-earlier-than>2017-06-21T00:00:00.000Z</start-no-earlier-than>
+    <start-no-earlier-than>2017-06-28T00:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t49">
     <title>原始层分区加载脚本整合</title>
     <effort>28800</effort>
-    <start-constraint-date>2017-06-08T00:00:00.000Z</start-constraint-date>
+    <start-constraint-date>2017-06-15T00:00:00.000Z</start-constraint-date>
     <assignment idref="r2"/>
-    <start-no-earlier-than>2017-06-08T00:00:00.000Z</start-no-earlier-than>
+    <start-no-earlier-than>2017-06-15T00:00:00.000Z</start-no-earlier-than>
   </task>
   <critical-path root="-1" enabled="true" resources="false">
     <color r="1" g="0.5" b="0.5"/>
