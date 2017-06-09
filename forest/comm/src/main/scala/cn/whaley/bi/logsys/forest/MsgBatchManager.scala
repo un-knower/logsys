@@ -42,8 +42,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         batchSize = confManager.getConfOrElseValue(this.name, "batchSize", "4000").toInt
         callableSize = confManager.getConfOrElseValue(this.name, "callableSize", "2000").toInt
         recoverSourceOffsetFromSink = confManager.getConfOrElseValue(this.name, "recoverSourceOffsetFromSink", "1").toInt
-        callableWaitSize = confManager.getConfOrElseValue(this.name, "callableWaitSize", "100").toInt
-        callableWaitSec = confManager.getConfOrElseValue(this.name, "callableWaitSec", "1").toInt
+        callableWaitSize = confManager.getConfOrElseValue(this.name, "callableWaitSize", callableWaitSize.toString).toInt
+        callableWaitSec = confManager.getConfOrElseValue(this.name, "callableWaitSec", callableWaitSec.toString).toInt
 
     }
 
