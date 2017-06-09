@@ -84,13 +84,19 @@ INSERT INTO metadata.app_metadatas
 ;
 
 INSERT INTO metadata.app_metadatas
-  SELECT CreateAppId('whaley','ai','recommand_api'),map('remark','大数据AI推荐服务接口')
-  ;
+     SELECT CreateAppId('whaley','ai','recommand_api'),map('remark','大数据AI推荐服务接口')
+     ;
 
 INSERT INTO metadata.app_metadata_logfile
   SELECT app_id
     ,concat('/data_warehouse/ods_origin.db/ngx_raw_log/key_appId=',app_id,'/key_day=#{key_day}')
   FROM (select CreateAppId('whaley','ai','recommand_api') as app_id) a
+  ;
+
+INSERT INTO metadata.app_metadata_logfile
+  SELECT app_id,concat('/data_warehouse/ods_origin.db/log_origin/key_appId=',app_id,'/key_day=#{key_day}/key_hour=#{key_hour}')
+  FROM metadata.app_metadata_idinfo a
+  WHERE a.product_code!='ai'
   ;
 
 
