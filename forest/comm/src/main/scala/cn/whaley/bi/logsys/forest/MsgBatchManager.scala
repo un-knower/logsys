@@ -70,6 +70,10 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
             item.stopProcess(waiting)
             LOG.info(s"## ${item.getName} shutdown")
         })
+        processThreads.foreach(item => {
+            item.join()
+        })
+
         //关闭消息处理线程池
         procThreadPool.shutdown()
         procThreadPool.awaitTermination(30, TimeUnit.SECONDS)

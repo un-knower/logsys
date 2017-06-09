@@ -325,7 +325,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
 
     private def commitFile(fileKey: LogWriteCacheKey): Unit = {
         val cacheItem = logWriterCache.get(fileKey)
-        val source =  cacheItem.filePath
+        val source = cacheItem.filePath
         val target = fileKey.getTargetFilePath(cacheItem.fileName)
         val fs = FileSystem.get(hdfsConf)
         val sourceLen = fs.getContentSummary(new Path(source)).getLength
@@ -346,12 +346,12 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         val fs = FileSystem.get(hdfsConf);
         val codecObj = ReflectionUtils.newInstance(codecClass, hdfsConf).asInstanceOf[CompressionCodec];
 
-        val targetFilePathObj = if (!targetFilePath.endsWith("." + codecObj.getDefaultExtension)) {
-            new Path(targetFilePath + "." + codecObj.getDefaultExtension);
+        val targetFilePathObj = if (!targetFilePath.endsWith(codecObj.getDefaultExtension)) {
+            new Path(targetFilePath + codecObj.getDefaultExtension);
         } else {
             new Path(targetFilePath)
         }
-        val tmpPath = new Path(srcFilePath + "." + codecObj.getDefaultExtension());
+        val tmpPath = new Path(srcFilePath + codecObj.getDefaultExtension());
         val outputStream = fs.create(tmpPath, true);
         val in = fs.open(new Path(srcFilePath));
         val out = codecObj.createOutputStream(outputStream);
@@ -361,13 +361,14 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             fs.rename(tmpPath, targetFilePathObj)
         } catch {
             case ex: Throwable => {
-                //防止残留无效文件
-                if (fs.exists(tmpPath)) {
-                    fs.delete(tmpPath, false)
-                }
                 throw ex
             }
         } finally {
+            try{
+                if (fs.exists(tmpPath)) {
+                    fs.delete(tmpPath, false)
+                }
+            }
             IOUtils.closeStream(in);
         }
 

@@ -99,6 +99,12 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
                 item.stopProcess()
             }
         })
+        //直到线程真正停止才退出
+        consumerThreads.foreach(item => {
+            if (topic == "" || item.consumerTopic == topic) {
+                item.join()
+            }
+        })
     }
 
     def commitOffset(topic: String = ""): Unit = {

@@ -52,7 +52,7 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
             Some(JSON.parseArray(str))
         } catch {
             case e: Throwable => {
-                LOG.error("", e)
+                LOG.debug("invalid jsonarray str:" + str, e)
                 None
             }
         }
@@ -125,11 +125,11 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
         if (actionLogEntity.msgBody == null) {
             return ProcessResult(this.name, ProcessResultCode.skipped, "msgBody is null", None)
         }
-        val method=actionLogEntity.msgBodyObj.method
+        val method = actionLogEntity.msgBodyObj.method
         if (method == null) {
             return ProcessResult(this.name, ProcessResultCode.skipped, "msgBodyObj.method is null", None)
         }
-        if(method!="GET" && method!="POST"){
+        if (method != "GET" && method != "POST") {
             return ProcessResult(this.name, ProcessResultCode.discard, s"invalid method ${method}", None)
         }
         val postObj = actionLogEntity.postMsgBodyObj;
