@@ -2,6 +2,7 @@ package cn.whaley.bi.logsys.forest
 
 import cn.whaley.bi.logsys.forest.Traits.ExecutedTrait
 import org.apache.commons.lang.exception.ExceptionUtils
+import org.slf4j.LoggerFactory
 import sun.misc.{SignalHandler, Signal}
 
 /**
@@ -10,6 +11,9 @@ import sun.misc.{SignalHandler, Signal}
  * forest程序主入口
  */
 object MainObj {
+
+    val LOG=LoggerFactory.getLogger(this.getClass)
+
     /**
      * 程序入口
      * @param args
@@ -39,15 +43,16 @@ object MainObj {
             new Thread() {
                 override def run(): Unit = {
                     try {
-                        println(s"## stopping the executor ${clsQualityName}");
+                        LOG.info(s"## stopping the executor ${clsQualityName}");
                         executedTrait.shutdown(true);
                         println(s"## stopped the executor ${clsQualityName}");
                     } catch {
                         case ex: Throwable => {
-                            println(s"## something goes wrong when stopping executor ${clsQualityName}");
+                            LOG.error("",ex);
+                            LOG.info(s"## something goes wrong when stopping executor ${clsQualityName}");
                         }
                     } finally {
-                        println(s"## executor ${clsQualityName} is down.");
+                        LOG.info(s"## executor ${clsQualityName} is down.");
                     }
                 }
             }

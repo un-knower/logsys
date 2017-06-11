@@ -62,29 +62,29 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     def shutdown(waiting: Boolean): Unit = {
 
         //停止数据源读取操作
+        LOG.info("## stopping msgSource.")
         msgSource.stop()
-        println("## stop msgSource.")
+        LOG.info("## stopped msgSource.")
 
         //停止消息处理线程
+        LOG.info("## stopping processThreads.")
         processThreads.foreach(item => {
             item.stopProcess(waiting)
             LOG.info(s"## ${item.getName} shutdown")
         })
-        processThreads.foreach(item => {
-            item.join()
-        })
+        LOG.info("## stopped processThreads.")
 
         //关闭消息处理线程池
+        LOG.info("## stopping procThreadPool.")
         procThreadPool.shutdown()
         procThreadPool.awaitTermination(30, TimeUnit.SECONDS)
+        LOG.info("## stopped procThreadPool.")
         processThreads.clear()
 
         //停止数据写入操作
+        LOG.info("## stopping msgSink.")
         msgSink.stop()
-        println("## stop msgSink.")
-
-
-
+        LOG.info("## stopped msgSink.")
 
         shutdownLatch.countDown()
     }
@@ -133,13 +133,12 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
             keepRunning = false
             LOG.info("stop process...")
-            if (isWaiting) {
-                LOG.info("interrupt task thread")
-                this.interrupt()
-            }
+
+            this.interrupt()
             if (waiting) {
                 LOG.info("waiting to task thread complete.")
                 runningLatch.await()
+                LOG.info("task thread complete.")
             }
         }
 
@@ -173,7 +172,11 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     }
                     var c = queue.drainTo(list, batchSize)
                     if (c <= callableWaitSize) {
-                        Thread.sleep(callableWaitSec * 1000);
+                        try{
+                            Thread.sleep(callableWaitSec * 1000);
+                        }catch{
+                            case ex:Throwable=>{}
+                        }
                         val moreC = queue.drainTo(list, batchSize);
                         LOG.debug(s"tak $c message. wait $callableWaitSec sec, take $moreC message")
                         c = c + moreC
@@ -189,64 +192,63 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
                 if (listSize == 0) {
                     LOG.info("message list is empty.")
-                    return
-                }
+                } else {
 
-                //分批次提交消息处理任务,利用多线程加快处理进度
-                val callableCount: Int = Math.max(1, Math.ceil(listSize / callableSize).toInt)
-                val futures =
-                    for (i <- 0 to callableCount - 1) yield {
-                        callId = callId + 1
-                        val indexFrom = i * callableSize
-                        val indexTo = Math.min(listSize, (i + 1) * callableSize)
-                        val taskList = list.subList(indexFrom, indexTo)
-                        val callable = new ProcessCallable(callId, taskList)
-                        val future = procThreadPool.submit(callable)
-                        future
+                    //分批次提交消息处理任务,利用多线程加快处理进度
+                    val callableCount: Int = Math.max(1, Math.ceil(listSize / callableSize).toInt)
+                    val futures =
+                        for (i <- 0 to callableCount - 1) yield {
+                            callId = callId + 1
+                            val indexFrom = i * callableSize
+                            val indexTo = Math.min(listSize, (i + 1) * callableSize)
+                            val taskList = list.subList(indexFrom, indexTo)
+                            val callable = new ProcessCallable(callId, taskList)
+                            val future = procThreadPool.submit(callable)
+                            future
+                        }
+
+                    LOG.info(s"${topic}-taskSubmit(${callableCount},${callableSize}):${monitor.checkStep()}")
+
+                    //等待所有消息处理任务执行完毕,sink端采用单线程模式
+                    val procResults = futures.map(future => {
+                        future.get
+                    }).sortBy(_._1).flatMap(_._2)
+                    LOG.info(s"${topic}-msgProcess(${procResults.size}):${monitor.checkStep()}")
+
+                    //发送处理成功的数据
+                    val ret = msgSink.saveProcMsg(procResults)
+                    LOG.info(s"${topic}-msgSave(${ret._1},${ret._2}):${monitor.checkStep()}")
+
+                    //打印错误日志
+                    val errorResults = procResults.filter(result => result._2.hasErr == true).toList
+                    val errorCount = errorResults.size
+                    if (errorCount > 0) {
+                        LOG.error(s"${errorCount} messages processed failure.")
+                        errorResults.foreach(err => {
+                            logMsgProcChainErr(err._1, err._2)
+                        })
                     }
 
-                LOG.info(s"${topic}-taskSubmit(${callableCount},${callableSize}):${monitor.checkStep()}")
 
-                //等待所有消息处理任务执行完毕,sink端采用单线程模式
-                val procResults = futures.map(future => {
-                    future.get
-                }).sortBy(_._1).flatMap(_._2)
-                LOG.info(s"${topic}-msgProcess(${procResults.size}):${monitor.checkStep()}")
-
-                //发送处理成功的数据
-                val ret = msgSink.saveProcMsg(procResults)
-                LOG.info(s"${topic}-msgSave(${ret._1},${ret._2}):${monitor.checkStep()}")
-
-                //打印错误日志
-                val errorResults = procResults.filter(result => result._2.hasErr == true).toList
-                val errorCount = errorResults.size
-                if (errorCount > 0) {
-                    LOG.error(s"${errorCount} messages processed failure.")
-                    errorResults.foreach(err => {
-                        logMsgProcChainErr(err._1, err._2)
+                    //打印offset日志信息
+                    val offset = procResults.map(result => {
+                        val message = result._1
+                        ((message.topic, message.partition), message.offset)
+                    }).groupBy(item => item._1)
+                        .map(item => {
+                        val topicAndPartition = item._1
+                        val lastOffset = item._2.maxBy(offset => offset._2)._2
+                        val firstOffset = item._2.minBy(offset => offset._2)._2
+                        (topicAndPartition, firstOffset, lastOffset)
                     })
+
+                    msgCount = msgCount + list.size()
+                    LOG.info(s"${topic}-done(${listSize}):${monitor.checkDone()}:${offset}")
                 }
-
-
-                //打印offset日志信息
-                val offset = procResults.map(result => {
-                    val message = result._1
-                    ((message.topic, message.partition), message.offset)
-                }).groupBy(item => item._1)
-                    .map(item => {
-                    val topicAndPartition = item._1
-                    val lastOffset = item._2.maxBy(offset => offset._2)._2
-                    val firstOffset = item._2.minBy(offset => offset._2)._2
-                    (topicAndPartition, firstOffset, lastOffset)
-                })
-
-                msgCount = msgCount + list.size()
-                LOG.info(s"${topic}-done(${listSize}):${monitor.checkDone()}:${offset}")
             }
 
             while (keepRunning || (!keepRunning && queue.peek() != null)) {
                 try {
-                    Thread.`yield`()
                     processFn()
                 } catch {
                     case e: Throwable => {

@@ -4,7 +4,7 @@ package cn.whaley.bi.logsys.forest.sinker
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.{Timer, TimerTask, Date}
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.{AtomicInteger, AtomicBoolean}
 import java.util.concurrent.locks.{ReentrantReadWriteLock}
 import java.util.concurrent.{CountDownLatch, Executors}
 
@@ -18,6 +18,7 @@ import org.apache.hadoop.fs.{FSDataOutputStream, Path, FileSystem}
 import org.apache.hadoop.io.compress.CompressionCodec
 import org.apache.hadoop.io.{IOUtils, SequenceFile, Text}
 import org.apache.hadoop.util.ReflectionUtils
+import org.slf4j.LoggerFactory
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
@@ -59,9 +60,13 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         if (commitTimer != null) {
             commitTimer.cancel()
         }
-        if (saveProcLatch != null) {
-            saveProcLatch.await()
+        while (saveOptCount.get() > 0) {
+            LOG.info(s"saveOptCount=${saveOptCount.get()},sleep 1s")
+            Thread.sleep(1000)
         }
+        //关闭线程池
+        procThreadPool.shutdown();
+
         //关闭所有文件流
         logWriterCache.keySet.foreach(key => {
             val item = logWriterCache.get(key)
@@ -71,7 +76,6 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             LOG.info(s"clean file: ${item.fileName}")
             item.writeLock.unlock()
         })
-
     }
 
     /**
@@ -80,13 +84,13 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
      */
     override def saveProcMsg(procResults: Seq[(KafkaMessage, ProcessResult[Seq[LogEntity]])]): (Int, Int) = {
         try {
-            saveProcLatch = new CountDownLatch(1)
+            saveOptCount.incrementAndGet()
             val success = procResults.filter(result => result._2.hasErr == false)
             val error = procResults.filter(result => result._2.hasErr == true)
             (saveSuccess(success), saveError(error))
         }
         finally {
-            saveProcLatch.countDown()
+            saveOptCount.decrementAndGet();
         }
     }
 
@@ -189,7 +193,10 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                     writeEntity(cacheItem, filePath, item)
                     count = count + 1
                 })
-                commitLogFileIf(fileKey)
+                if (cacheItem.readyForCommit.get() == true) {
+                    IOUtils.closeStream(cacheItem.writer);
+                }
+                commitFileIf(fileKey)
             }
             finally {
                 cacheItem.writeLock.unlock()
@@ -286,7 +293,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                         value.readyForCommit.set(true)
                     }
                     if (value.readyForCommit.get()) {
-                        val committed = commitLogFileIf(entry.getKey)
+                        val committed = commitFileIf(entry.getKey)
                         count = count + (if (committed) 1 else 0)
                     }
                 })
@@ -298,7 +305,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
     }
 
     //如有必要则提交文件,并清理相关缓存项
-    private def commitLogFileIf(fileKey: LogWriteCacheKey): Boolean = {
+    private def commitFileIf(fileKey: LogWriteCacheKey): Boolean = {
         val cacheItem = logWriterCache.get(fileKey)
         if (cacheItem == null || cacheItem.readyForCommit.get() == false || cacheItem.isCommitted.get() == true) {
             return false
@@ -330,46 +337,17 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         val fs = FileSystem.get(hdfsConf)
         val sourceLen = fs.getContentSummary(new Path(source)).getLength
         if (sourceLen > 0) {
-            compressGzFile(source, target)
-            val targetLen = fs.getContentSummary(new Path(target)).getLength
-            LOG.info(s"commit file ${source}[${sourceLen}] -> ${target}[${targetLen}] [ OpCount=${cacheItem.OpCount}, OpBytes=${cacheItem.OpBytes},lastOpTime:${new Date(cacheItem.lastOpTs)} ]")
+            val finalPath = HdfsMsgSink.compressFileWithTry(source, target, codec, hdfsConf, 1)
+            if (!finalPath.isDefined || !fs.exists(new Path(finalPath.get))) {
+                LOG.warn(s"commit file failure, target file not exist.${source}[${sourceLen}] -> ${finalPath.get}")
+                return;
+            }
+            fs.delete(new Path(source), false);
+            val finalLen = fs.getContentSummary(new Path(finalPath.get)).getLength
+            LOG.info(s"commit file ${source}[${sourceLen}] -> ${finalPath.get}[${finalLen}] [ OpCount=${cacheItem.OpCount}, OpBytes=${cacheItem.OpBytes},lastOpTime:${new Date(cacheItem.lastOpTs)} ]")
         } else {
+            fs.delete(new Path(source), false);
             LOG.warn(s"source file is empty.[${source}}]")
-        }
-        fs.delete(new Path(source), false);
-    }
-
-
-    //压缩文件
-    private def compressGzFile(srcFilePath: String, targetFilePath: String): Unit = {
-        val codecClass = Class.forName(codec)
-        val fs = FileSystem.get(hdfsConf);
-        val codecObj = ReflectionUtils.newInstance(codecClass, hdfsConf).asInstanceOf[CompressionCodec];
-
-        val targetFilePathObj = if (!targetFilePath.endsWith(codecObj.getDefaultExtension)) {
-            new Path(targetFilePath + codecObj.getDefaultExtension);
-        } else {
-            new Path(targetFilePath)
-        }
-        val tmpPath = new Path(srcFilePath + codecObj.getDefaultExtension());
-        val outputStream = fs.create(tmpPath, true);
-        val in = fs.open(new Path(srcFilePath));
-        val out = codecObj.createOutputStream(outputStream);
-        try {
-            IOUtils.copyBytes(in, out, hdfsConf);
-            IOUtils.closeStream(out);
-            fs.rename(tmpPath, targetFilePathObj)
-        } catch {
-            case ex: Throwable => {
-                throw ex
-            }
-        } finally {
-            try{
-                if (fs.exists(tmpPath)) {
-                    fs.delete(tmpPath, false)
-                }
-            }
-            IOUtils.closeStream(in);
         }
 
     }
@@ -383,10 +361,14 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                 item.writeLock.lock()
                 if (item.readyForCommit.get() == false) {
                     return item
+                } else {
+                    LOG.info(s"item[${item.filePath},OpBytes=${item.OpBytes},OpCount=${item.OpCount},lastOpTs=${item.lastOpTs},ts=${System.currentTimeMillis() - item.lastOpTs}] readyForCommit=true ,new item will be created")
                 }
             } finally {
                 item.writeLock.unlock()
             }
+        } else {
+            LOG.info(s"item[${fileKey}] not found ,new item will be created")
         }
         val ret = createFileWriter(filePath)
         val newItem = new LogWriteCacheItem(ret._1, ret._2, System.currentTimeMillis())
@@ -416,7 +398,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         (targetFilePath, writer)
     }
 
-    private var codec: String = "org.apache.hadoop.io.compress.GzipCodec";
+    private var codec: String = HdfsMsgSink.DEFAULT_CODEC;
 
     //文件提交定时器
     private var commitTimer: Timer = null;
@@ -440,8 +422,8 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
     //缓存
     private val logWriterCache: java.util.concurrent.ConcurrentHashMap[LogWriteCacheKey, LogWriteCacheItem] = new java.util.concurrent.ConcurrentHashMap[LogWriteCacheKey, LogWriteCacheItem]()
 
-    //保存操作Latch
-    private var saveProcLatch: CountDownLatch = null;
+    //保存操作计数器
+    private val saveOptCount: AtomicInteger = new AtomicInteger(0)
 
 
     case class LogWriteCacheKey(appId: String, timeKey: String, fileFlag: String, parId: Int) {
@@ -502,5 +484,130 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
 
     }
 
+
+}
+
+object HdfsMsgSink {
+    val LOG = LoggerFactory.getLogger(this.getClass)
+
+    val DEFAULT_CODEC: String = "org.apache.hadoop.io.compress.GzipCodec";
+
+    def compressFileWithTry(srcFilePath: String, targetFilePath: String, codec: String, conf: Configuration, tryCount: Int): Option[String] = {
+        var finalPath = "";
+        val maxRunCount = Math.max(1, tryCount + 1);
+        var currCount = 0;
+        while (currCount < maxRunCount) {
+            currCount = currCount + 1
+            try {
+                finalPath = compressFile(srcFilePath, targetFilePath, codec, conf)
+            } catch {
+                case ex: Throwable => {
+                    finalPath = ""
+                    LOG.error(s"[${currCount}/${maxRunCount}]compress file error. ${srcFilePath} -> ${targetFilePath}", ex)
+                }
+            }
+            if (finalPath != "") {
+                currCount = maxRunCount
+            }
+        }
+        if (finalPath == "") {
+            return None
+        } else {
+            return Some(finalPath)
+        }
+    }
+
+    //压缩文件
+    def compressFile(srcFilePath: String, targetFilePath: String, codec: String, conf: Configuration): String = {
+        val codecClass = Class.forName(codec)
+        val fs = FileSystem.get(conf);
+        val codecObj = ReflectionUtils.newInstance(codecClass, conf).asInstanceOf[CompressionCodec];
+
+        val targetFilePathObj = if (!targetFilePath.endsWith(codecObj.getDefaultExtension)) {
+            new Path(targetFilePath + codecObj.getDefaultExtension);
+        } else {
+            new Path(targetFilePath)
+        }
+        val tmpPath = new Path(srcFilePath + codecObj.getDefaultExtension());
+        val outputStream = fs.create(tmpPath, true);
+        val in = fs.open(new Path(srcFilePath));
+        val out = codecObj.createOutputStream(outputStream);
+        try {
+            IOUtils.copyBytes(in, out, conf);
+            IOUtils.closeStream(out);
+            if(!fs.exists(targetFilePathObj.getParent())) {
+                fs.mkdirs(targetFilePathObj.getParent())
+            }
+            fs.rename(tmpPath, targetFilePathObj)
+            targetFilePathObj.toUri.getPath
+        } catch {
+            case ex: Throwable => {
+                throw ex
+            }
+        } finally {
+            try {
+                if (fs.exists(tmpPath)) {
+                    fs.delete(tmpPath, false)
+                }
+            }
+            catch {
+                case _: Throwable => {}
+            }
+            IOUtils.closeStream(in);
+        }
+
+    }
+
+    /**
+     * java -classpath $classpath cn.whaley.bi.logsys.forest.sinker.HdfsMsgSink
+     * /data_warehouse/ods_origin.db/tmp_log_origin
+     * /data_warehouse/ods_origin.db/log_origin
+     * org.apache.hadoop.io.compress.GzipCodec
+     * @param args
+     */
+    def main(args: Array[String]): Unit = {
+        LOG.info(s"args:${args.mkString(",")}")
+        if (args.length < 2) {
+            System.out.println("require 2 args. (inPath:String,outDir:String)");
+            System.exit(-1)
+        }
+        val inPath = args(0)
+        val outDir = args(1)
+        val codec = if (args.length > 2) args(2) else DEFAULT_CODEC
+
+        val conf = new Configuration()
+        val fs = FileSystem.get(conf)
+        val statuses = fs.globStatus(new Path(inPath))
+        val fileNameR = "([a-zA-Z0-9]{32})_(\\d{10})_raw_\\d+_\\d+.*.json$".r
+        for (i <- 0 to statuses.length - 1) {
+            val status = statuses(i)
+            val fileName = status.getPath.getName;
+            if (status.isFile && status.getLen > 0) {
+                val m = fileNameR.findFirstMatchIn(fileName)
+                if (m.isDefined) {
+                    val appId = m.get.group(1)
+                    val time = m.get.group(2)
+                    val day = time.substring(0, 8)
+                    val hour = time.substring(8)
+                    val targetPath = s"${outDir}/key_appId=${appId}/key_day=${day}/key_hour=${hour}/${fileName}"
+                    val finalPath = compressFile(status.getPath.toUri.getPath, targetPath, codec, conf)
+                    if(fs.exists(new Path(finalPath))){
+                        fs.delete(status.getPath, false)
+                        LOG.info(s"process file: ${status.getPath.toUri.getPath} -> ${finalPath}")
+                    }
+                    else {
+                        LOG.error(s"failure , finalPath not exists. ${status.getPath.toUri.getPath} -> ${finalPath}")
+                    }
+
+                } else {
+                    LOG.info(s"skip file:${status.getPath}")
+                }
+
+            } else {
+                LOG.warn(s"invalid path:${status.getPath}");
+            }
+        }
+        LOG.info("task completed.")
+    }
 
 }
