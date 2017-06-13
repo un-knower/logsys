@@ -3,6 +3,7 @@
 --jdbc:phoenix:thin:url=http://bigdata-cmpt-128-25:8765;serialization=PROTOBUF;defaultAutoCommit=true
 --drop table if exists metadata.applog_key_field_desc;
 
+--日志关键字段描述表
 create table metadata.applog_key_field_desc(
     appId varchar(100) not null --appId [key]
     ,fieldName varchar(100) not null  --字段名 [key]
@@ -16,13 +17,124 @@ create table metadata.applog_key_field_desc(
 )
 ;
 
-upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,filedDefault,isDeleted,createTime,updateTime)
-values( 'ALL','appId',0,0,'',false,now(),now());
-delete from  metadata.applog_key_field_desc where fieldName='appId';
+--日志文件关键字段字段值表
+create table metadata.logfile_key_field_value(
+    logPath varchar(500) not null --日志文件路径 [key]
+    ,fieldName varchar(100) not null --字段名 [key]
+    ,fieldValue varchar(100) --字段值
+    ,appId varchar(100) --appId
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (logPath,fieldName)
+)
+;
+CREATE INDEX idx_logfile_key_field_value_taskId ON metadata.logfile_key_field_value(taskId);
+
+
+--日志文件字段信息表
+create table metadata.logfile_field_desc(
+    logPath varchar(500) not null --日志文件路径 [key]
+    ,fieldName varchar(100) not null --字段名 [key]
+    ,fieldType varchar(100) --hive字段类型
+    ,fieldSql varchar(500) --hive字段SQL声明子句
+    ,rawType varchar(100) --parquet字段类型
+    ,rawInfo varchar(500) --parquet字段类型信息
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (logPath,fieldName)
+);
+CREATE INDEX idx_logfile_field_desc_taskId ON metadata.logfile_field_desc(taskId);
 
 
 
-select * from  metadata.applog_key_field_desc;
+--日志文件转换任务信息表
+create table metadata.logfile_task_info(
+    taskId varchar(100) --唯一性ID [key]
+    ,taskType varchar(100) --任务类型, 预定义: json2parquent
+    ,taskCode integer --任务状态, -1=任务发生错误;0=任务启动;1=任务完成
+    ,taskMsg varchar --任务信息,任务当前状态的备注信息
+    ,timeFrom date --任务开始时间
+    ,timeTo date --任务结束时间
+    ,logSrcPath varchar(500) --任务涉及的日志文件源路径
+    ,logTargetPaths varchar --任务涉及的日志文件输出路径(逗号分隔)
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (taskId)
+);
 
-upsert into metadata.applog_key_field_desc
-    select 'ALL','app_id',0,0,false,now(),now();
+
+--日志特殊字段描述表
+create table metadata.applog_special_field_desc(
+    id varchar(100) not null --唯一性ID [key]
+    ,tabNameReg varchar(100) --表名正则匹配表达式
+    ,logPathReg varchar(100) --日志文件路径正则匹配表达式
+    ,fieldNameReg varchar(100) --字段名正则匹配表达式
+    ,specialType varchar(100) --特例类型, blackList=黑名单,rename=重命名
+    ,speicalValue varchar(500) --特例值,如重命名值
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (id)
+)
+;
+
+
+
+--表字段信息表
+create table metadata.logtab_field_desc(
+    tabName varchar(100) not null --表名 [key]
+    ,fieldName varchar(100) not null --字段名 [key]
+    ,seq integer not null --序号 [key]
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,fieldType varchar(100) --hive字段类型
+    ,fieldSql varchar(500) --hive字段SQL声明子句
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (tabName,fieldName,seq)
+);
+CREATE INDEX idx_logtab_field_desc_taskId ON metadata.logtab_field_desc(taskId);
+
+
+--DDL信息表
+create table metadata.logtab_ddl(
+    dbName varchar(100) not null --[key]
+    ,tableName varchar(500) not null --[key]
+    ,seq integer not null --序号 [key]
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,ddlType varchar(100) --DDL类型, CHANGE_COLUMN/ADD_COLUMN/DROP_COLUMN/CREATE_TABLE/ALTER_TABLE/DROP_TABLE
+    ,ddlText varchar --DDL语句
+    ,commitTime date --DDL提交时间
+    ,commitCode Integer --DDL提交结果
+    ,commitMsg varchar --DDL提交结果说明
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (dbName,tableName,seq)
+);
+CREATE INDEX idx_logtab_ddl_taskId ON metadata.logtab_ddl(taskId);
+
+
+--DML信息表
+create table metadata.logtab_dml(
+    dbName varchar(100) not null --[key]
+    ,tableName varchar(500) not null --[key]
+    ,seq integer  not null --序号 [key]
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,dmlType varchar(100) --DML类型, ADD_PARTITION
+    ,dmlText varchar --DML语句
+    ,commitTime date --DDL提交时间
+    ,commitCode Integer --DDL提交结果
+    ,commitMsg varchar --DDL提交结果说明
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (dbName,tableName,seq)
+);
+CREATE INDEX idx_logtab_dml_taskId ON metadata.logtab_dml(taskId);
+
