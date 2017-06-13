@@ -138,3 +138,22 @@ create table metadata.logtab_dml(
 );
 CREATE INDEX idx_logtab_dml_taskId ON metadata.logtab_dml(taskId);
 
+
+--数据初始化
+
+--直接指定表名
+upsert into metadata.applog_key_field_desc values('ALL','tabName',0,0,'',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','tab_name',0,0,'',false,now(),now());
+--产品代码
+upsert into metadata.applog_key_field_desc values('ALL','productCode',0,1,'ALL',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','product_code',0,1,'ALL',false,now(),now());
+--应用代码
+upsert into metadata.applog_key_field_desc values('ALL','appCode',0,2,'ALL',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','app_code',0,2,'ALL',false,now(),now());
+--日志类型
+upsert into metadata.applog_key_field_desc values('ALL','logType',0,3,'ALL',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','log_type',0,3,'ALL',false,now(),now());
+--事件ID
+upsert into metadata.applog_key_field_desc values('ALL','eventId',0,4,'ALL',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','event_id',0,4,'ALL',false,now(),now());
+
