@@ -1,0 +1,28 @@
+--phoenix query server:
+--!autocommit true
+--jdbc:phoenix:thin:url=http://bigdata-cmpt-128-25:8765;serialization=PROTOBUF;defaultAutoCommit=true
+--drop table if exists metadata.applog_key_field_desc;
+
+create table metadata.applog_key_field_desc(
+    appId varchar(100) not null --appId [key]
+    ,fieldName varchar(100) not null  --字段名 [key]
+    ,fieldFlag integer --字段标记, 0=表名字段,1=分区字段
+    ,fieldOrder integer --字段顺序
+    ,filedDefault varchar(100) --字段默认值
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (appId,fieldName)
+)
+;
+
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,filedDefault,isDeleted,createTime,updateTime)
+values( 'ALL','appId',0,0,'',false,now(),now());
+delete from  metadata.applog_key_field_desc where fieldName='appId';
+
+
+
+select * from  metadata.applog_key_field_desc;
+
+upsert into metadata.applog_key_field_desc
+    select 'ALL','app_id',0,0,false,now(),now();

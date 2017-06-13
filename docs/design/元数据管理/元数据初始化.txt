@@ -100,6 +100,44 @@ INSERT INTO metadata.app_metadata_logfile
   ;
 
 
+id string --唯一性ID
+appId string --appId
+tabNameFields map<string,int> --表名字段[字段名,序号]
+partitionFields map<string,int> --分区字段[字段名,序号]
+
+--ID生成方案:
+—${appId}
+
+
+--表名及分区字段定义
+drop table if exists metadata.applog_special_field_desc;
+create table metadata.applog_special_field_desc(
+  id string --唯一性ID [key]
+  ,tabNameReg string --表名正则匹配表达式
+  ,logPathReg string --日志文件路径正则匹配表达式
+  ,conditions map<string,string> --ALL匹配条件[字段名.字段值]
+  ,fieldNameReg string --字段名正则匹配表达式
+  ,specialType string --特例类型, blackList=黑名单
+  ,isDeleted boolean --记录是否删除
+  ,createTime string --记录创建时间
+  ,updateTime string --记录更新时间
+)
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES (
+  'hbase.table.name' = 'metadata.applog_special_field_desc',
+  'hbase.columns.mapping'=':key,a:tabNameReg,a:logPathReg,b:,a:fieldNameReg,a:specialType,a:isDeleted,a:createTime,a:updateTime'
+)
+;
+
+insert into metadata.applog_special_field_desc
+    select 1,'test','',map('sid','0'),'^a$','blackList',false,'2017-06-12 16:40:21','2017-06-12 16:40:21'
+    ;
+
+
+
+
+
+
 ----test------------
 SELECT * FROM metadata.app_metadatas;
 SELECT * FROM metadata.app_metadata_logfile;
@@ -110,8 +148,16 @@ FROM metadata.app_metadata_logfile where app_id='boikgpokn78sb95kpghmafidrled9fm
 
 SELECT a.*,b.*
 FROM metadata.app_metadata_logfile a
-    inner join metadata.app_metadata_idinfo b on b.product_code='ai'
-;
+    inner join metadata.app_metadata_idinfo b on b.product_code='ai';
+
+scan 'metadata.app_metadatas'
+delete 'metadata.app_metadatas','ALL','a:partitionField_productCode'
+delete 'metadata.app_metadatas','ALL','a:productCode'
+delete 'metadata.app_metadatas','ALL','a:tabName'
+delete 'metadata.app_metadatas','ALL','a:tabNameField_tabName'
+
+
+
 
 
 
