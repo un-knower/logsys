@@ -31,6 +31,7 @@
         <version-hadoop>2.6.0</version-hadoop>
         <version-kafka>0.10.1.0</version-kafka>
         <version-hive>2.1.1</version-hive>
+        <version-phoenix>4.10.0-HBase-1.2</version-phoenix>
     </properties>
 
     <dependencyManagement>
