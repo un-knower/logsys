@@ -16,9 +16,3 @@ object Log2Parquet {
   }
 }
 
-/**
-*   !describe METADATA.APPLOG_SPECIAL_FIELD_DESC
-  *
-  *   UPSERT INTO METADATA.APPLOG_SPECIAL_FIELD_DESC VALUES('foo','bar');
-  *   select * from METADATA.APPLOG_SPECIAL_FIELD_DESC
-* */
