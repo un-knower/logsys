@@ -17,6 +17,21 @@
             <artifactId>phoenix-core</artifactId>
             <version>${version-phoenix}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_2.11</artifactId>
+            <version>${version-spark}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_2.11</artifactId>
+            <version>${version-spark}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.scopt</groupId>
+            <artifactId>scopt_2.11</artifactId>
+            <version>3.6.0</version>
+        </dependency>
     </dependencies>
 
 </project>

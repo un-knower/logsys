@@ -32,6 +32,7 @@
         <version-kafka>0.10.1.0</version-kafka>
         <version-hive>2.1.1</version-hive>
         <version-phoenix>4.10.0-HBase-1.2</version-phoenix>
+        <version-spark>2.1.0</version-spark>
     </properties>
 
     <dependencyManagement>
