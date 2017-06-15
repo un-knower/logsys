@@ -58,3 +58,18 @@ logType规则：
 hadoop fs -du -h /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=12
 
 
+####疑问
+1.需要做md5校验吗？no
+2.分post请求，get请求？yes
+3.realLogType处理逻辑? yes
+val realLogType = if(EVENT == logType){
+            getStringValue(log,EVENT_ID)
+          }else if(START_END == logType){
+            getStringValue(log,ACTION_ID)
+          }else logType
+4.除了logBody，还有哪些字段需要加入转parquet的json? all of them
+5.remoteIp和forwardedIp对应？find svr_forwarded_for,svr_remote_addr in log
+6.参考代码MedusaLog2Parquet?yes
+
+####信息同步
+2.x 代码逻辑参考forest项目GenericActionLogGetProcessor类parseMedusa20Log方法。

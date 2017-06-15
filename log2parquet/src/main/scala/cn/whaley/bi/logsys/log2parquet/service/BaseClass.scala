@@ -20,7 +20,6 @@ trait BaseClass {
     init()
     println("init success ....")
 
-    beforeExecute()
     println("execute start ....")
     ParamsParseUtil.parse(args) match {
       case Some(p) => {
@@ -61,10 +60,6 @@ trait BaseClass {
 
   }
 
-  def beforeExecute(): Unit = {
-
-  }
-
 
   /**
     * release resource
@@ -76,32 +71,9 @@ trait BaseClass {
   }
 
   /**
-    * ETL过程执行程序
+    * this method do not complete.Sub class that extends BaseClass complete this method
     */
-  def execute(params: Params): Unit = {
-    val df = extract(params)
-    val result = transform(params, df)
-    load(params, result)
-  }
+  def execute(params: Params): Unit
 
-  /**
-    * 源数据读取函数, ETL中的Extract
-    * 如需自定义，可以在子类中重载实现
-    *
-    * @return
-    */
-  def extract(params: Params): DataFrame
-
-  /**
-    * 数据转换函数，ETL中的Transform
-    *
-    * @return
-    */
-  def transform(params: Params, df: DataFrame): DataFrame
-
-  /**
-    * 数据存储函数，ETL中的Load
-    */
-  def load(params: Params, df: DataFrame)
 
 }

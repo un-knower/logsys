@@ -2,47 +2,39 @@ package cn.whaley.bi.logsys.log2parquet.main
 
 import cn.whaley.bi.logsys.log2parquet.service.BaseClass
 import cn.whaley.bi.logsys.log2parquet.utils.{Params, PhoenixUtils}
-import org.apache.spark.sql.DataFrame
+import com.alibaba.fastjson.JSON
 import cn.whaley.bi.logsys.log2parquet.utils.PathUtil
 
 /**
   * Created by michael on 2017/6/13.
   */
 object Log2Parquet extends BaseClass {
-  /**
-    * 源数据读取函数, ETL中的Extract
-    * 如需自定义，可以在子类中重载实现
-    *
-    * @return
-    */
-  override def extract(params: Params): DataFrame = {
-    //val repartitionNum = params.paramMap.getOrElse("repartitionNum", 2000)
-    val odsPath = PathUtil.getOdsOriginPath(params.appID, params.startDate, params.startHour)
-    //val df=sparkSession.read.load(odsPath)
-    val rdd_original = sparkSession.sparkContext.textFile(odsPath, 2000)
-    rdd_original.map(line=>{
 
+  override  def execute(params: Params):Unit={
+    /** TODO 获得某个路径下的字段属性：黑名单、白名单或重命名
+      * 从 METADATA.APPLOG_SPECIAL_FIELD_DESC 表获得信息
+      * */
+
+    //val repartitionNum = params.paramMap.getOrElse("repartitionNum", 2000)
+    //加载数据
+    val odsPath = PathUtil.getOdsOriginPath(params.appID, params.startDate, params.startHour)
+    val rdd_original = sparkSession.sparkContext.textFile(odsPath, 2000)
+    //按logType和eventId分类
+    rdd_original.map(line=>{
+      //
+      val json = JSON.parseObject(line)
 
     })
 
 //.filter(_ != null).flatMap(x => x)
 
+    val outputPath=PathUtil.getOdsViewPath(params.appID, params.startDate, params.startHour, "logType", "eventID")
 
-    val test = sparkSession.read.load("")
-    test
+
+
+
   }
 
-
-  override def transform(params: Params, df: DataFrame): DataFrame = {
-
-
-    df
-  }
-
-  override def load(params: Params, df: DataFrame) = {
-    PathUtil.getOdsViewPath(params.appID, params.startDate, params.startHour, "logType", "eventID")
-
-  }
 
 
 }
