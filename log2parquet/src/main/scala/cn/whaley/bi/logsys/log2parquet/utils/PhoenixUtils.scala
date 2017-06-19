@@ -1,9 +1,9 @@
 package cn.whaley.bi.logsys.log2parquet.utils
 
-import java.sql.{Connection, DriverManager}
+import java.sql.{Statement, Connection, DriverManager}
 
 /**
-  * Created by baozhiwang on 2017/6/13.
+  * Created by michael on 2017/6/13.
   */
 object PhoenixUtils {
 
@@ -13,6 +13,20 @@ object PhoenixUtils {
     Class.forName("org.apache.phoenix.jdbc.PhoenixDriver")
     val con=DriverManager.getConnection("jdbc:phoenix:bigdata-cmpt-128-1,bigdata-cmpt-128-13,bigdata-cmpt-128-25:2181")
     con
+  }
+
+
+  def getStatement:Statement={
+    Class.forName("org.apache.phoenix.jdbc.PhoenixDriver")
+    val con=DriverManager.getConnection("jdbc:phoenix:bigdata-cmpt-128-1,bigdata-cmpt-128-13,bigdata-cmpt-128-25:2181")
+    val stat=con.createStatement()
+    stat
+  }
+
+  def closeConnection(con:Connection)={
+   if(null!=con){
+    con.close()
+   }
   }
 
 }
