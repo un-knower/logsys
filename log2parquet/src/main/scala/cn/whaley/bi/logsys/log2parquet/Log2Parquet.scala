@@ -1,9 +1,8 @@
-package cn.whaley.bi.logsys.log2parquet.main
+package cn.whaley.bi.logsys.log2parquet
 
 import cn.whaley.bi.logsys.log2parquet.service.BaseClass
-import cn.whaley.bi.logsys.log2parquet.utils.{Params, PhoenixUtils}
+import cn.whaley.bi.logsys.log2parquet.utils.{Params, PathUtil}
 import com.alibaba.fastjson.JSON
-import cn.whaley.bi.logsys.log2parquet.utils.PathUtil
 
 /**
   * Created by michael on 2017/6/13.

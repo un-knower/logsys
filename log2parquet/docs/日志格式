@@ -1,4 +1,5 @@
 
+
 {
     "msgSignFlag":0,
     "msgId":"AAABXKT47PUKEz1LG13HgAAB",
@@ -59,18 +60,5 @@
     "msgVersion":"1.0",
     "msgSite":"10.19.61.75"
 }
-
-
-
-{"appEnterWay":"native",
-'_msg':{"msgFormat":"json","logSignFlag":1}
-}
-
-{"appEnterWay":"native",
-'_msg':"{"msgFormat":"json","logSignFlag":1}"
-}
-
-
-hive
 
 
