@@ -41,6 +41,7 @@ public class LogTabDMLRepo extends MetadataBaseRepo<LogTabDMLEntity> {
 
         Map<String, Object> wheres = new HashMap<>();
         wheres.put("taskId", taskId);
+        wheres.put("isDeleted", false);
 
         return update(keys, updates, wheres);
 

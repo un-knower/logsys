@@ -124,7 +124,12 @@ public class ODSViewService {
                 .map(item -> generateDML(item.desc))
                 .collect(Collectors.toList());
 
-        LOG.info("taskId:{},tabFieldDescItems:{},ddlEntities:{},dmlEntities:{}", new Object[]{taskId, tabFieldDescItems.size(), ddlEntities.size(), dmlEntities.size()});
+        LOG.info("taskId:{}: field={} , ddl={} , dml={}", new Object[]{taskId
+                , tabFieldDescItems.stream()
+                .map(item -> item.fieldDescEntities.size())
+                .collect(Collectors.summingInt(item -> item))
+                , ddlEntities.size()
+                , dmlEntities.size()});
 
         //保存字段描述,保存之前删除taskId对应的旧数据
         Integer fieldDelRet = getLogTabFieldDescRepo().deleteByTaskId(taskId);
@@ -133,18 +138,18 @@ public class ODSViewService {
             fieldRet += logTabFieldDescRepo.insert(descItem.fieldDescEntities);
         }
 
-        LOG.info("field: taskId:{} , insert:{}, delete:{}", taskId, fieldRet, fieldDelRet);
+        LOG.info("taskId:{}: field.insert:{}, field.delete:{}", taskId, fieldRet, fieldDelRet);
 
         //保存DDL,保存之前删除taskId对应的旧数据
         Integer ddlDelRet = getLogTabDDLRepo().deleteByTaskId(taskId);
         Integer ddlRet = logTabDDLRepo.insert(ddlEntities);
-        LOG.info("ddl: taskId:{} , insert:{} , delete:{}", taskId, ddlRet, ddlDelRet);
+        LOG.info("taskId:{}: ddl.insert:{} , ddl.delete:{}", taskId, ddlRet, ddlDelRet);
 
 
         //保存DML,保存之前删除taskId对应的旧数据
         Integer dmlDdlRet = getLogTabDMLRepo().deleteByTaskId(taskId);
         Integer dmlRet = logTabDMLRepo.insert(dmlEntities);
-        LOG.info("dml: taskId:{} , insert:{} , delete:{}", taskId, dmlRet, dmlDdlRet);
+        LOG.info("taskId:{}: dml.insert:{} , dml.delete:{}", taskId, dmlRet, dmlDdlRet);
 
         return new Integer[]{fieldRet, ddlRet, dmlRet};
     }
@@ -300,15 +305,16 @@ public class ODSViewService {
             List<LogTabFieldDescEntity> changed = tabGroup.stream().filter(item -> {
                 String fieldName = item.getFieldName();
                 String fieldType = item.getFieldType();
-                Boolean hasField = fieldInfos.stream()
+                Boolean hasChangedField = fieldInfos.stream()
                         .filter(fieldInfo -> fieldInfo.getColName().equalsIgnoreCase(fieldName)
-                                && fieldInfo.getDataType().equalsIgnoreCase(fieldType))
+                                && !fieldInfo.getDataType().equalsIgnoreCase(fieldType))
                         .findAny().isPresent();
-                return hasField == true;
+                return hasChangedField == true;
             }).collect(Collectors.toList());
             if (changed.size() > 0) {
                 List<LogTabDDLEntity> changedDDLs = changed.stream().map(change -> {
-                    String ddlText = String.format("ALTER TABLE %s CHANGE COLUMN %s", tabFullName, change.getFieldName(), change.getFieldName(), change.getFieldType());
+                    String ddlText = String.format("ALTER TABLE %s CHANGE COLUMN %s %s %s"
+                            , tabFullName, change.getFieldName(),change.getFieldName(), change.getFieldType());
                     LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
                     ddlEntity.setDbName(dbName);
                     ddlEntity.setTabName(tabName);
