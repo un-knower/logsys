@@ -14,27 +14,32 @@
     <change idref="t41" attribute="internalAssignments" type="string" from="" to="2"/>
     <change idref="t47" attribute="internalAssignments" type="string" from="" to="2"/>
   </task-change-set>
-  <task-change-set user="连凯" date="2017-06-08T05:48:39.582Z" timestamp="2017-06-08T05:48:39.582Z">
-    <change idref="t1" attribute="noLaterThanConstrainedTaskEnd" type="real" from="1" to="0" resolved="yes"/>
-    <change idref="t2" attribute="noLaterThanConstrainedTaskEnd" type="real" from="1" to="0" resolved="yes"/>
-    <change idref="t12" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-07T00:00:00.000Z" to="2017-06-14T00:00:00.000Z" resolved="yes"/>
-    <change idref="t13" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-09T00:00:00.000Z" to="2017-06-16T00:00:00.000Z" resolved="yes"/>
-    <change idref="t14" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-12T00:00:00.000Z" to="2017-06-19T00:00:00.000Z" resolved="yes"/>
-    <change idref="t15" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-14T00:00:00.000Z" to="2017-06-21T00:00:00.000Z" resolved="yes"/>
-    <change idref="t17" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-05T00:00:00.000Z" to="2017-06-12T00:00:00.000Z" resolved="yes"/>
-    <change idref="t20" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-15T00:00:00.000Z" to="2017-06-22T00:00:00.000Z" resolved="yes"/>
-    <change idref="t21" attribute="noEarlierThanConstraintDate" type="date" to="2017-06-26T00:00:00.000Z" resolved="yes"/>
-    <change idref="t22" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-19T00:00:00.000Z" to="2017-06-26T00:00:00.000Z" resolved="yes"/>
-    <change idref="t23" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-20T00:00:00.000Z" to="2017-06-27T00:00:00.000Z" resolved="yes"/>
-    <change idref="t24" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-20T00:00:00.000Z" to="2017-06-27T00:00:00.000Z" resolved="yes"/>
-    <change idref="t25" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-21T00:00:00.000Z" to="2017-06-28T00:00:00.000Z" resolved="yes"/>
-    <change idref="t26" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-22T00:00:00.000Z" to="2017-06-29T00:00:00.000Z" resolved="yes"/>
-    <change idref="t34" attribute="noEarlierThanConstraintDate" type="date" to="2017-06-13T00:00:00.000Z" resolved="yes"/>
-    <change idref="t38" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-08T00:00:00.000Z" to="2017-06-15T00:00:00.000Z" resolved="yes"/>
-    <change idref="t39" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-12T07:00:00.000Z" to="2017-06-19T07:00:00.000Z" resolved="yes"/>
-    <change idref="t40" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-15T00:00:00.000Z" to="2017-06-22T00:00:00.000Z" resolved="yes"/>
-    <change idref="t41" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-20T00:00:00.000Z" to="2017-06-27T00:00:00.000Z" resolved="yes"/>
-    <change idref="t47" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-21T00:00:00.000Z" to="2017-06-28T00:00:00.000Z" resolved="yes"/>
-    <change idref="t49" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-08T00:00:00.000Z" to="2017-06-15T00:00:00.000Z" resolved="yes"/>
+  <task-change-set user="连凯" date="2017-06-16T09:34:22.397Z" timestamp="2017-06-16T09:34:22.397Z">
+    <change idref="t1" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-05T00:00:00.000Z" to="2017-06-19T00:00:00.000Z" resolved="yes"/>
+    <change idref="t2" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-06T00:00:00.000Z" to="2017-06-19T00:00:00.000Z" resolved="yes"/>
+    <change idref="t3" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-05T00:00:00.000Z" to="2017-06-19T00:00:00.000Z" resolved="yes"/>
+    <change idref="t12" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-14T00:00:00.000Z" to="2017-06-21T00:00:00.000Z" resolved="yes"/>
+    <change idref="t13" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-16T00:00:00.000Z" to="2017-06-23T00:00:00.000Z" resolved="yes"/>
+    <change idref="t14" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-19T00:00:00.000Z" to="2017-06-26T00:00:00.000Z" resolved="yes"/>
+    <change idref="t15" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-21T00:00:00.000Z" to="2017-06-28T00:00:00.000Z" resolved="yes"/>
+    <change idref="t20" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-22T00:00:00.000Z" to="2017-06-29T00:00:00.000Z" resolved="yes"/>
+    <change idref="t21" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-26T00:00:00.000Z" to="2017-06-27T00:00:00.000Z" resolved="yes"/>
+    <change idref="t22" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-26T00:00:00.000Z" to="2017-06-29T00:00:00.000Z" resolved="yes"/>
+    <change idref="t22" attribute="internalAssignments" type="string" from="2" to="4" resolved="yes"/>
+    <change idref="t23" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-27T00:00:00.000Z" to="2017-06-30T00:00:00.000Z" resolved="yes"/>
+    <change idref="t26" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-29T00:00:00.000Z" to="2017-07-03T00:00:00.000Z" resolved="yes"/>
+    <change idref="t34" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-13T00:00:00.000Z" to="2017-06-19T00:00:00.000Z" resolved="yes"/>
+    <change idref="t38" attribute="internalAssignments" type="string" from="2" to="4" resolved="yes"/>
+    <change idref="t39" attribute="effort" type="real" from="57600" to="86400" resolved="yes"/>
+    <change idref="t39" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-19T07:00:00.000Z" to="2017-06-21T00:00:00.000Z" resolved="yes"/>
+    <change idref="t39" attribute="internalAssignments" type="string" from="2" to="4" resolved="yes"/>
+    <change idref="t40" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-22T00:00:00.000Z" to="2017-06-26T00:00:00.000Z" resolved="yes"/>
+    <change idref="t40" attribute="internalAssignments" type="string" from="2" to="4" resolved="yes"/>
+    <change idref="t49" attribute="noEarlierThanConstraintDate" type="date" from="2017-06-15T00:00:00.000Z" to="2017-06-21T00:00:00.000Z" resolved="yes"/>
   </task-change-set>
+  <resource-change-set user="连凯" date="2017-06-16T09:34:22.397Z" timestamp="2017-06-16T09:34:22.397Z">
+    <change idref="r4" to="r-1" to-position="2" resolved="yes">
+      <change idref="r4" attribute="name" type="string" from="" to="王宝志"/>
+    </change>
+  </resource-change-set>
 </changelog>

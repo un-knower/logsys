@@ -1,0 +1,74 @@
+delete from metadata.applog_key_field_desc;
+upsert into metadata.applog_key_field_desc values('ALL','db_name',0,0,'test',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','tab_prefix',1,0,'log',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','product_code',1,1,'',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','app_code',1,2,'',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','log_type',1,3,'',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','event_id',1,4,'',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','key_day',2,0,'',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','key_hour',2,1,'',false,now(),now());
+
+--日志文件关键字段字段值表
+create table metadata.logfile_key_field_value(
+    logPath varchar(500) not null --日志文件路径 [key]
+    ,fieldName varchar(100) not null --字段名 [key]
+    ,fieldValue varchar(100) --字段值
+    ,appId varchar(100) --appId
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (logPath,fieldName)
+)
+;
+CREATE INDEX idx_logfile_key_field_value_taskId ON metadata.logfile_key_field_value(taskId);
+
+upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','tab_prefix','test_log','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','product_code','test_product','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','app_code','test_app','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','log_type','test_type','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','event_id','test_event','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','key_day','20170620','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','key_hour','02','app1','task1',false,now(),now());
+
+
+--日志文件字段信息表
+create table metadata.logfile_field_desc(
+    logPath varchar(500) not null --日志文件路径 [key]
+    ,fieldName varchar(100) not null --字段名 [key]
+    ,fieldType varchar(100) --hive字段类型
+    ,fieldSql varchar(500) --hive字段SQL声明子句
+    ,rawType varchar(100) --parquet字段类型
+    ,rawInfo varchar(500) --parquet字段类型信息
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (logPath,fieldName)
+);
+CREATE INDEX idx_logfile_field_desc_taskId ON metadata.logfile_field_desc(taskId);
+
+upsert into metadata.logfile_field_desc values('/logs/test_app1.json','userId','string','userId string','string','option string','task1',false,now(),now());
+upsert into metadata.logfile_field_desc values('/logs/test_app1.json','accountId','string','accountId string','string','option string','task1',false,now(),now());
+
+
+
+--日志文件转换任务信息表
+create table metadata.logfile_task_info(
+    taskId varchar(100) --唯一性ID [key]
+    ,taskType varchar(100) --任务类型, 预定义: json2parquent
+    ,taskCode integer --任务状态, -1=任务发生错误;0=任务启动;1=任务完成
+    ,taskMsg varchar --任务信息,任务当前状态的备注信息
+    ,timeFrom date --任务开始时间
+    ,timeTo date --任务结束时间
+    ,logSrcPath varchar(500) --任务涉及的日志文件源路径
+    ,logTargetPaths varchar --任务涉及的日志文件输出路径(逗号分隔)
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (taskId)
+);
+
+upsert into metadata.logfile_task_info
+values('task1','json2parquent',0,'',now(),null,'/logs/test_app1.json','/logs/test_app1.parquet',false,now(),now());
+
