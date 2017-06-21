@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <property>
+        <name>GenericProcessorChain.msgDecoder</name>
+        <value>GenericMsgDecoder</value>
+    </property>
+    <property>
+        <name>GenericProcessorChain.msgProcessor</name>
+        <value>GenericMsgProcessor</value>
+    </property>
+    <property>
+        <name>GenericProcessorChain.logProcessor</name>
+        <value>GenericLogProcessor</value>
+    </property>
+
+    <!-- GenericMsgDecoder -->
+    <property>
+        <name>GenericMsgDecoder.class</name>
+        <value>cn.whaley.bi.logsys.forest.processor.GenericMsgDecoder</value>
+    </property>
+    <property>
+        <name>GenericMsgDecoder.ngxLogDecode</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>GenericMsgDecoder.filebeatDecode</name>
+        <value>true</value>
+    </property>
+
+    <!-- GenericMsgProcessor -->
+    <property>
+        <name>GenericMsgProcessor.class</name>
+        <value>cn.whaley.bi.logsys.forest.processor.GenericMsgProcessor</value>
+    </property>
+    <property>
+        <name>GenericMsgProcessor.processors</name>
+        <value>NgxLogJSONMsgProcessor</value>
+    </property>
+    <property>
+        <name>NgxLogJSONMsgProcessor.class</name>
+        <value>cn.whaley.bi.logsys.forest.actionlog.NgxLogJSONMsgProcessor</value>
+    </property>
+
+
+    <!-- GenericLogProcessor -->
+    <property>
+        <name>GenericLogProcessor.class</name>
+        <value>cn.whaley.bi.logsys.forest.processor.GenericLogProcessor</value>
+    </property>
+
+    <property>
+        <name>GenericLogProcessor.processors</name>
+        <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor,GenericActionLogCommProcessor</value>
+    </property>
+
+    <property>
+        <name>GenericActionLogGetProcessor.class</name>
+        <value>cn.whaley.bi.logsys.forest.actionlog.GenericActionLogGetProcessor</value>
+    </property>
+    <property>
+        <name>GenericActionLogPostProcessor.class</name>
+        <value>cn.whaley.bi.logsys.forest.actionlog.GenericActionLogPostProcessor</value>
+    </property>
+    <property>
+        <name>GenericActionLogPostProcessor.include</name>
+        <value>GenericActionLogPostProcessor.properties</value>
+    </property>
+    <property>
+        <name>GenericActionLogCommProcessor.class</name>
+        <value>cn.whaley.bi.logsys.forest.actionlog.GenericActionLogCommProcessor</value>
+    </property>
+    <property>
+        <name>GenericActionLogCommProcessor.happenTime.deviation.sec</name>
+        <value>${prop.GenericActionLogCommProcessor.happenTime.deviation.sec}</value>
+    </property>
+    <!--
+    <property>
+        <name>GenericActionLogCommProcessor.FieldRename</name>
+        <value>pageview:from->source,launcher:accessArea->accessAera</value>
+    </property>
+    <property>
+        <name>GenericActionLogCommProcessor.LongTypeKeys</name>
+        <value>accountId,duration,speed,size,preMemory,postMemory</value>
+    </property>
+    -->
+
+</configuration>
