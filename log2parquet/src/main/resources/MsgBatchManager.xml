@@ -4,26 +4,6 @@
         <name>MsgBatchManager.processorChain</name>
         <value>${prop.MsgBatchManager.processorChain}</value>
     </property>
-    <property>
-        <name>MsgBatchManager.batchSize</name>
-        <value>${prop.MsgBatchManager.batchSize}</value>
-    </property>
-    <property>
-        <name>MsgBatchManager.callableSize</name>
-        <value>${prop.MsgBatchManager.callableSize}</value>
-    </property>
-    <property>
-        <name>MsgBatchManager.recoverSourceOffsetFromSink</name>
-        <value>${prop.MsgBatchManager.recoverSourceOffsetFromSink}</value>
-    </property>
-    <property>
-        <name>MsgBatchManager.callableWaitSize</name>
-        <value>${prop.MsgBatchManager.callableWaitSize}</value>
-    </property>
-    <property>
-        <name>MsgBatchManager.callableWaitSec</name>
-        <value>${prop.MsgBatchManager.callableWaitSec}</value>
-    </property>
 
     <!-- GenericProcessorChain -->
     <property>
