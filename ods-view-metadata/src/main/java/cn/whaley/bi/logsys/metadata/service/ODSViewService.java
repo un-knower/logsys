@@ -110,6 +110,7 @@ public class ODSViewService {
         List<LogFileKeyFieldDescEntity> logFileKeyFieldDescEntities = logFileKeyFieldDescRepo.findByTaskId(taskId);
         List<LogFileFieldDescEntity> logFileFieldDescEntities = logFileFieldDescRepo.findByTaskId(taskId);
 
+
         //扫描表字段元数据
         List<TabFieldDescItem> tabFieldDescItems = generateTabFieldDesc(appLogKeyFieldDescEntities, logFileKeyFieldDescEntities, logFileFieldDescEntities);
 
@@ -123,19 +124,27 @@ public class ODSViewService {
                 .map(item -> generateDML(item.desc))
                 .collect(Collectors.toList());
 
+        LOG.info("taskId:{},tabFieldDescItems:{},ddlEntities:{},dmlEntities:{}", new Object[]{taskId, tabFieldDescItems.size(), ddlEntities.size(), dmlEntities.size()});
 
-        //保存字段描述
+        //保存字段描述,保存之前删除taskId对应的旧数据
+        Integer fieldDelRet = getLogTabFieldDescRepo().deleteByTaskId(taskId);
         Integer fieldRet = 0;
         for (TabFieldDescItem descItem : tabFieldDescItems) {
             fieldRet += logTabFieldDescRepo.insert(descItem.fieldDescEntities);
         }
 
-        //保存DDL
+        LOG.info("field: taskId:{} , insert:{}, delete:{}", taskId, fieldRet, fieldDelRet);
+
+        //保存DDL,保存之前删除taskId对应的旧数据
+        Integer ddlDelRet = getLogTabDDLRepo().deleteByTaskId(taskId);
         Integer ddlRet = logTabDDLRepo.insert(ddlEntities);
+        LOG.info("ddl: taskId:{} , insert:{} , delete:{}", taskId, ddlRet, ddlDelRet);
 
 
-        //保存DML
+        //保存DML,保存之前删除taskId对应的旧数据
+        Integer dmlDdlRet = getLogTabDMLRepo().deleteByTaskId(taskId);
         Integer dmlRet = logTabDMLRepo.insert(dmlEntities);
+        LOG.info("dml: taskId:{} , insert:{} , delete:{}", taskId, dmlRet, dmlDdlRet);
 
         return new Integer[]{fieldRet, ddlRet, dmlRet};
     }

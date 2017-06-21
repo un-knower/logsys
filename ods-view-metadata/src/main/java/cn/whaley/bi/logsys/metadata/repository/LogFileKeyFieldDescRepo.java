@@ -21,6 +21,7 @@ public class LogFileKeyFieldDescRepo extends MetadataBaseRepo<LogFileKeyFieldDes
     public List<LogFileKeyFieldDescEntity> findByTaskId(String taskId) {
         Map<String, Object> where = new HashMap<>();
         where.put("taskId", taskId);
+        where.put("isDeleted", false);
         List<LogFileKeyFieldDescEntity> entities = select(where);
         return entities;
     }

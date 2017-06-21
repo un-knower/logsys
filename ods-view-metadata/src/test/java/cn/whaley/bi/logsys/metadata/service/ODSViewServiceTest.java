@@ -78,6 +78,13 @@ public class ODSViewServiceTest {
     }
 
     @Test
+    public void testGetTabFieldInfo() {
+        String taskId = "task1";
+        List<HiveFieldInfo> infos = service.getHiveRepo().getTabFieldInfo("test", "test_log_test_product_test_app_test_type_test_event");
+        Assert.assertTrue(infos.size() > 0);
+    }
+
+    @Test
     public void testX() {
         String taskId = "task1";
         LogTabDDLRepo repo = service.getLogTabDDLRepo();

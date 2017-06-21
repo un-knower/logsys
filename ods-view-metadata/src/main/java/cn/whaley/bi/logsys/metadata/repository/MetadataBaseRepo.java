@@ -58,8 +58,9 @@ public class MetadataBaseRepo<T extends BaseTableEntity> {
      * @return
      */
     public List<T> selectAll() {
-        String selectSql = buildSelectSQL(mapper.tab_name);
-        return jdbcTemplate.query(selectSql, mapper);
+        Map<String, Object> where = new HashMap<>();
+        where.put("isDeleted", false);
+        return select(where);
     }
 
     /**

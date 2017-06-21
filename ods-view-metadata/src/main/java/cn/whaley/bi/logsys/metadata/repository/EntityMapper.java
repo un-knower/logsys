@@ -16,8 +16,6 @@ import java.util.stream.Collectors;
  */
 public class EntityMapper<T> implements RowMapper<T> {
 
-    public static Logger LOG = LoggerFactory.getLogger(EntityMapper.class);
-
     //实体对象类型
     Class clazz;
 
@@ -125,6 +123,9 @@ public class EntityMapper<T> implements RowMapper<T> {
         }
     }
 
+    /**
+     * 初始化过程,解析属性方式(get-set对 或 is-set对)
+     */
     void init() {
         Method[] allMethods = clazz.getMethods();
 
@@ -202,31 +203,9 @@ public class EntityMapper<T> implements RowMapper<T> {
             fieldTypeMap.put(fieldName, returnType);
         }
 
-        /*
-        Field[] field = clazz.getDeclaredFields();
-
-        for (int j = 0; j < field.length; j++) {
-            String name = field[j].getName();
-            Class type = field[j].getType();
-            fieldTypeMap.put(name, type);
-            //get+set
-            try {
-                String setMethodName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
-                Method setMethod = clazz.getMethod(setMethodName, type);
-                fieldSetMap.put(name, setMethod);
-                String getMethodName = "get" + name.substring(0, 1).toUpperCase() + name.substring(1);
-                Method getMethod = clazz.getMethod(getMethodName);
-                fieldGetMap.put(name, getMethod);
-
-            } catch (Exception ex) {
-                LOG.debug("ignore field setMethod: " + name + ",type:" + type.getName());
-            }
-        }
-        */
-
-
     }
 
+    //填充实体类
     void fillEntity(T entity, ResultSet rs, int rowNum, Set<String> fieldNames) throws Exception {
         if (fieldNames == null) {
             fieldNames = new HashSet<>();

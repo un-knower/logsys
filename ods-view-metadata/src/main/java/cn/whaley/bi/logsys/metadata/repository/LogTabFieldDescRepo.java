@@ -34,7 +34,7 @@ public class LogTabFieldDescRepo extends MetadataBaseRepo<LogTabFieldDescEntity>
     @Transactional(readOnly = false)
     public Integer deleteByTaskId(String taskId) {
         Set<String> keys = new HashSet<>();
-        keys.addAll(Arrays.asList("dbName,tabName,seq".split(",")));
+        keys.addAll(Arrays.asList("dbName,tabName,fieldName,seq".split(",")));
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("isDeleted", true);

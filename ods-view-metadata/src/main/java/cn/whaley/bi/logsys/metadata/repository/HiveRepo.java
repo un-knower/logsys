@@ -11,8 +11,10 @@ import org.springframework.stereotype.Repository;
 
 import javax.annotation.Resource;
 import javax.jdo.annotations.Transactional;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,8 +49,49 @@ public class HiveRepo {
      * @return
      */
     public List<HiveFieldInfo> getTabFieldInfo(String dbName, String tabName) {
+
+        try {
+            //jdbcTemplate的封装方法目前不支持describe语句,所以需要直接调用底层驱动
+            List<HiveFieldInfo> fieldInfos = new ArrayList<>();
+            String sql = String.format("describe %s.%s", dbName, tabName);
+            Statement statement = jdbcTemplate.getDataSource().getConnection().createStatement();
+            ResultSet rs = statement.executeQuery(sql);
+            boolean isPartition = false;
+            while (rs.next()) {
+                String f1 = rs.getString(1);
+                String f2 = rs.getString(2);
+                //忽略空行
+                if (StringUtils.isAnyEmpty(f1, f2)) {
+                    continue;
+                }
+                //分区行
+                if (f1.startsWith("# col_name")) {
+                    isPartition = true;
+                    continue;
+                }
+
+                if (isPartition) {
+                    fieldInfos.stream()
+                            .filter(fieldInfo -> fieldInfo.getColName().equals(f1))
+                            .forEach(item -> item.setPartitionField(true));
+                } else {
+                    HiveFieldInfo fieldInfo = new HiveFieldInfo();
+                    fieldInfo.setColName(f1);
+                    fieldInfo.setDataType(f2);
+                    fieldInfo.setPartitionField(false);
+                    fieldInfos.add(fieldInfo);
+                }
+            }
+            rs.close();
+            statement.close();
+            return fieldInfos;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        /*
         List<HiveFieldInfo> fieldInfos = new ArrayList<HiveFieldInfo>();
-        String sql = String.format("desc %s.%s", dbName, tabName);
+        String sql = String.format("describe %s.%s", dbName, tabName);
         SqlRowSet rs = jdbcTemplate.queryForRowSet(sql);
         boolean start1 = false;
         boolean start2 = false;
@@ -77,6 +120,7 @@ public class HiveRepo {
             fieldInfos.add(fieldInfo);
         }
         return fieldInfos;
+        */
     }
 
     /**
