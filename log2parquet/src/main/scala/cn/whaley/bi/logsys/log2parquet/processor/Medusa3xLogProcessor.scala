@@ -81,7 +81,7 @@ class Medusa3xLogProcessor extends LogProcessorTrait {
             })
             //中断点的结果即为整个处理链的结果
             if (isBreak) {
-               // return new ProcessResult(route.mkString("->"), ProcessResultCode.processed, "", Some(currLogs))
+                return new ProcessResult(route.mkString("->"), ProcessResultCode.processed, "", Some(log))
             }
             logs = currLogs
         }
