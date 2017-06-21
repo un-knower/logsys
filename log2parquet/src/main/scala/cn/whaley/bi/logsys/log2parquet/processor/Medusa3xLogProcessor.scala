@@ -1,8 +1,8 @@
 package cn.whaley.bi.logsys.log2parquet.processor
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.log2parquet.{ProcessResultCode, ProcessResult}
 import cn.whaley.bi.logsys.log2parquet.entity.LogEntity
+import cn.whaley.bi.logsys.log2parquet.{ProcessResult, ProcessResultCode}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -11,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
  *
  * 通用应用层日志处理器
  */
-class GenericLogProcessor extends LogProcessorTrait {
+class Medusa3xLogProcessor extends LogProcessorTrait {
 
 
     //应用层日志处理器表
@@ -36,7 +36,7 @@ class GenericLogProcessor extends LogProcessorTrait {
       *
       * @return
      */
-    override def process(log: LogEntity): ProcessResult[Seq[LogEntity]] = {
+    override def process(log: LogEntity): ProcessResult[LogEntity] = {
         //处理结果
         var logs: ArrayBuffer[LogEntity] = ArrayBuffer(log)
         //记录处理路由
@@ -68,7 +68,7 @@ class GenericLogProcessor extends LogProcessorTrait {
                     if (result.code == ProcessResultCode.skipped) {
                         currLogs.append(curr)
                     } else {
-                        currLogs ++= result.result.get
+                        currLogs ++= result.result
                     }
                 } else {
                     if (result.code != ProcessResultCode.silence) {
@@ -81,11 +81,11 @@ class GenericLogProcessor extends LogProcessorTrait {
             })
             //中断点的结果即为整个处理链的结果
             if (isBreak) {
-                return new ProcessResult(route.mkString("->"), ProcessResultCode.processed, "", Some(currLogs))
+               // return new ProcessResult(route.mkString("->"), ProcessResultCode.processed, "", Some(currLogs))
             }
             logs = currLogs
         }
-        new ProcessResult(route.mkString("->"), ProcessResultCode.processed, "", Some(logs))
+        new ProcessResult(route.mkString("->"), ProcessResultCode.processed, "", Some(log))
     }
 
 }

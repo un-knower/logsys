@@ -1,12 +1,12 @@
 package cn.whaley.bi.logsys.log2parquet
 
 import cn.whaley.bi.logsys.common.ConfManager
+import cn.whaley.bi.logsys.log2parquet.entity.LogEntity
 import cn.whaley.bi.logsys.log2parquet.traits.{InitialTrait, LogTrait, NameTrait}
 import cn.whaley.bi.logsys.log2parquet.utils.PathUtil
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import com.alibaba.fastjson.JSON
-
+import com.alibaba.fastjson.{JSON, JSONObject}
 /**
  * Created by fj on 16/10/30.
  */
@@ -38,17 +38,28 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         val odsPath = PathUtil.getOdsOriginPath(appID,startDate, startHour)
         val rdd_original = sparkSession.sparkContext.textFile(odsPath, partition)
         //按logType和eventId分类
-        rdd_original.map(line=>{
-            //
-            val json = JSON.parseObject(line)
-           // processorChain.process(line)
-
+        val logRdd = rdd_original.map(line=>{
+            val json = string2JsonObject(line)
+            //processorChain.process(new LogEntity(json))
+            // change to  (keyType, json)
         })
 
         //.filter(_ != null).flatMap(x => x)
 
         val outputPath=PathUtil.getOdsViewPath(appID, startDate, startHour, "logType", "eventID")
 
+    }
+
+    def string2JsonObject(log:String):JSONObject = {
+        try{
+             val json = JSON.parseObject(log)
+             json
+        }catch {
+            case e:Exception => {
+                 e.printStackTrace()
+                null
+            }
+        }
     }
 
     /**

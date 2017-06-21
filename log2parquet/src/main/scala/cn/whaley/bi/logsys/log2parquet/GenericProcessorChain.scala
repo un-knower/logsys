@@ -2,8 +2,9 @@ package cn.whaley.bi.logsys.log2parquet
 
 import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.log2parquet.entity.LogEntity
-import cn.whaley.bi.logsys.log2parquet.processor.{MsgDecodeTrait, MsgProcessorTrait, LogProcessorTrait}
+import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTrait
 import cn.whaley.bi.logsys.log2parquet.traits.{InitialTrait, LogTrait, NameTrait}
+import com.alibaba.fastjson.JSONObject
 
 
 /**
@@ -11,69 +12,21 @@ import cn.whaley.bi.logsys.log2parquet.traits.{InitialTrait, LogTrait, NameTrait
  */
 class GenericProcessorChain extends InitialTrait with LogTrait with NameTrait {
 
-    var msgDecoder: MsgDecodeTrait = null
-
-    var msgProcessor: MsgProcessorTrait = null
-
     var logProcessor: LogProcessorTrait = null
-
 
     /**
      * 初始化方法
      * 如果初始化异常，则应该抛出异常
      */
     override def init(confManager: ConfManager): Unit = {
-        val msgDecoderName = confManager.getConf(this.name, "msgDecoder")
-        msgDecoder = instanceFrom(confManager, msgDecoderName).asInstanceOf[MsgDecodeTrait]
-
-        val msgProcName = confManager.getConf(this.name, "msgProcessor")
-        msgProcessor = instanceFrom(confManager, msgProcName).asInstanceOf[MsgProcessorTrait]
-
-        val logProcName = confManager.getConf(this.name, "logProcessor")
+        val logProcName = confManager.getConf(this.name, "medusa3xLogProcessor")
         logProcessor = instanceFrom(confManager, logProcName).asInstanceOf[LogProcessorTrait]
     }
 
 
-    def process(bytes: Array[Byte]): ProcessResult[Seq[LogEntity]] = {
-        val decRet = msgDecoder.decode(bytes)
-
-        //解码错误
-        if (decRet.hasErr) {
-            ProcessorChainException(("NONE", new String(bytes)), Array(decRet))
-            return new ProcessResult(this.name, decRet.code, decRet.message, None, decRet.ex)
-        }
-
-        val msgEntity = decRet.result.get
-        val msgRet = msgProcessor.process(msgEntity)
-
-        //归集层消息处理错误
-        if (msgRet.hasErr) {
-            val decRet = msgDecoder.decode(bytes)
-            val exception = Some(ProcessorChainException((msgEntity.msgId, decRet.result.get.toJSONString), Array(msgRet)))
-            return new ProcessResult(this.name, ProcessResultCode.exception, "归集层消息处理错误", None, exception)
-        }
-
-        val logRet =
-            msgRet.result.get.map(item => {
-                val logRet = logProcessor.process(item)
-                logRet
-            })
-
-        //应用层消息处理错误
-        val errRets = logRet.filter(item => item.hasErr)
-        if (errRets.length > 0) {
-            val decRet = msgDecoder.decode(bytes)
-            val exception = Some(ProcessorChainException((msgEntity.msgId, decRet.result.get.toJSONString), errRets))
-            return new ProcessResult(this.name, ProcessResultCode.exception, "应用层消息处理错误", None, exception)
-        }
-
-        //返回结果
-        val logs =
-            logRet.flatMap(item => {
-                item.result.get
-            })
-
-        new ProcessResult(this.name, ProcessResultCode.processed, "", Some(logs))
+    def process(log:LogEntity): ProcessResult[LogEntity] = {
+        val logPost = logProcessor.process(log)
+        logPost
     }
 
 }
