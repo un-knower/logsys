@@ -16,5 +16,5 @@ trait LogProcessorTrait extends InitialTrait with NameTrait {
       *
       * @return
      */
-    def process(log: LogEntity): ProcessResult[Seq[LogEntity]]
+    def process(log: LogEntity): ProcessResult[LogEntity]
 }

@@ -75,5 +75,8 @@ val realLogType = if(EVENT == logType){
 2.x 代码逻辑参考forest项目GenericActionLogGetProcessor类parseMedusa20Log方法。
 
 
-在原有log2parquet需要做一条日志解析为多条日志的行为，现有log2parquet无需此操作。
+在原有log2parquet需要做一条日志解析为多条日志的行为，现有log2parquet无需此操作.
+
+
+
 
