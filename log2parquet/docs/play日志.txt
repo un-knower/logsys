@@ -1,4 +1,6 @@
+hadoop fs -get /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=13/boikgpokn78sb95kbqei6cc98dc5mlsr_2017061413_raw_5_14348.json.gz
 
+此项目要处理的日志格式：
 
 {
     "msgSignFlag":0,
