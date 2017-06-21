@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <omniplan xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2" xmlns:opnx="http://www.omnigroup.com/namespace/OmniPlan/v2">
-  <window x="0" y="64" w="1280" h="736">
+  <window x="45" y="122" w="1280" h="736">
     <editing-scenario>fNCCQuKBo2i</editing-scenario>
     <view>task</view>
     <change-tracking/>
@@ -16,9 +16,9 @@
         <column name="Start" width="82"/>
         <column name="End" width="92"/>
         <expanded-items idrefs="t1 t4 t17 t3 t2"/>
-        <selected-items-at-filter-time idrefs="t38 t21 t13 t34 t26 t2 t39 t47 t22 t14 t3 t4 t23 t15 t49 t40 t24 t20 t12 t41 t25 t17"/>
+        <selected-items-at-filter-time idrefs="t38 t21 t13 t34 t26 t2 t39 t47 t22 t14 t3 t56 t4 t23 t15 t49 t40 t24 t20 t12 t41 t25 t17"/>
       </outline>
-      <gantt-view x="2555" y="0" w="619" h="653">
+      <gantt-view x="2256" y="0" w="619" h="653">
         <view-mode>actual</view-mode>
         <critical-path/>
         <dependency-lines/>
@@ -66,14 +66,14 @@
     </task-view>
     <resource-view>
       <split-view-divider-position>306</split-view-divider-position>
-      <outline x="0" y="0" w="306" h="652">
+      <outline x="0" y="0" w="306" h="653">
         <column name="Notes" width="20"/>
         <column name="Type" width="49"/>
         <column name="Resource" width="157"/>
         <column name="#" width="75"/>
         <selected-items-at-filter-time idrefs="r2"/>
       </outline>
-      <timeline x="-20" y="0" w="944" h="652">
+      <timeline x="566" y="0" w="944" h="653">
         <offtime-display>weekends</offtime-display>
         <show-project-end/>
         <task-bar-label task-type="group" position="left">
@@ -117,7 +117,7 @@
     </resource-view>
     <calendar>
       <split-view-divider-position>290</split-view-divider-position>
-      <outline x="0" y="0" w="290" h="628">
+      <outline x="0" y="0" w="290" h="629">
         <column name="Notes" width="20"/>
         <column name="Type" width="49"/>
         <column name="Resource" width="175"/>
@@ -140,8 +140,8 @@ End:</group-table-style>
     </network-view>
   </window>
   <project>
-    <next-task-id>51</next-task-id>
-    <next-resource-id>4</next-resource-id>
+    <next-task-id>57</next-task-id>
+    <next-resource-id>5</next-resource-id>
     <scenario id="fNCCQuKBo2i" name="Actual" filename="Actual.xml"/>
     <date-display dates="true" times="false" seconds="false"/>
     <numbering-style>wbs</numbering-style>
