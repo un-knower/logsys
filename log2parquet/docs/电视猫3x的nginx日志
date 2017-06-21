@@ -1,0 +1,49 @@
+moretv@bigdata-extsvr-log1
+head -1 /data/logs/nginx/boikgpokn78sb95ktmsc1bnkechpgj9l.log
+
+GET请求日志
+
+{
+    "msgId":"AAABXMk8dHoKE7pKBPzixgAB",
+    "msgVersion":"1.0",
+    "msgSite":"10.19.186.74",
+    "msgSource":"ngx_log",
+    "msgFormat":"json",
+    "msgSignFlag":0,
+    "msgBody":{
+        "svr_host":"log.tvmore.com.cn",
+        "svr_req_method":"GET",
+        "svr_req_url":"/medusalog/?logVersion=01&accountId=&appEnterWay=native&apkSeries=MoreTV_TVApp3.0_Medusa&versionCode=311&retrieval=&contentType=comic&videoName=%E7%8C%AB%E5%92%8C%E8%80%81%E9%BC%A0++%E5%9B%BD%E8%AF%AD%E7%89%88%5B12%5D&event=playview&userId=e671dbfd9995a7e9029d08a5b5a8211b&uploadTime=20170621140000&episodeSid=8r7oefop4f9w&promotionChannel=shafa&productModel=B860AV1.1&apkVersion=3.1.1&pathMain=home*my_tv*history-history&groupId=527&duration=325&videoSid=8r7o2di6xzuv&searchText=&buildDate=20161014&pathSpecial=&pathSub=&weatherCode=101180104&logType=playview",
+        "svr_content_type":"-",
+        "svr_remote_addr":"10.10.251.83",
+        "svr_forwarded_for":"183.204.70.93, 111.6.184.34",
+        "svr_receive_time":1498024801402,
+        "appId":"boikgpokn78sb95ktmsc1bnkechpgj9l",
+        "body":{
+
+        }
+    }
+}
+
+POST请求
+
+{
+    "msgId":"AAABXMlntSsKE7pKBQCKmAAB",
+    "msgVersion":"1.0",
+    "msgSite":"10.19.186.74",
+    "msgSource":"ngx_log",
+    "msgFormat":"json",
+    "msgSignFlag":0,
+    "msgBody":{
+        "svr_host":"log.tvmore.com.cn",
+        "svr_req_method":"POST",
+        "svr_req_url":"/medusalog/",
+        "svr_content_type":"application/json",
+        "svr_remote_addr":"10.10.251.91",
+        "svr_forwarded_for":"112.109.237.162, 36.250.248.56",
+        "svr_receive_time":1498027636011,
+        "appId":"boikgpokn78sb95ktmsc1bnkechpgj9l",
+        "body":{\x22md5\x22:\x2219971dc21db0ab247e5ec50c4f1c8047\x22,\x22baseInfo\x22:\x22{\x5C\x22apkVersion\x5C\x22:\x5C\x223.1.3\x5C\x22,\x5C\x22groupId\x5C\x22:\x5C\x22426\x5C\x22,\x5C\x22accountId\x5C\x22:\x5C\x22\x5C\x22,\x5C\x22appEnterWay\x5C\x22:\x5C\x22native\x5C\x22,\x5C\x22promotionChannel\x5C\x22:\x5C\x22xunma\x5C\x22,\x5C\x22userId\x5C\x22:\x5C\x221e578ba9a663a0fa8deb012494c78fc1\x5C\x22,\x5C\x22apkSeries\x5C\x22:\x5C\x22MoreTV_TVApp3.0_Medusa\x5C\x22,\x5C\x22productModel\x5C\x22:\x5C\x22VA_3128\x5C\x22,\x5C\x22versionCode\x5C\x22:\x5C\x22313\x5C\x22,\x5C\x22buildDate\x5C\x22:\x5C\x2220170206\x5C\x22,\x5C\x22uploadTime\x5C\x22:\x5C\x2220170621144737\x5C\x22,\x5C\x22weatherCode\x5C\x22:\x5C\x22101230601\x5C\x22}\x22,\x22ts\x22:1498027657230,\x22logs\x22:\x22[{\x5C\x22logVersion\x5C\x22:\x5C\x2202\x5C\x22,\x5C\x22happenTime\x5C\x22:1498027456566,\x5C\x22params\x5C\x22:{\x5C\x22notificationMethod\x5C\x22:\x5C\x22keep-alive\x5C\x22,\x5C\x22notificationType\x5C\x22:\x5C\x22Launcher\x5C\x22},\x5C\x22eventId\x5C\x22:\x5C\x22medusa-notification-action\x5C\x22,\x5C\x22logType\x5C\x22:\x5C\x22event\x5C\x22}]\x22,\x22version\x22:\x2201\x22}
+    }
+}
+
