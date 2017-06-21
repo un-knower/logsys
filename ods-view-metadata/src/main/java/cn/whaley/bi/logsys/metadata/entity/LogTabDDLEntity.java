@@ -1,8 +1,5 @@
 package cn.whaley.bi.logsys.metadata.entity;
 
-
-import cn.whaley.bi.logsys.metadata.repository.SeqGenerator;
-
 import java.util.Date;
 
 /**
