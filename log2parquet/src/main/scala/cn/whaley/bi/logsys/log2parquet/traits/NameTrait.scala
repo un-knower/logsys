@@ -1,7 +1,7 @@
 package cn.whaley.bi.logsys.log2parquet.traits
 
 /**
- * Created by fj on 16/11/10.
+ * Created by michael on 2017/6/22.
  *
  * 名称Trait
  */

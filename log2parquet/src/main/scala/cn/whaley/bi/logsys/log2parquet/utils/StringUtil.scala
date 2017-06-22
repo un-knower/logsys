@@ -4,7 +4,7 @@ import scala.collection.mutable.ArrayBuffer
 
 
 /**
- * Created by fj on 16/11/8.
+ * Created by michael on 2017/6/22.
  *
  * Nginx日志内容解析实用类
  */

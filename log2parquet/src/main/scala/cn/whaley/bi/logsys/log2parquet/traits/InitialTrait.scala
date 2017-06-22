@@ -4,7 +4,7 @@ import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.log2parquet.utils.StringUtil
 
 /**
- * Created by fj on 16/11/10.
+ * Created by michael on 2017/6/22.
  *
  * 可初始化Trait
  */

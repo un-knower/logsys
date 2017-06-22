@@ -7,7 +7,7 @@ import cn.whaley.bi.logsys.log2parquet.traits.{ExecutedTrait, LogTrait}
 import org.apache.commons.cli.{BasicParser, OptionBuilder, Options}
 
 /**
-  * Created by fj on 16/11/20.
+  * Created by michael on 2017/6/22.
   */
 class MsgProcExecutor extends ExecutedTrait with LogTrait {
   private var batchManager: MsgBatchManager = null
@@ -33,7 +33,6 @@ class MsgProcExecutor extends ExecutedTrait with LogTrait {
         System.exit(-1)
       }
     }
-
   }
 
   override def shutdown(wait: Boolean = true): Unit = {

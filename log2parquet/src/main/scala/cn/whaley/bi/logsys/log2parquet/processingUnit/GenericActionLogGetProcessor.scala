@@ -9,7 +9,7 @@ import com.alibaba.fastjson.JSONObject
 
 
 /**
-  * Created by fj on 16/11/9.
+  * Created by michael on 2017/6/22.
  *
  * 通用的行为日志处理器
  * 1. 在归集层没有做签名验证的情况下，完成消息体签名验证

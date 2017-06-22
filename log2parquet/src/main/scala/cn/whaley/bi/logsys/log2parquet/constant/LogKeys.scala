@@ -1,7 +1,7 @@
 package cn.whaley.bi.logsys.log2parquet.constant
 
 /**
- * Created by fj on 16/11/14.
+ * Created by michael on 2017/6/22.
  */
 class LogKeys {
 
@@ -28,5 +28,10 @@ object LogKeys {
     val LOG_HOST = "host"
     val LOG_PARAMS = "params"
     val LOG_PLAYQOS = "playqos"
+
+
+    val LOG_APP_ID = "appId"
+
+
 
 }

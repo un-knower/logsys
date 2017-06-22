@@ -7,7 +7,7 @@ package cn.whaley.bi.logsys.log2parquet
  */
 
 /**
- * Created by fj on 16/11/20.
+ * Created by michael on 2017/6/22.
  * 处理器链异常类
  * @param msgIdAndInfo 消息ID和消息相关的字符串信息
  * @param results 处理结果

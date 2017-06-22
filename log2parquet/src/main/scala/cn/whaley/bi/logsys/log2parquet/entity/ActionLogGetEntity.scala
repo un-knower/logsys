@@ -2,7 +2,7 @@ package cn.whaley.bi.logsys.log2parquet.entity
 
 
 /**
- * Created by fj on 16/11/13.
+ * Created by michael on 2017/6/22.
  */
 class ActionLogGetEntity(from: LogEntity) extends LogEntity(from) {
 

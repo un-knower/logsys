@@ -3,7 +3,7 @@ package cn.whaley.bi.logsys.log2parquet.traits
 import org.slf4j.LoggerFactory
 
 /**
- * Created by fj on 16/11/9.
+ * Created by michael on 2017/6/22.
  */
 trait LogTrait {
     def LOG = LoggerFactory.getLogger(this.getClass)

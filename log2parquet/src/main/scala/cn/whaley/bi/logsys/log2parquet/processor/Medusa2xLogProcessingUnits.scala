@@ -7,11 +7,11 @@ import cn.whaley.bi.logsys.log2parquet.{ProcessResult, ProcessResultCode}
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Created by fj on 16/11/11.
+ * Created by michael on 2017/6/22.
  *
- * 通用应用层日志处理器
+ * 电视猫2.x处理单元集合
  */
-class Medusa3xLogProcessor extends LogProcessorTrait {
+class Medusa2xLogProcessingUnits extends LogProcessorTrait {
 
 
     //应用层日志处理器表

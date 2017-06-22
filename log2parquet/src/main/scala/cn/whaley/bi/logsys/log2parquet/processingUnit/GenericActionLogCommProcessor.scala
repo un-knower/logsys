@@ -9,7 +9,7 @@ import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTrait
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
 
 /**
- * Created by fj on 16/11/14.
+ * Created by michael on 2017/6/22.
  */
 class GenericActionLogCommProcessor extends LogProcessorTrait with LogTrait {
     /**

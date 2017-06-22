@@ -4,23 +4,26 @@ import cn.whaley.bi.logsys.log2parquet.traits.ExecutedTrait
 import org.slf4j.LoggerFactory
 
 /**
- * Created by fj on 16/10/30.
+ * Created by michael on 2017/6/22.
  *
- * forest程序主入口
+ * log2parquet程序主入口
  */
 object MainObj {
 
     val LOG=LoggerFactory.getLogger(this.getClass)
 
     /**
-     * 程序入口
+      * 程序入口
       *
       * @param args
-     * 第一个参数为运行的类名,之后的所有参数为该类所需要的入参列表,如:
-     * MsgProcExecutor -s 20160601
-     * 类名以.开头，代表与cn.whaley.bi.logsys.forest的相对路径
-     * 类名不以.开头，且包含.则代表全路径名
-     * 类名不以.开头，且不包含.则代表cn.whaley.bi.logsys.forest下的类
+      * 第一个参数为运行的类名,之后的所有参数为该类所需要的入参列表,如:
+      * 处理多个appId
+      * MsgProcExecutor --c prop.inputPath=/data_warehouse/ods_origin.db/log_origin
+      * 或者具体到某个appId的某个小时
+      * MsgProcExecutor --c prop.inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=13
+      * 类名以.开头，代表与cn.whaley.bi.logsys.log2parquet的相对路径
+      * 类名不以.开头，且包含.则代表全路径名
+      * 类名不以.开头，且不包含.则代表cn.whaley.bi.logsys.log2parquet下的类
      */
     def main(args: Array[String]) {
         require(args.length >= 1)
@@ -37,25 +40,6 @@ object MainObj {
 
         val clz = Class.forName(clsQualityName)
         val executedTrait = clz.newInstance().asInstanceOf[ExecutedTrait]
-
-        Runtime.getRuntime().addShutdownHook(
-            new Thread() {
-                override def run(): Unit = {
-                    try {
-                        LOG.info(s"## stopping the executor ${clsQualityName}");
-                        executedTrait.shutdown(true);
-                        println(s"## stopped the executor ${clsQualityName}");
-                    } catch {
-                        case ex: Throwable => {
-                            LOG.error("",ex);
-                            LOG.info(s"## something goes wrong when stopping executor ${clsQualityName}");
-                        }
-                    } finally {
-                        LOG.info(s"## executor ${clsQualityName} is down.");
-                    }
-                }
-            }
-        );
 
         val execArgs = args.toList.tail.toArray
         executedTrait.execute(execArgs)

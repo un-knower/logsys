@@ -1,18 +1,25 @@
 hadoop fs -get /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=13/boikgpokn78sb95kbqei6cc98dc5mlsr_2017061413_raw_5_14348.json.gz
 
-此项目要处理的日志格式：
+此项目（最新log2parquet）要处理的日志格式：
 
 {
+    "_sync":{
+            "rawTopic":"log-raw-boikgpokn78sb95ktmsc1bnk",
+            "rawTs":1497416396072,
+            "odsTs":1497416402715,
+            "rawOffset":575016728,
+            "rawParId":9
+        },
     "msgSignFlag":0,
     "msgId":"AAABXKT47PUKEz1LG13HgAAB",
     "msgFormat":"json",
-    "_sync":{
-        "rawTopic":"log-raw-boikgpokn78sb95ktmsc1bnk",
-        "rawTs":1497416396072,
-        "odsTs":1497416402715,
-        "rawOffset":575016728,
-        "rawParId":9
-    },
+    "logSignFlag":1,
+    "appId":"boikgpokn78sb95ktmsc1bnkechpgj9l",
+    "logId":"AAABXKT47PUKEz1LG13HgAAB0000",
+    "logVersion":"01",
+    "msgSource":"ngx_log",
+    "msgVersion":"1.0",
+    "msgSite":"10.19.61.75",
     "logTime":1497416396021,
     "logBody":{
         "logType":"play",
@@ -53,14 +60,7 @@ hadoop fs -get /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb9
         "svr_req_method":"POST",
         "md5":"1e6c1f4235d8209347b3e04bfee5f676",
         "ts":1497416396029
-    },
-    "logSignFlag":1,
-    "appId":"boikgpokn78sb95ktmsc1bnkechpgj9l",
-    "logId":"AAABXKT47PUKEz1LG13HgAAB0000",
-    "logVersion":"01",
-    "msgSource":"ngx_log",
-    "msgVersion":"1.0",
-    "msgSite":"10.19.61.75"
+    }
 }
 
 

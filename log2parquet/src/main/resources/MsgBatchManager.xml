@@ -1,17 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
+
+    <!-- 所有处理器组配置 -->
     <property>
-        <name>MsgBatchManager.processorChain</name>
-        <value>${prop.MsgBatchManager.processorChain}</value>
+        <name>MsgBatchManager.allProcessGroup</name>
+        <value>Medusa3xProcessGroup,Medusa2xProcessGroup</value>
     </property>
 
-    <!-- GenericProcessorChain -->
+    <!-- 电视猫3x处理器组配置 -->
     <property>
-        <name>GenericProcessorChain.class</name>
-        <value>cn.whaley.bi.logsys.log2parquet.GenericProcessorChain</value>
+        <name>MsgBatchManager.Medusa3xProcessGroup</name>
+        <value>Medusa3xProcessGroup</value>
     </property>
     <property>
-        <name>GenericProcessorChain.include</name>
-        <value>GenericProcessorChain.xml,GenericActionLogPostProcessor.properties</value>
+        <name>Medusa3xProcessGroup.class</name>
+        <value>cn.whaley.bi.logsys.log2parquet.Medusa3xProcessGroup</value>
     </property>
+    <property>
+        <name>Medusa3xProcessGroup.include</name>
+        <value>Medusa3xProcessGroup.xml,ProcessingUnits.xml</value>
+    </property>
+
+    <!-- 电视猫2x处理器组配置 -->
+    <property>
+        <name>MsgBatchManager.Medusa2xProcessGroup</name>
+        <value>Medusa2xProcessGroup</value>
+    </property>
+    <property>
+        <name>Medusa2xProcessGroup.class</name>
+        <value>cn.whaley.bi.logsys.log2parquet.Medusa2xProcessGroup</value>
+    </property>
+    <property>
+        <name>Medusa2xProcessGroup.include</name>
+        <value>Medusa2xProcessGroup.xml,ProcessingUnits.xml</value>
+    </property>
+
+
+    <!-- appId对应处理器组的配置 -->
+    <property>
+        <name>appIdForProcessGroup.boikgpokn78sb95ktmsc1bnkechpgj9l</name>
+        <value>Medusa3xProcessGroup</value>
+    </property>
+    <property>
+        <name>appIdForProcessGroup.boikgpokn78sb95ktmsc1bnken8tuboa</name>
+        <value>Medusa2xProcessGroup</value>
+    </property>
+
 </configuration>

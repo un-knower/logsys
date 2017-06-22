@@ -3,7 +3,7 @@ package cn.whaley.bi.logsys.log2parquet.entity
 import com.alibaba.fastjson.{JSONArray, JSONObject}
 
 /**
- * Created by fj on 17/5/2.
+ * Created by michael on 2017/6/22.
  */
 class MsgBodyEntity(from: JSONObject) extends JSONObject(from) {
     def host(): String = {
