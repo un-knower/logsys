@@ -5,12 +5,9 @@ import cn.whaley.bi.logsys.metadata.entity.LogTabDDLEntity;
 import cn.whaley.bi.logsys.metadata.entity.LogTabDMLEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.Resource;
-import javax.jdo.annotations.Transactional;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -88,39 +85,6 @@ public class HiveRepo {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
-        /*
-        List<HiveFieldInfo> fieldInfos = new ArrayList<HiveFieldInfo>();
-        String sql = String.format("describe %s.%s", dbName, tabName);
-        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql);
-        boolean start1 = false;
-        boolean start2 = false;
-        while (rs.next()) {
-            String f1 = rs.getString(1);
-            String f2 = rs.getString(2);
-            if (StringUtils.isAnyEmpty(f1, f2)) {
-                continue;
-            }
-            if ("col_name".equals(f1) && "data_type".equals(f2)) {
-                start1 = true;
-                continue;
-            }
-            if (f1.startsWith("#") && f1.indexOf("Partition Information") > 0) {
-                start2 = true;
-                continue;
-            }
-            if (f1.startsWith("#") || start1 == false) {
-                continue;
-            }
-
-            HiveFieldInfo fieldInfo = new HiveFieldInfo();
-            fieldInfo.setColName(f1);
-            fieldInfo.setDataType(f2);
-            fieldInfo.setPartitionField(start2);
-            fieldInfos.add(fieldInfo);
-        }
-        return fieldInfos;
-        */
     }
 
     /**
@@ -130,7 +94,6 @@ public class HiveRepo {
      * @return
      */
     public void executeDDL(List<LogTabDDLEntity> entity) {
-        int ret = 0;
         Map<String, List<LogTabDDLEntity>> groups = entity.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
         for (Map.Entry<String, List<LogTabDDLEntity>> entry : groups.entrySet()) {
             String dbName = entry.getKey();
@@ -140,7 +103,6 @@ public class HiveRepo {
                 jdbcTemplate.execute(ddlEntity.getDdlText());
             }
         }
-        ;
     }
 
     /**
