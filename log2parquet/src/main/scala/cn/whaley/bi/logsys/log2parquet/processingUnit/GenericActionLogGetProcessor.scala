@@ -1,7 +1,7 @@
 package cn.whaley.bi.logsys.log2parquet.processingUnit
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.log2parquet.entity.{ActionLogGetEntity, LogEntity}
+import cn.whaley.bi.logsys.log2parquet.entity.{ActionLogGetEntity, LogFromEntity}
 import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTrait
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
 import cn.whaley.bi.logsys.log2parquet.{URLParser, ProcessResult, ProcessResultCode}
@@ -33,7 +33,7 @@ class GenericActionLogGetProcessor extends LogProcessorTrait with LogTrait {
       *
       * @return
      */
-     def process(log: LogEntity): ProcessResult[LogEntity] = {
+     def process(log: LogFromEntity): ProcessResult[LogFromEntity] = {
         val actionLogEntity = new ActionLogGetEntity(log)
         if (actionLogEntity.msgBody == null) {
             return ProcessResult(this.name, ProcessResultCode.skipped, "msgBodyObj is null", None)
@@ -59,8 +59,8 @@ class GenericActionLogGetProcessor extends LogProcessorTrait with LogTrait {
             val queryObj = URLParser.parseHttpQueryString(httpUrl.queryString)
             //移除冗余的url参数
             actionLogEntity.msgBodyObj.setUrl(httpUrl.location)
-            actionLogEntity.updateLogSignFlag(LogEntity.VAL_SIGN_NO)
-            actionLogEntity.updateLogBody(queryObj)
+            //actionLogEntity.updateLogSignFlag(LogFromEntity.VAL_SIGN_NO)
+            //actionLogEntity.updateLogBody(queryObj)
             /** ****** 不再处理medusa2.0的get日志, 处理放到数仓层完成 ****************************/
             /*
             val logBody =
@@ -74,7 +74,7 @@ class GenericActionLogGetProcessor extends LogProcessorTrait with LogTrait {
                 }
                 actionLogEntity.updateLogBody(logBody)
                 */
-            val ret = Some(actionLogEntity.normalize())
+            //val ret = Some(actionLogEntity.normalize())
             //临时注释掉 ProcessResult(this.name, ProcessResultCode.processed, "", ret)
             new ProcessResult(this.name, ProcessResultCode.processed, "", Some(log))
         } catch {

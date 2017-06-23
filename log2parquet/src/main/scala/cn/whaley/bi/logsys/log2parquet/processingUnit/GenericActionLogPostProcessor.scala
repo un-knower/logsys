@@ -2,7 +2,7 @@ package cn.whaley.bi.logsys.log2parquet.processingUnit
 
 import cn.whaley.bi.logsys.common.{ConfManager, DigestUtil}
 import cn.whaley.bi.logsys.log2parquet.{ProcessResult, ProcessResultCode}
-import cn.whaley.bi.logsys.log2parquet.entity.{LogEntity, ActionLogPostEntity}
+import cn.whaley.bi.logsys.log2parquet.entity.{LogFromEntity, ActionLogPostEntity}
 import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTrait
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
 import cn.whaley.bi.logsys.log2parquet.utils.StringUtil
@@ -91,15 +91,15 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
                     signMD5 == md5
                 }
             } else {
-                logEntity.updateLogSignFlag(LogEntity.VAL_SIGN_NO)
+                //logEntity.updateLogSignFlag(LogFromEntity.VAL_SIGN_NO)
                 true
             }
         //logEntity.removeSignInfo()
         if (!signed) {
-            logEntity.updateLogSignFlag(LogEntity.VAL_SIGN_ERR)
+            //logEntity.updateLogSignFlag(LogFromEntity.VAL_SIGN_ERR)
             ProcessResultCode.signFailure
         } else {
-            logEntity.updateLogSignFlag(LogEntity.VAL_SIGN_PASS)
+           // logEntity.updateLogSignFlag(LogFromEntity.VAL_SIGN_PASS)
             ProcessResultCode.processed
         }
     }
@@ -123,7 +123,7 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
       *
       * @return
      */
-    def process(log: LogEntity): ProcessResult[LogEntity] = {
+    def process(log: LogFromEntity): ProcessResult[LogFromEntity] = {
         val actionLogEntity = new ActionLogPostEntity(log)
         if (actionLogEntity.msgBody == null) {
             return ProcessResult(this.name, ProcessResultCode.skipped, "msgBody is null", None)
@@ -148,7 +148,7 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
                 return ProcessResult(this.name, verifyCode, "", None)
             }
 
-            var errorResult: ProcessResult[Seq[LogEntity]] = null
+            var errorResult: ProcessResult[Seq[LogFromEntity]] = null
 
             //---------------POST解析-----------------
             val bodyObj = postObj.bodyObj;
@@ -200,7 +200,7 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
                 //临时注释掉errorResult
                 new ProcessResult(this.name, ProcessResultCode.processed, "", Some(log))
             } else {
-                val ret = Some(actionLogEntity.normalize())
+                // val ret = Some(actionLogEntity.normalize())
                 //临时注释掉 ProcessResult(this.name, ProcessResultCode.processed, "", ret)
                 new ProcessResult(this.name, ProcessResultCode.processed, "", Some(log))
             }

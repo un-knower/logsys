@@ -1,9 +1,9 @@
 package cn.whaley.bi.logsys.log2parquet
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.log2parquet.entity.LogEntity
+import cn.whaley.bi.logsys.log2parquet.entity.{LogFromEntity}
 import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTrait
-import cn.whaley.bi.logsys.log2parquet.traits.{ProcessGroupTrait, InitialTrait, LogTrait, NameTrait}
+import cn.whaley.bi.logsys.log2parquet.traits.{ProcessGroupTrait}
 
 
 /**
@@ -23,7 +23,7 @@ class Medusa2xProcessGroup extends ProcessGroupTrait  {
     }
 
 
-    override def process(log:LogEntity): ProcessResult[LogEntity] = {
+    override def process(log:LogFromEntity): ProcessResult[LogFromEntity] = {
         val logPost = logProcessor.process(log)
         logPost
     }

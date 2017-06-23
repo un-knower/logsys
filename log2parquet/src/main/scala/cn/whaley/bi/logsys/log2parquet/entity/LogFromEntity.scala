@@ -8,111 +8,171 @@ import cn.whaley.bi.logsys.log2parquet.utils.StringUtil
   *
   * 电视猫3.x消息实体对象【处理前】
   */
-class LogFromEntity(from: MsgEntity) extends MsgEntity(from) {
+class LogFromEntity(from: JSONObject) extends JSONObject(from) {
 
-    def appId: String = {
-        this.getString(LogFromEntity.KEY_APP_ID)
+    def msgId: String = {
+        this.getString(LogFromEntity.KEY_MSG_ID)
     }
 
-    def updateAppId(value: String): Unit = {
-        this.put(LogFromEntity.KEY_APP_ID, value)
+    def msgVersion: String = {
+        this.getString(LogFromEntity.KEY_MSG_VERSION)
     }
 
-    def logId: String = {
-        this.getString(LogFromEntity.KEY_LOG_ID)
+    def msgSite: String = {
+        this.getString(LogFromEntity.KEY_MSG_SITE)
     }
 
-    def updateLogId(value: String): Unit = {
-        this.put(LogFromEntity.KEY_LOG_ID, value)
+    def msgSource: String = {
+        this.getString(LogFromEntity.KEY_MSG_SOURCE)
     }
 
-    def logVersion: String = {
-        this.getString(LogFromEntity.KEY_LOG_VERSION)
+    def msgFormat: String = {
+        this.getString(LogFromEntity.KEY_MSG_FORMAT)
     }
 
-    def updateLogVersion(value: String): Unit = {
-        this.put(LogFromEntity.KEY_LOG_VERSION, value)
+    def msgSignFlag: Int = {
+        this.getIntValue(LogFromEntity.KEY_MSG_SIGN_FLAG)
     }
 
-    def logTime: Long = {
-        this.getLongValue(LogFromEntity.KEY_LOG_TIME)
+    def msgBody: JSONObject = {
+        this.getJSONObject(LogFromEntity.KEY_MSG_BODY)
     }
 
-    def updateLogTime(value: Long): Unit = {
-        this.put(LogFromEntity.KEY_LOG_TIME, value)
-    }
-
-    def logSignFlag: Int = {
-        this.getIntValue(LogFromEntity.KEY_LOG_SIGN_FLAG)
-    }
-
-    def updateLogSignFlag(value: Int): Unit = {
-        this.put(LogFromEntity.KEY_LOG_SIGN_FLAG, value)
-    }
-
-    def logBody: JSONObject = {
-        this.getJSONObject(LogFromEntity.KEY_LOG_BODY)
-    }
-
-    def updateLogBody(value: JSONObject): Unit = {
-        if (this.containsKey(LogFromEntity.KEY_LOG_BODY)) {
-            this.getJSONObject(LogFromEntity.KEY_LOG_BODY).asInstanceOf[java.util.Map[String, Object]].putAll(value)
+    def updateMsgBody(value: JSONObject): Unit = {
+        if (this.containsKey(LogFromEntity.KEY_MSG_BODY)) {
+            this.getJSONObject(LogFromEntity.KEY_MSG_BODY).asInstanceOf[java.util.Map[String, Object]].putAll(value)
         } else {
-            this.put(LogFromEntity.KEY_LOG_BODY, value)
+            this.put(LogFromEntity.KEY_MSG_BODY, value)
         }
     }
 
-    //平展化msgBody
-    def normalizeMsgBodyObj(): Seq[JSONObject] = {
-        msgBodyObj.normalize()
+
+    def removeMsgBody: Unit = {
+        this.remove(LogFromEntity.KEY_MSG_BODY)
     }
 
 
-    //格式平展化
-    def normalize(): Seq[LogFromEntity] = {
-        //展开msgBody
-        val normalizeMsgBody = normalizeMsgBodyObj()
-        this.removeMsgBody
-        val size = normalizeMsgBody.size
-        for (i <- 0 to size - 1) yield {
-            //只有一个消息体则可避免一次不必要的复制
-            val entity = if (i == 0) this else LogFromEntity.copy(this)
-            val logId = this.msgId + StringUtil.fixLeftLen(Integer.toHexString(i), '0', 4)
-            entity.updateLogId(logId)
-            entity.updateLogBody(normalizeMsgBody(0))
-
-            //提升公共字段
-            MsgEntity.translateProp(entity.logBody, LogFromEntity.KEY_APP_ID, entity, LogFromEntity.KEY_APP_ID)
-            MsgEntity.translateProp(entity.logBody, LogFromEntity.KEY_LOG_VERSION, entity, LogFromEntity.KEY_LOG_VERSION)
-            MsgEntity.translateProp(entity.logBody, LogFromEntity.KEY_LOG_SIGN_FLAG, entity, LogFromEntity.KEY_LOG_SIGN_FLAG)
-            MsgEntity.translateProp(entity.logBody, LogFromEntity.KEY_LOG_TIME, entity, LogFromEntity.KEY_LOG_TIME)
-
-            entity
-        }
-
+    def updateMsgId(value: String): Unit = {
+        this.put(LogFromEntity.KEY_MSG_ID, value)
     }
+
+
+    def updateMsgVersion(value: String): Unit = {
+        this.put(LogFromEntity.KEY_MSG_VERSION, value)
+    }
+
+
+    def updateMsgSite(value: String): Unit = {
+        this.put(LogFromEntity.KEY_MSG_SITE, value)
+    }
+
+
+    def updateMsgSource(value: String): Unit = {
+        this.put(LogFromEntity.KEY_MSG_SOURCE, value)
+    }
+
+
+    def updateMsgFormat(value: String): Unit = {
+        this.put(LogFromEntity.KEY_MSG_FORMAT, value)
+    }
+
+
+    def updateMsgSignFlag(value: Int): Unit = {
+        this.put(LogFromEntity.KEY_MSG_SIGN_FLAG, value)
+    }
+
+    //将obj中的key对应的属性平展到obj,如果属性值不是JSONObject,则不做任何处理
+    def extractObj(obj: JSONObject, key: String): JSONObject = {
+        LogFromEntity.translateProp(obj, key, this, "")
+    }
+
+    def extractObj(key: String): JSONObject = {
+        LogFromEntity.translateProp(this, key, this, "")
+    }
+
+
+    def msgBodyObj(): MsgBodyEntity = {
+        new MsgBodyEntity(this.msgBody)
+    }
+
 
 }
+
+
 object LogFromEntity {
     val KEY_APP_ID = "appId"
     val KEY_LOG_ID = "logId"
     val KEY_LOG_VERSION = "logVersion"
     val KEY_LOG_TIME = "logTime"
-    val KEY_LOG_SIGN_FLAG = "logSignFlag"
+
+    //将被展开
     val KEY_LOG_BODY = "logBody"
 
 
-    val VAL_SIGN_NO = 0
-    val VAL_SIGN_PASS = 1
-    val VAL_SIGN_ERR = -1
+    //保留原有json结构体
+    val KEY_SYNC = "_sync"
+
+    //下面以KEY_MSG_为前缀的字段将被放入key为_msg的json结构体内
+    val KEY_MSG_LOG_SIGIN_FLAG = "logSignFlag"
+    val KEY_MSG_MSG_SOURCE = "msgSource"
+    val KEY_MSG_MSG_VERSION = "msgVersion"
+    val KEY_MSG_MSG_SITE = "msgSite"
+    val KEY_MSG_MSG_SIGN_FLAG = "msgSignFlag"
+    val KEY_MSG_MSG_ID = "msgId"
+    val KEY_MSG_MSG_FORMAT = "msgFormat"
+
+
+
+    val KEY_MSG_ID = "msgId"
+    val KEY_MSG_VERSION = "msgVersion"
+    val KEY_MSG_SITE = "msgSite"
+    val KEY_MSG_SOURCE = "msgSource"
+    val KEY_MSG_FORMAT = "msgFormat"
+    val KEY_MSG_SIGN_FLAG = "msgSignFlag"
+    val KEY_MSG_BODY = "msgBody"
 
     def create(obj: JSONObject): LogFromEntity = {
-        new LogFromEntity(new MsgEntity(obj))
+        new LogFromEntity(obj)
     }
 
     def copy(obj: JSONObject): LogFromEntity = {
-        new LogFromEntity(MsgEntity.copy(obj))
+        val copyObj = new JSONObject()
+        copyObj.asInstanceOf[java.util.Map[String, Object]].putAll(obj)
+        new LogFromEntity(copyObj)
     }
 
+
+    //转移并展开属性值
+    //如果fromProp为空,则不进任何处理,直接返回to
+    //如果fromProp为JSONObject,如果toKey为空,则展开fromProp到to,否则展开到toProp
+    //如果fromProp为非JSONObject,则要求toKey不能为空,且将toProp设置为fromProp
+    def translateProp(from: JSONObject, fromKey: String, to: JSONObject, toKey: String): JSONObject = {
+        val fromProp = from.get(fromKey)
+        from.remove(fromKey)
+
+        //如果fromProp为空,则不做任何处理
+        if (fromProp == null || (fromProp.isInstanceOf[String] && fromProp.asInstanceOf[String].isEmpty)) {
+            return to
+        }
+
+        if (fromProp.isInstanceOf[JSONObject]) {
+            if (toKey != null && !toKey.isEmpty) {
+                val toProp = if (to.get(toKey) != null && to.get(toKey).isInstanceOf[JSONObject]) {
+                    to.getJSONObject(toKey)
+                } else {
+                    new JSONObject()
+                }
+                toProp.asInstanceOf[java.util.Map[String, Object]].putAll(fromProp.asInstanceOf[JSONObject])
+                to.put(toKey, toProp)
+            } else {
+                to.asInstanceOf[java.util.Map[String, Object]].putAll(fromProp.asInstanceOf[JSONObject])
+            }
+        } else {
+            assert(toKey != null && !toKey.isEmpty)
+            to.put(toKey, fromProp)
+        }
+
+        return to
+    }
 }
 

@@ -2,6 +2,7 @@ package cn.whaley.bi.logsys.log2parquet
 
 import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
+import cn.whaley.bi.logsys.log2parquet.entity.{LogFromEntity, LogEntity}
 import cn.whaley.bi.logsys.log2parquet.traits._
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
@@ -52,15 +53,18 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
           val json = string2JsonObject(line)
           if (null != json) {
             if (json.containsKey(LogKeys.LOG_APP_ID)) {
-              val appID = json.get(LogKeys.LOG_APP_ID)
-
-
+              val appID = json.getString(LogKeys.LOG_APP_ID)
+              val logFromEntity=new LogFromEntity(json)
+              initAllProcessGroup.get(appID).get.process(logFromEntity)
             }
           }
         })
       })
 
-    //
+    /**输出路径
+      * 通过appid读取[metadata.applog_key_field_desc]表，通过【表字段，分区字段（排序）】获得输出路径的非hive表非分区字段，
+      * 通过logTime获得key_day和key_hour获得hive表分区字段。
+      */
     //val outputPath=PathUtil.getOdsViewPath(appID, startDate, startHour, "logType", "eventID")
   }
 
