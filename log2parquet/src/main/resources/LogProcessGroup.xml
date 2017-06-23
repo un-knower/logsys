@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <property>
+        <name>LogProcessGroup.LogProcessingUnits</name>
+        <value>LogProcessingUnits</value>
+    </property>
+
+    <property>
+        <name>LogProcessingUnits.class</name>
+        <value>cn.whaley.bi.logsys.log2parquet.processor.LogProcessingUnits</value>
+    </property>
+
+    <property>
+        <name>LogProcessingUnits.processors</name>
+        <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor,GenericActionLogCommProcessor</value>
+    </property>
+</configuration>

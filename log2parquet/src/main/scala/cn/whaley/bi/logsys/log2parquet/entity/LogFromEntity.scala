@@ -1,7 +1,6 @@
 package cn.whaley.bi.logsys.log2parquet.entity
 
 import com.alibaba.fastjson.JSONObject
-import cn.whaley.bi.logsys.log2parquet.utils.StringUtil
 
 /**
   * Created by michael on 17/6/21.

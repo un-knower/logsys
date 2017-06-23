@@ -82,4 +82,12 @@ a.处理器组:处理器组由多个处理器组成。例如，电视猫3.x处�
 b.处理器:粒度最小的处理器
 
 
+####思路：
 
+main函数，输入参数只有一个path，通过获得path下的所有appid获得处理器链
+输出路径
+  通过appid读取[metadata.applog_key_field_desc]表，通过【表字段，分区字段（排序）】获得输出路径的非hive表非分区字段，
+通过logTime获得key_day和key_hour获得hive表分区字段。
+  对于写出文件模块，要先以json格式写到临时文件，然后在读取临时文件目录里的json文件，转化为parquet文件。
+参考，线网log2parquet项目
+Json2ParquetUtil.saveAsParquet(jsonRdd,sqlContext,p,outputDate)
