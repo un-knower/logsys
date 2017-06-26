@@ -4,6 +4,8 @@ import cn.whaley.bi.logsys.metadata.entity.HiveFieldInfo;
 import cn.whaley.bi.logsys.metadata.entity.LogTabDDLEntity;
 import cn.whaley.bi.logsys.metadata.entity.LogTabDMLEntity;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -11,9 +13,7 @@ import javax.annotation.Resource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -21,6 +21,8 @@ import java.util.stream.Collectors;
  */
 @Repository
 public class HiveRepo {
+
+    public static Logger LOG = LoggerFactory.getLogger(HiveRepo.class);
 
     @Resource(name = "hiveJdbcTemplate")
     protected JdbcTemplate jdbcTemplate;
@@ -90,17 +92,27 @@ public class HiveRepo {
     /**
      * 执行DDL语句
      *
-     * @param entity
+     * @param entities
      * @return
      */
-    public void executeDDL(List<LogTabDDLEntity> entity) {
-        Map<String, List<LogTabDDLEntity>> groups = entity.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
+    public void executeDDL(List<LogTabDDLEntity> entities) {
+        Map<String, List<LogTabDDLEntity>> groups =  entities.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
         for (Map.Entry<String, List<LogTabDDLEntity>> entry : groups.entrySet()) {
             String dbName = entry.getKey();
             jdbcTemplate.execute("use " + dbName);
-            List<LogTabDDLEntity> entities = entry.getValue();
-            for (LogTabDDLEntity ddlEntity : entities) {
-                jdbcTemplate.execute(ddlEntity.getDdlText());
+            List<LogTabDDLEntity> group = entry.getValue();
+            for (LogTabDDLEntity ddlEntity : group) {
+                try {
+                    ddlEntity.setCommitTime(new Date());
+                    jdbcTemplate.execute(ddlEntity.getDdlText());
+                    ddlEntity.setCommitCode(1);
+                    ddlEntity.setCommitMsg("SUCCESS");
+                } catch (Exception ex) {
+                    LOG.error(ddlEntity.getDdlText(), ex);
+                    ddlEntity.setCommitCode(-1);
+                    ddlEntity.setCommitMsg(ex.getMessage());
+                }
+
             }
         }
     }
@@ -108,17 +120,26 @@ public class HiveRepo {
     /**
      * 执行DML语句
      *
-     * @param entity
+     * @param entities
      * @return
      */
-    public void executeDML(List<LogTabDMLEntity> entity) {
-        Map<String, List<LogTabDMLEntity>> groups = entity.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
+    public void executeDML(List<LogTabDMLEntity> entities) {
+        Map<String, List<LogTabDMLEntity>> groups =  entities.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
         for (Map.Entry<String, List<LogTabDMLEntity>> entry : groups.entrySet()) {
             String dbName = entry.getKey();
             jdbcTemplate.execute("use " + dbName);
-            List<LogTabDMLEntity> entities = entry.getValue();
-            for (LogTabDMLEntity dmlEntity : entities) {
-                jdbcTemplate.execute(dmlEntity.getDmlText());
+            List<LogTabDMLEntity> group = entry.getValue();
+            for (LogTabDMLEntity dmlEntity : group) {
+                try {
+                    dmlEntity.setCommitTime(new Date());
+                    jdbcTemplate.execute(dmlEntity.getDmlText());
+                    dmlEntity.setCommitCode(1);
+                    dmlEntity.setCommitMsg("SUCCESS");
+                } catch (Exception ex) {
+                    LOG.error(dmlEntity.getDmlText(), ex);
+                    dmlEntity.setCommitCode(-1);
+                    dmlEntity.setCommitMsg(ex.getMessage());
+                }
             }
         }
     }

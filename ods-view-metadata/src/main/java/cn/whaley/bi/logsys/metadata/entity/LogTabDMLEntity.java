@@ -19,7 +19,7 @@ public class LogTabDMLEntity extends BaseTableEntity   implements SeqEntity{
     private String dmlType ;// --DML类型, ADD_PARTITION
     private String dmlText ;// --DML语句
     private Date commitTime ;// --DDL提交时间
-    private String commitCode ;// --DDL提交结果
+    private Integer commitCode ;// --DDL提交结果
     private String commitMsg ;// --DDL提交结果说明
 
     @Override
@@ -83,11 +83,11 @@ public class LogTabDMLEntity extends BaseTableEntity   implements SeqEntity{
         this.commitTime = commitTime;
     }
 
-    public String getCommitCode() {
+    public Integer getCommitCode() {
         return commitCode;
     }
 
-    public void setCommitCode(String commitCode) {
+    public void setCommitCode(Integer commitCode) {
         this.commitCode = commitCode;
     }
 

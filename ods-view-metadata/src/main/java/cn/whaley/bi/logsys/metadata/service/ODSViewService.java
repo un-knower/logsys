@@ -160,8 +160,14 @@ public class ODSViewService {
      * @param taskId
      */
     public void executeDDL(String taskId) {
-        List<LogTabDDLEntity> ddlEntities = logTabDDLRepo.queryByTaskId(taskId);
-        hiveRepo.executeDDL(ddlEntities);
+        List<LogTabDDLEntity> ddlEntities = logTabDDLRepo.queryByTaskId(taskId, false);
+        if (ddlEntities.size() > 0) {
+            hiveRepo.executeDDL(ddlEntities);
+            ddlEntities.forEach(entity -> {
+                logTabDDLRepo.updateCommitInfo(entity);
+            });
+        }
+
     }
 
 
@@ -171,8 +177,13 @@ public class ODSViewService {
      * @param taskId
      */
     public void executeDML(String taskId) {
-        List<LogTabDMLEntity> dmlEntities = logTabDMLRepo.queryForTaskId(taskId);
-        hiveRepo.executeDML(dmlEntities);
+        List<LogTabDMLEntity> dmlEntities = logTabDMLRepo.queryForTaskId(taskId, false);
+        if (dmlEntities.size() > 0) {
+            hiveRepo.executeDML(dmlEntities);
+            dmlEntities.forEach(entity -> {
+                logTabDMLRepo.updateCommitInfo(entity);
+            });
+        }
     }
 
     /**
@@ -314,7 +325,7 @@ public class ODSViewService {
             if (changed.size() > 0) {
                 List<LogTabDDLEntity> changedDDLs = changed.stream().map(change -> {
                     String ddlText = String.format("ALTER TABLE %s CHANGE COLUMN %s %s %s"
-                            , tabFullName, change.getFieldName(),change.getFieldName(), change.getFieldType());
+                            , tabFullName, change.getFieldName(), change.getFieldName(), change.getFieldType());
                     LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
                     ddlEntity.setDbName(dbName);
                     ddlEntity.setTabName(tabName);
