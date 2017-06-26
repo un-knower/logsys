@@ -12,6 +12,9 @@
 
     <property>
         <name>LogProcessingUnits.processors</name>
-        <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor,GenericActionLogCommProcessor</value>
+        <value>JsonFormatProcessingUnits,RealLogTypeProcessingUnits</value>
+        <!--
+                <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor,GenericActionLogCommProcessor</value>
+        -->
     </property>
 </configuration>

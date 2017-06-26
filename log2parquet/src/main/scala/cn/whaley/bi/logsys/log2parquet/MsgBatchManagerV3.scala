@@ -53,9 +53,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait {
               val appID = jsonObject.getString(LogKeys.LOG_APP_ID)
               if("medusa2xappID".equalsIgnoreCase(appID)){
                 //进入分叉逻辑
-                initAllProcessGroup.get(appID).get.process(jsonObject)
+                val jsonObjectAfter=initAllProcessGroup.get(appID).get.process(jsonObject).result.get
+                jsonObjectAfter.toJSONString
               }else{
-                processGroupInstance.process(jsonObject)
+                val jsonObjectAfter=processGroupInstance.process(jsonObject).result.get
+                jsonObjectAfter.toJSONString
               }
             }
           }

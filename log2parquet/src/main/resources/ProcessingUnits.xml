@@ -16,4 +16,15 @@
         <name>GenericActionLogCommProcessor.class</name>
         <value>cn.whaley.bi.logsys.log2parquet.processingUnit.GenericActionLogCommProcessor</value>
     </property>
+
+    <property>
+        <name>JsonFormatProcessingUnits.class</name>
+        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.JsonFormatProcessingUnits</value>
+    </property>
+
+    <property>
+        <name>RealLogTypeProcessingUnits.class</name>
+        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.RealLogTypeProcessingUnits</value>
+    </property>
+
 </configuration>
