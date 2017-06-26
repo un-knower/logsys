@@ -72,10 +72,25 @@ public class ODSViewServiceTest {
     }
 
     @Test
-    public void test3() {
+    public void testQueryDML() {
+        String taskId = "task1";
+        List<LogTabDMLEntity> dmlEntities = service.getLogTabDMLRepo().queryForTaskId(taskId, false);
+        LOG.info("dmlEntities:" + dmlEntities.size());
+    }
+
+
+    @Test
+    public void testExecuteDDL() {
         String taskId = "task1";
         service.executeDDL(taskId);
     }
+
+    @Test
+    public void testExecuteDML() {
+        String taskId = "task1";
+        service.executeDML(taskId);
+    }
+
 
     @Test
     public void testGetTabFieldInfo() {
@@ -85,7 +100,7 @@ public class ODSViewServiceTest {
     }
 
     @Test
-    public void testX() {
+    public void testDeleteByTaskId() {
         String taskId = "task1";
         LogTabDDLRepo repo = service.getLogTabDDLRepo();
         Integer ret = repo.deleteByTaskId(taskId);
