@@ -329,6 +329,13 @@ public class ODSViewService {
             }).collect(Collectors.toList());
             if (changed.size() > 0) {
                 List<LogTabDDLEntity> changedDDLs = changed.stream().map(change -> {
+                    String fieldName=change.getFieldName();
+                    String fieldType=change.getFieldType();
+                    String oldFieldType=fieldInfos.stream()
+                            .filter(fieldInfo -> fieldInfo.getColName().equalsIgnoreCase(fieldName))
+                            .map(fieldInfo->fieldInfo.getDataType())
+                            .findFirst().get();
+
                     String ddlText = String.format("ALTER TABLE %s CHANGE COLUMN %s %s %s"
                             , tabFullName, change.getFieldName(), change.getFieldName(), change.getFieldType());
                     LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
