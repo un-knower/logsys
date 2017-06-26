@@ -31,39 +31,6 @@ public class ODSViewServiceTest {
     }
 
     @Test
-    public void test1() {
-        String taskId = "task1";
-
-        List<AppLogKeyFieldDescEntity> appLogKeyFieldDescEntities = service.getAppLogKeyFieldDescRepo().findAll();
-        List<LogFileKeyFieldDescEntity> logFileKeyFieldDescEntities = service.getLogFileKeyFieldDescRepo().findByTaskId(taskId);
-        List<LogFileFieldDescEntity> logFileFieldDescEntities = service.getLogFileFieldDescRepo().findByTaskId(taskId);
-
-        //扫描表字段元数据
-        List<ODSViewService.TabFieldDescItem> tabFieldDescItems = service.generateTabFieldDesc(appLogKeyFieldDescEntities, logFileKeyFieldDescEntities, logFileFieldDescEntities);
-
-        for (ODSViewService.TabFieldDescItem descItem : tabFieldDescItems) {
-            List<LogTabDDLEntity> ddlEntities = service.generateDDL(descItem);
-            for (LogTabDDLEntity ddlEntity : ddlEntities) {
-                LOG.info(ddlEntity.getDdlText());
-            }
-            //保存DDL
-            int ret = service.getLogTabDDLRepo().insert(ddlEntities);
-            LOG.info("insert ddl:" + ret);
-        }
-
-        for (ODSViewService.TabFieldDescItem descItem : tabFieldDescItems) {
-            LogTabDMLEntity dmlEntity = service.generateDML(descItem.desc);
-            LOG.info(dmlEntity.getDmlText());
-            //保存DML
-            int ret = service.getLogTabDMLRepo().insert(Arrays.asList(dmlEntity));
-            LOG.info("insert dml:" + ret);
-        }
-
-
-        Assert.assertTrue(tabFieldDescItems.size() > 0);
-    }
-
-    @Test
     public void testGenerateDDLAndDML() {
         String taskId = "task1";
         Integer[] ret = service.generateDDLAndDML(taskId);

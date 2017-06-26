@@ -3,6 +3,7 @@ package cn.whaley.bi.logsys.metadata.service;
 import cn.whaley.bi.logsys.metadata.entity.*;
 import cn.whaley.bi.logsys.metadata.repository.*;
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,7 +122,7 @@ public class ODSViewService {
 
         //产生DML
         List<LogTabDMLEntity> dmlEntities = tabFieldDescItems.stream()
-                .map(item -> generateDML(item.desc))
+                .flatMap(item -> generateDML(item.desc).stream())
                 .collect(Collectors.toList());
 
         LOG.info("taskId:{}: field={} , ddl={} , dml={}", new Object[]{taskId
@@ -163,11 +164,10 @@ public class ODSViewService {
         Integer ret = 0;
         List<LogTabDDLEntity> ddlEntities = logTabDDLRepo.queryByTaskId(taskId, false);
         if (ddlEntities.size() > 0) {
-            hiveRepo.executeDDL(ddlEntities);
+            ret += hiveRepo.executeDDL(ddlEntities.stream().sorted(new SeqEntityComparator<>()).collect(Collectors.toList()));
             ddlEntities.forEach(entity -> {
                 logTabDDLRepo.updateCommitInfo(entity);
             });
-            ret++;
         }
         return ret;
     }
@@ -182,11 +182,10 @@ public class ODSViewService {
         Integer ret = 0;
         List<LogTabDMLEntity> dmlEntities = logTabDMLRepo.queryForTaskId(taskId, false);
         if (dmlEntities.size() > 0) {
-            hiveRepo.executeDML(dmlEntities);
+            ret += hiveRepo.executeDML(dmlEntities.stream().sorted(new SeqEntityComparator<>()).collect(Collectors.toList()));
             dmlEntities.forEach(entity -> {
                 logTabDMLRepo.updateCommitInfo(entity);
             });
-            ret++;
         }
         return ret;
     }
@@ -250,19 +249,29 @@ public class ODSViewService {
      *
      * @return 产生的DDL语句条数
      */
-    LogTabDMLEntity generateDML(LogFileTabKeyDesc desc) {
+    List<LogTabDMLEntity> generateDML(LogFileTabKeyDesc desc) {
         String partInfo = desc.parFieldNameAndValue.stream()
                 .map(par -> String.format("%s='%s'", par[0], par[1]))
                 .collect(Collectors.joining(","));
-        String dmlText = String.format("ALTER TABLE %s.%s ADD PARTITION(%s) location '%s' "
+
+        String dmlText = String.format("ALTER TABLE %s.%s DROP IF EXISTS PARTITION (%s)", desc.getDbName(), desc.getTabName(), partInfo);
+        LogTabDMLEntity dropEntity = new LogTabDMLEntity();
+        dropEntity.setDbName(desc.getDbName());
+        dropEntity.setTabName(desc.getTabName());
+        dropEntity.setDmlType("DROP PARTITION");
+        dropEntity.setDmlText(dmlText);
+        dropEntity.setTaskId(desc.getTaskId());
+
+        dmlText = String.format("ALTER TABLE %s.%s ADD PARTITION(%s) location '%s' "
                 , desc.getDbName(), desc.getTabName(), partInfo, desc.getLogPath());
-        LogTabDMLEntity ddlEntity = new LogTabDMLEntity();
-        ddlEntity.setDbName(desc.getDbName());
-        ddlEntity.setTabName(desc.getTabName());
-        ddlEntity.setDmlType("ADD PARTITION");
-        ddlEntity.setDmlText(dmlText);
-        ddlEntity.setTaskId(desc.getTaskId());
-        return ddlEntity;
+        LogTabDMLEntity addEntity = new LogTabDMLEntity();
+        addEntity.setDbName(desc.getDbName());
+        addEntity.setTabName(desc.getTabName());
+        addEntity.setDmlType("ADD PARTITION");
+        addEntity.setDmlText(dmlText);
+        addEntity.setTaskId(desc.getTaskId());
+
+        return Arrays.asList(dropEntity, addEntity);
     }
 
 
@@ -329,15 +338,19 @@ public class ODSViewService {
             }).collect(Collectors.toList());
             if (changed.size() > 0) {
                 List<LogTabDDLEntity> changedDDLs = changed.stream().map(change -> {
-                    String fieldName=change.getFieldName();
-                    String fieldType=change.getFieldType();
-                    String oldFieldType=fieldInfos.stream()
+                    String fieldName = change.getFieldName();
+                    String newFieldType = change.getFieldType();
+                    String oldFieldType = fieldInfos.stream()
                             .filter(fieldInfo -> fieldInfo.getColName().equalsIgnoreCase(fieldName))
-                            .map(fieldInfo->fieldInfo.getDataType())
+                            .map(fieldInfo -> fieldInfo.getDataType())
                             .findFirst().get();
 
+                    boolean isConvertible = TypeInfoUtils.implicitConvertible(TypeInfoUtils.getTypeInfoFromTypeString(oldFieldType),
+                            TypeInfoUtils.getTypeInfoFromTypeString(newFieldType));
+                    String targetFieldType = isConvertible ? newFieldType : "string";
+                    LOG.info("{}->{} implicitConvertible=false, targetFieldType={}", new Object[]{oldFieldType, newFieldType, targetFieldType});
                     String ddlText = String.format("ALTER TABLE %s CHANGE COLUMN %s %s %s"
-                            , tabFullName, change.getFieldName(), change.getFieldName(), change.getFieldType());
+                            , tabFullName, fieldName, fieldName, targetFieldType);
                     LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
                     ddlEntity.setDbName(dbName);
                     ddlEntity.setTabName(tabName);
@@ -488,9 +501,26 @@ public class ODSViewService {
         public int compare(AppLogKeyFieldDescEntity o1, AppLogKeyFieldDescEntity o2) {
             if (o1 == null) return 0;
             if (o2 == null) return 1;
-            return o1.getFieldOrder() - o2.getFieldOrder();
+            int diff = o1.getFieldOrder() - o2.getFieldOrder();
+            if (diff == 0) return 0;
+            if (diff > 0) return 1;
+            return -1;
         }
     }
+
+    class SeqEntityComparator<T extends SeqEntity> implements Comparator<T> {
+
+        @Override
+        public int compare(T o1, T o2) {
+            if (o1 == null) return 0;
+            if (o2 == null) return 1;
+            int diff = o1.getSeq() - o2.getSeq();
+            if (diff == 0) return 0;
+            if (diff > 0) return 1;
+            return -1;
+        }
+    }
+
 
     //日志文件对应的表字段描述项目
     class TabFieldDescItem {
