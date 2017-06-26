@@ -159,15 +159,17 @@ public class ODSViewService {
      *
      * @param taskId
      */
-    public void executeDDL(String taskId) {
+    public Integer executeDDL(String taskId) {
+        Integer ret = 0;
         List<LogTabDDLEntity> ddlEntities = logTabDDLRepo.queryByTaskId(taskId, false);
         if (ddlEntities.size() > 0) {
             hiveRepo.executeDDL(ddlEntities);
             ddlEntities.forEach(entity -> {
                 logTabDDLRepo.updateCommitInfo(entity);
             });
+            ret++;
         }
-
+        return ret;
     }
 
 
@@ -176,14 +178,17 @@ public class ODSViewService {
      *
      * @param taskId
      */
-    public void executeDML(String taskId) {
+    public Integer executeDML(String taskId) {
+        Integer ret = 0;
         List<LogTabDMLEntity> dmlEntities = logTabDMLRepo.queryForTaskId(taskId, false);
         if (dmlEntities.size() > 0) {
             hiveRepo.executeDML(dmlEntities);
             dmlEntities.forEach(entity -> {
                 logTabDMLRepo.updateCommitInfo(entity);
             });
+            ret++;
         }
+        return ret;
     }
 
     /**
