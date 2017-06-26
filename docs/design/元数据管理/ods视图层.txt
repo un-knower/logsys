@@ -7,12 +7,12 @@
 create table metadata.applog_key_field_desc(
     appId varchar(100) not null --appId [key]
     ,fieldName varchar(100) not null  --字段名 [key]
-    ,fieldFlag integer --字段标记, 0=表名字段,1=分区字段
+    ,fieldFlag integer --字段标记, 0=库名字段;1=表名字段,2=分区字段
     ,fieldOrder integer --字段顺序
-    ,filedDefault varchar(100) --字段默认值
+    ,fieldDefault varchar(100) --字段默认值
     ,isDeleted boolean --记录是否删除
-    ,createTime date --记录创建时间
-    ,updateTime date --记录更新时间
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (appId,fieldName)
 )
 ;
@@ -25,8 +25,8 @@ create table metadata.logfile_key_field_value(
     ,appId varchar(100) --appId
     ,taskId varchar(100) --产生该批数据的任务ID
     ,isDeleted boolean --记录是否删除
-    ,createTime date --记录创建时间
-    ,updateTime date --记录更新时间
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (logPath,fieldName)
 )
 ;
@@ -43,8 +43,8 @@ create table metadata.logfile_field_desc(
     ,rawInfo varchar(500) --parquet字段类型信息
     ,taskId varchar(100) --产生该批数据的任务ID
     ,isDeleted boolean --记录是否删除
-    ,createTime date --记录创建时间
-    ,updateTime date --记录更新时间
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (logPath,fieldName)
 );
 CREATE INDEX idx_logfile_field_desc_taskId ON metadata.logfile_field_desc(taskId);
@@ -57,13 +57,13 @@ create table metadata.logfile_task_info(
     ,taskType varchar(100) --任务类型, 预定义: json2parquent
     ,taskCode integer --任务状态, -1=任务发生错误;0=任务启动;1=任务完成
     ,taskMsg varchar --任务信息,任务当前状态的备注信息
-    ,timeFrom date --任务开始时间
-    ,timeTo date --任务结束时间
+    ,timeFrom timestamp --任务开始时间
+    ,timeTo timestamp --任务结束时间
     ,logSrcPath varchar(500) --任务涉及的日志文件源路径
     ,logTargetPaths varchar --任务涉及的日志文件输出路径(逗号分隔)
     ,isDeleted boolean --记录是否删除
-    ,createTime date --记录创建时间
-    ,updateTime date --记录更新时间
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (taskId)
 );
 
@@ -75,10 +75,11 @@ create table metadata.applog_special_field_desc(
     ,logPathReg varchar(100) --日志文件路径正则匹配表达式
     ,fieldNameReg varchar(100) --字段名正则匹配表达式
     ,specialType varchar(100) --特例类型, blackList=黑名单,rename=重命名
-    ,speicalValue varchar(500) --特例值,如重命名值
+    ,specialValue varchar(500) --特例值,如重命名值
+    ,specialOrder integer --排序值
     ,isDeleted boolean --记录是否删除
-    ,createTime date --记录创建时间
-    ,updateTime date --记录更新时间
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (id)
 )
 ;
@@ -87,73 +88,82 @@ create table metadata.applog_special_field_desc(
 
 --表字段信息表
 create table metadata.logtab_field_desc(
-    tabName varchar(100) not null --表名 [key]
+    dbName varchar(100) not null --[key]
+    ,tabName varchar(100) not null --表名 [key]
     ,fieldName varchar(100) not null --字段名 [key]
     ,seq integer not null --序号 [key]
     ,taskId varchar(100) --产生该批数据的任务ID
     ,fieldType varchar(100) --hive字段类型
     ,fieldSql varchar(500) --hive字段SQL声明子句
     ,isDeleted boolean --记录是否删除
-    ,createTime date --记录创建时间
-    ,updateTime date --记录更新时间
-    ,CONSTRAINT pk PRIMARY KEY (tabName,fieldName,seq)
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,fieldName,seq)
 );
 CREATE INDEX idx_logtab_field_desc_taskId ON metadata.logtab_field_desc(taskId);
+
+CREATE SEQUENCE metadata.seq_logtab_field_desc;
 
 
 --DDL信息表
 create table metadata.logtab_ddl(
     dbName varchar(100) not null --[key]
-    ,tableName varchar(500) not null --[key]
+    ,tabName varchar(500) not null --[key]
     ,seq integer not null --序号 [key]
     ,taskId varchar(100) --产生该批数据的任务ID
     ,ddlType varchar(100) --DDL类型, CHANGE_COLUMN/ADD_COLUMN/DROP_COLUMN/CREATE_TABLE/ALTER_TABLE/DROP_TABLE
     ,ddlText varchar --DDL语句
-    ,commitTime date --DDL提交时间
+    ,commitTime timestamp --DDL提交时间
     ,commitCode Integer --DDL提交结果
     ,commitMsg varchar --DDL提交结果说明
     ,isDeleted boolean --记录是否删除
-    ,createTime date --记录创建时间
-    ,updateTime date --记录更新时间
-    ,CONSTRAINT pk PRIMARY KEY (dbName,tableName,seq)
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,seq)
 );
 CREATE INDEX idx_logtab_ddl_taskId ON metadata.logtab_ddl(taskId);
-
+CREATE SEQUENCE metadata.seq_logtab_ddl;
 
 --DML信息表
 create table metadata.logtab_dml(
     dbName varchar(100) not null --[key]
-    ,tableName varchar(500) not null --[key]
+    ,tabName varchar(500) not null --[key]
     ,seq integer  not null --序号 [key]
     ,taskId varchar(100) --产生该批数据的任务ID
     ,dmlType varchar(100) --DML类型, ADD_PARTITION
     ,dmlText varchar --DML语句
-    ,commitTime date --DDL提交时间
+    ,commitTime timestamp --DDL提交时间
     ,commitCode Integer --DDL提交结果
     ,commitMsg varchar --DDL提交结果说明
     ,isDeleted boolean --记录是否删除
-    ,createTime date --记录创建时间
-    ,updateTime date --记录更新时间
-    ,CONSTRAINT pk PRIMARY KEY (dbName,tableName,seq)
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,seq)
 );
 CREATE INDEX idx_logtab_dml_taskId ON metadata.logtab_dml(taskId);
+CREATE SEQUENCE metadata.seq_logtab_dml;
+
+
+ALTER TABLE  metadata.logtab_dml DROP COLUMN createTime, updateTime;
+ALTER TABLE  metadata.logtab_dml ADD createTime timestamp, updateTime timestamp;
 
 
 --数据初始化
+delete from metadata.applog_key_field_desc;
+upsert into metadata.applog_key_field_desc values('ALL','db_name',0,0,'ods_view',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','tab_prefix',1,0,'log',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','product_code',2,1,'',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','app_code',2,2,'',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','log_type',2,3,'',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','event_id',2,4,'',false,now(),now());
 
---直接指定表名
-upsert into metadata.applog_key_field_desc values('ALL','tabName',0,0,'',false,now(),now());
-upsert into metadata.applog_key_field_desc values('ALL','tab_name',0,0,'',false,now(),now());
---产品代码
-upsert into metadata.applog_key_field_desc values('ALL','productCode',0,1,'ALL',false,now(),now());
-upsert into metadata.applog_key_field_desc values('ALL','product_code',0,1,'ALL',false,now(),now());
---应用代码
-upsert into metadata.applog_key_field_desc values('ALL','appCode',0,2,'ALL',false,now(),now());
-upsert into metadata.applog_key_field_desc values('ALL','app_code',0,2,'ALL',false,now(),now());
---日志类型
-upsert into metadata.applog_key_field_desc values('ALL','logType',0,3,'ALL',false,now(),now());
-upsert into metadata.applog_key_field_desc values('ALL','log_type',0,3,'ALL',false,now(),now());
---事件ID
-upsert into metadata.applog_key_field_desc values('ALL','eventId',0,4,'ALL',false,now(),now());
-upsert into metadata.applog_key_field_desc values('ALL','event_id',0,4,'ALL',false,now(),now());
+
+upsert into metadata.logtab_field_desc(
+tabName,fieldName,seq,taskId,fieldType
+,fieldSql,isDeleted,createTime,updateTime)
+values('log_medusa_test','a',metadata.seq_logtab_field_desc,'task_test','string','a string',false,now(),now())
+    ON DUPLICATE KEY UPDATE seq = seq + 1;
+
+    select next value for metadata.seq_logtab_field_desc;
+    select next value for METADATA.SEQ_LOGTAB_FIELD_DESC;
 
