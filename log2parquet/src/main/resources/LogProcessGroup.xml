@@ -12,7 +12,7 @@
 
     <property>
         <name>LogProcessingUnits.processors</name>
-        <value>JsonFormatProcessingUnits,RealLogTypeProcessingUnits</value>
+        <value>JsonFormatProcessingUnits,RealLogTypeProcessingUnits,FormatLogValueProcessingUnits,RemoveInvalidKeysProcessingUnits</value>
         <!--
                 <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor,GenericActionLogCommProcessor</value>
         -->

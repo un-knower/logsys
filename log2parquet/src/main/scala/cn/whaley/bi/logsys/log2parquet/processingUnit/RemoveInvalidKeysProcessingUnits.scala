@@ -23,24 +23,23 @@ class RemoveInvalidKeysProcessingUnits extends LogProcessorTraitV2 with LogTrait
 
   }
 
-  private def formatLogValue(json:JSONObject, key:String):Unit = {
-    if(longTypeKeyList.contains(key)){
-      try {
-        val valueStr = json.getString(key)
-        if(valueStr != null){
-          val trimStr = valueStr.trim()
-          if(trimStr != ""){
-            json.put(key,trimStr.toInt)
-          }else json.put(key,0)
+  /**
+    * 判断字段名(Key)是否合法，同时对中划线做处理
+    * @param key
+    * @return
+    */
+  def isValidKey(product:String,logType:String,key:String):Boolean = {
+   /* if(key != null && key.nonEmpty) {
+      if(!keyWhiteList.contains(key)){
+        regexKey findFirstIn key match {
+          case Some(_) => !FieldNameListUtil.isBlack(product,logType,key)
+          case None => false
         }
-      } catch {
-        case e: Exception => {
-          e.printStackTrace()
-          json.put(key, 0)
-        }
-      }
-    }
+      }else true
+    }else false*/
+    false
   }
+
   /**
     * 解析出realLogType，并校验realLogType是否有效
     *
@@ -48,10 +47,23 @@ class RemoveInvalidKeysProcessingUnits extends LogProcessorTraitV2 with LogTrait
     */
   def process(jsonObject: JSONObject): ProcessResult[JSONObject] = {
     try {
+      val realLogType=jsonObject.getString(LogKeys.LOG_BODY_REAL_LOG_TYPE)
       val it=jsonObject.keySet().iterator()
       while (it.hasNext){
         val key=it.next()
-        formatLogValue(jsonObject,key)
+        //TODO
+        if(!isValidKey("appId",realLogType,key)) {
+          jsonObject.remove(key)
+          false
+        }else {
+          if(key.contains('-')){
+            val validKey = key.replace('-','_')
+            val value = jsonObject.get(key)
+            jsonObject.put(validKey,value)
+            jsonObject.remove(key)
+          }
+          true
+        }
       }
       new ProcessResult(this.name, ProcessResultCode.processed, "", Some(jsonObject))
     } catch {

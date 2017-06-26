@@ -43,7 +43,12 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait {
         val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
         val processGroupInstance=instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
 
-        //分叉处理medusa2x
+
+        //批量加载metadata.applog_key_field_desc表
+        //批量加载metadata.applog_special_field_desc表
+
+
+        //分叉处理medusa2x的处理器组初始化
         initAllProcessGroup
 
         partition.foreach(line => {
@@ -54,10 +59,10 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait {
               if("medusa2xappID".equalsIgnoreCase(appID)){
                 //进入分叉逻辑
                 val jsonObjectAfter=initAllProcessGroup.get(appID).get.process(jsonObject).result.get
-                jsonObjectAfter.toJSONString
+                (jsonObjectAfter.toJSONString)
               }else{
                 val jsonObjectAfter=processGroupInstance.process(jsonObject).result.get
-                jsonObjectAfter.toJSONString
+                (jsonObjectAfter.toJSONString)
               }
             }
           }

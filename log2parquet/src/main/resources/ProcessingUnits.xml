@@ -27,4 +27,15 @@
         <value>cn.whaley.bi.logsys.log2parquet.processingUnit.RealLogTypeProcessingUnits</value>
     </property>
 
+    <property>
+        <name>FormatLogValueProcessingUnits.class</name>
+        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.FormatLogValueProcessingUnits</value>
+    </property>
+
+    <property>
+        <name>RemoveInvalidKeysProcessingUnits.class</name>
+        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.RemoveInvalidKeysProcessingUnits</value>
+    </property>
+
+
 </configuration>

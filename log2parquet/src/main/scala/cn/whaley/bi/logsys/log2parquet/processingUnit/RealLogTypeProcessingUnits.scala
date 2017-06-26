@@ -44,17 +44,18 @@ class RealLogTypeProcessingUnits extends LogProcessorTraitV2 with LogTrait {
     */
   def process(jsonObject: JSONObject): ProcessResult[JSONObject] = {
     try {
-      if(jsonObject.containsKey(LogKeys.LOG_LOG_TYPE)){
-        val logType=jsonObject.getString(LogKeys.LOG_LOG_TYPE)
-        val realLogType=if(LogKeys.LOG_EVENT.equalsIgnoreCase(logType)){
-          getStringValue(jsonObject,LogKeys.LOG_EVENT_ID)
-        }else if(LogKeys.LOG_START_END.equalsIgnoreCase(logType)){
-          getStringValue(jsonObject,LogKeys.LOG_ACTION_ID)
+      if(jsonObject.containsKey(LogKeys.LOG_BODY_LOG_TYPE)){
+        val logType=jsonObject.getString(LogKeys.LOG_BODY_LOG_TYPE)
+        val realLogType=if(LogKeys.LOG_BODY_EVENT.equalsIgnoreCase(logType)){
+          getStringValue(jsonObject,LogKeys.LOG_BODY_EVENT_ID)
+        }else if(LogKeys.LOG_BODY_START_END.equalsIgnoreCase(logType)){
+          getStringValue(jsonObject,LogKeys.LOG_BODY_ACTION_ID)
         }else{
           logType
         }
 
         if(isValidLogType(realLogType)){
+          jsonObject.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
           new ProcessResult(this.name, ProcessResultCode.processed, "", Some(jsonObject))
         }else{
           //do nothing
