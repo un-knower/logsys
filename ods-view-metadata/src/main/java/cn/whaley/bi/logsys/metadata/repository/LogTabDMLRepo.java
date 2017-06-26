@@ -12,6 +12,14 @@ import java.util.*;
  */
 @Repository
 public class LogTabDMLRepo extends MetadataBaseRepo<LogTabDMLEntity> {
+
+    private static final Set<String> LOG_TAB_DML_KEYOG_TAB_FIELDS;
+
+    static {
+        LOG_TAB_DML_KEYOG_TAB_FIELDS = new HashSet<>();
+        LOG_TAB_DML_KEYOG_TAB_FIELDS.addAll(Arrays.asList("dbName,tabName,seq".split(",")));
+    }
+
     public LogTabDMLRepo() {
         super(LogTabDMLEntity.class);
     }
@@ -23,9 +31,10 @@ public class LogTabDMLRepo extends MetadataBaseRepo<LogTabDMLEntity> {
      * @param taskId
      * @return
      */
-    public List<LogTabDMLEntity> queryForTaskId(String taskId) {
+    public List<LogTabDMLEntity> queryForTaskId(String taskId, boolean isDeleted) {
         Map<String, Object> where = new HashMap<>();
         where.put("taskId", taskId);
+        where.put("isDeleted", isDeleted);
         List<LogTabDMLEntity> entities = select(where);
         return entities;
     }
@@ -33,8 +42,6 @@ public class LogTabDMLRepo extends MetadataBaseRepo<LogTabDMLEntity> {
 
     @Transactional(readOnly = false)
     public Integer deleteByTaskId(String taskId) {
-        Set<String> keys = new HashSet<>();
-        keys.addAll(Arrays.asList("dbName,tabName,seq".split(",")));
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("isDeleted", true);
@@ -43,9 +50,23 @@ public class LogTabDMLRepo extends MetadataBaseRepo<LogTabDMLEntity> {
         wheres.put("taskId", taskId);
         wheres.put("isDeleted", false);
 
-        return update(keys, updates, wheres);
+        return update(LOG_TAB_DML_KEYOG_TAB_FIELDS, updates, wheres);
 
     }
 
+    public Integer updateCommitInfo(LogTabDMLEntity entity) {
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("commitTime", entity.getCommitTime());
+        updates.put("commitCode", entity.getCommitCode());
+        updates.put("commitMsg", entity.getCommitMsg());
+
+        Map<String, Object> wheres = new HashMap<>();
+        wheres.put("dbName", entity.getDbName());
+        wheres.put("tabName", entity.getTabName());
+        wheres.put("seq", entity.getSeq());
+
+        return update(LOG_TAB_DML_KEYOG_TAB_FIELDS, updates, wheres);
+    }
 
 }
