@@ -52,6 +52,7 @@ CREATE INDEX idx_logfile_field_desc_taskId ON metadata.logfile_field_desc(taskId
 
 upsert into metadata.logfile_field_desc values('/data_warehouse/ods_view.db/log_app1','userId','string','userId string','string','option string','task1',false,now(),now());
 upsert into metadata.logfile_field_desc values('/data_warehouse/ods_view.db/log_app1','accountId','string','accountId string','string','option string','task1',false,now(),now());
+upsert into metadata.logfile_field_desc values('/data_warehouse/ods_view.db/log_app1','tag','string','tag string','string','option string','task1',false,now(),now());
 
 
 
