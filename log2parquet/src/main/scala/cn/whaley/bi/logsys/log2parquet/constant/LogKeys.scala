@@ -54,12 +54,17 @@ object LogKeys {
     val LOG_MSG_MSG = "_msg"
 
     //----------logBody里字段定义
-    val LOG_LOG_TYPE = "logType"
-    val LOG_EVENT = "event"
-    val LOG_EVENT_ID = "eventId"
-    val LOG_START_END = "start_end"
-    val LOG_ACTION_ID = "actionId"
+    val LOG_BODY_LOG_TYPE = "logType"
+    val LOG_BODY_EVENT = "event"
+    val LOG_BODY_EVENT_ID = "eventId"
+    val LOG_BODY_START_END = "start_end"
+    val LOG_BODY_ACTION_ID = "actionId"
     val LOG_BODY_METHOD = "svr_req_method"
+
+
+
+    //中间字段
+    val LOG_BODY_REAL_LOG_TYPE = "realLogType"
 
 
 

@@ -40,10 +40,16 @@ s
 
 ####业务逻辑
 * 程序入口输入参数
-appId，day，hour
+不是appId，day，hour固定值，而是只有一个参数，input_dir
 
 * ods origin路径生成规则
 /data_warehouse/ods_origin.db/log_origin/key_appId=${appId}/key_day=${yyyymmdd}/key_hour=${HH}
+
+
+如果传入如下参数，/data_warehouse/ods_origin.db/log_origin/，会跑所有appId的全量数据
+理论上至少应该具体到这一层吧？或者更深入的key_day层
+/data_warehouse/ods_origin.db/log_origin/key_appId=${appId}
+
 
 * ods view路径生成规则
 路径模版：/data_warehouse/ods_view.db/t_log/productCode=../appCode=../logType=../eventId=../key_day=${yyyymmdd}/key_hour=${HH}
@@ -59,18 +65,26 @@ hadoop fs -du -h /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78s
 
 
 ####疑问
-1.需要做md5校验吗？no
-2.分post请求，get请求？yes
-3.realLogType处理逻辑? yes
+1. 需要做md5校验吗？no
+2. 分post请求，get请求？yes
+3. realLogType处理逻辑? yes
 val realLogType = if(EVENT == logType){
             getStringValue(log,EVENT_ID)
           }else if(START_END == logType){
             getStringValue(log,ACTION_ID)
           }else logType
-4.除了logBody，还有哪些字段需要加入转parquet的json? all of them
-5.remoteIp和forwardedIp对应？find svr_forwarded_for,svr_remote_addr in log
-6.参考代码MedusaLog2Parquet?yes
-7.crash日志还需要校验md5吗？
+4. 除了logBody，还有哪些字段需要加入转parquet的json? all of them
+5. remoteIp和forwardedIp对应？find svr_forwarded_for,svr_remote_addr in log
+6. 参考代码MedusaLog2Parquet?yes
+7. crash日志还需要校验md5吗？yes
+8. 如果传入如下参数，/data_warehouse/ods_origin.db/log_origin/，会跑所有appId的全量数据
+ 理论上至少应该具体到这一层吧？或者更深入的key_day层？
+ /data_warehouse/ods_origin.db/log_origin/key_appId=${appId}
+ 答：
+ 使用azkaban调度传入day和hour，会运行所有的appid的当前hour
+ /data_warehouse/ods_origin.db/log_origin/key_appId=*/key_day=${yyyymmdd}/key_hour=${HH}
+ 
+
 
 
 ####信息同步
@@ -87,13 +101,15 @@ b.处理器:粒度最小的处理器
 
 
 ####思路：
-main函数，输入参数只有一个path，通过获得path下的所有appid获得处理器链
-输出路径
+1. 输出路径
+main函数，输入参数只有一个path，通过获得path下文件中（而不是路径信息所带的appId）所有appid获得处理器链
   通过appid读取[metadata.applog_key_field_desc]表，通过【表字段，分区字段（排序）】获得输出路径的非hive表非分区字段，
 通过logTime获得key_day和key_hour获得hive表分区字段。
   对于写出文件模块，要先以json格式写到临时文件，然后在读取临时文件目录里的json文件，转化为parquet文件。
 参考，线网log2parquet项目
 Json2ParquetUtil.saveAsParquet(jsonRdd,sqlContext,p,outputDate)
+
+2. 
 
 
 
