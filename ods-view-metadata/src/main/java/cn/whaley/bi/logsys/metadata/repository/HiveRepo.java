@@ -95,8 +95,9 @@ public class HiveRepo {
      * @param entities
      * @return
      */
-    public void executeDDL(List<LogTabDDLEntity> entities) {
-        Map<String, List<LogTabDDLEntity>> groups =  entities.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
+    public Integer executeDDL(List<LogTabDDLEntity> entities) {
+        Integer ret=0;
+        Map<String, List<LogTabDDLEntity>> groups = entities.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
         for (Map.Entry<String, List<LogTabDDLEntity>> entry : groups.entrySet()) {
             String dbName = entry.getKey();
             jdbcTemplate.execute("use " + dbName);
@@ -107,6 +108,7 @@ public class HiveRepo {
                     jdbcTemplate.execute(ddlEntity.getDdlText());
                     ddlEntity.setCommitCode(1);
                     ddlEntity.setCommitMsg("SUCCESS");
+                    ret++;
                 } catch (Exception ex) {
                     LOG.error(ddlEntity.getDdlText(), ex);
                     ddlEntity.setCommitCode(-1);
@@ -115,6 +117,7 @@ public class HiveRepo {
 
             }
         }
+        return ret;
     }
 
     /**
@@ -123,8 +126,9 @@ public class HiveRepo {
      * @param entities
      * @return
      */
-    public void executeDML(List<LogTabDMLEntity> entities) {
-        Map<String, List<LogTabDMLEntity>> groups =  entities.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
+    public Integer executeDML(List<LogTabDMLEntity> entities) {
+        Integer ret = 0;
+        Map<String, List<LogTabDMLEntity>> groups = entities.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
         for (Map.Entry<String, List<LogTabDMLEntity>> entry : groups.entrySet()) {
             String dbName = entry.getKey();
             jdbcTemplate.execute("use " + dbName);
@@ -135,6 +139,7 @@ public class HiveRepo {
                     jdbcTemplate.execute(dmlEntity.getDmlText());
                     dmlEntity.setCommitCode(1);
                     dmlEntity.setCommitMsg("SUCCESS");
+                    ret++;
                 } catch (Exception ex) {
                     LOG.error(dmlEntity.getDmlText(), ex);
                     dmlEntity.setCommitCode(-1);
@@ -142,6 +147,7 @@ public class HiveRepo {
                 }
             }
         }
+        return ret;
     }
 
 

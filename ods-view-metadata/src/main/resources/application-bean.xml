@@ -56,12 +56,14 @@
         <property name="dataSource" ref="metadataDataSource"/>
     </bean>
 
+    <tx:annotation-driven transaction-manager="metadataTxManager" />
+
+    <!--
     <bean id="hiveTxManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="hiveDataSource"/>
     </bean>
 
-    <tx:annotation-driven transaction-manager="metadataTxManager" />
-
     <tx:annotation-driven transaction-manager="hiveTxManager" />
+    -->
 
 </beans>

@@ -1,5 +1,5 @@
 delete from metadata.applog_key_field_desc;
-upsert into metadata.applog_key_field_desc values('ALL','db_name',0,0,'test',false,now(),now());
+upsert into metadata.applog_key_field_desc values('ALL','db_name',0,0,'ods_view',false,now(),now());
 upsert into metadata.applog_key_field_desc values('ALL','tab_prefix',1,0,'log',false,now(),now());
 upsert into metadata.applog_key_field_desc values('ALL','product_code',1,1,'',false,now(),now());
 upsert into metadata.applog_key_field_desc values('ALL','app_code',1,2,'',false,now(),now());
@@ -23,13 +23,15 @@ create table metadata.logfile_key_field_value(
 ;
 CREATE INDEX idx_logfile_key_field_value_taskId ON metadata.logfile_key_field_value(taskId);
 
-upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','tab_prefix','test_log','app1','task1',false,now(),now());
-upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','product_code','test_product','app1','task1',false,now(),now());
-upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','app_code','test_app','app1','task1',false,now(),now());
-upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','log_type','test_type','app1','task1',false,now(),now());
-upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','event_id','test_event','app1','task1',false,now(),now());
-upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','key_day','20170620','app1','task1',false,now(),now());
-upsert into metadata.logfile_key_field_value values('/logs/test_app1.json','key_hour','02','app1','task1',false,now(),now());
+
+upsert into metadata.logfile_key_field_value values('/data_warehouse/ods_view.db/log_app1','db_name','test','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/data_warehouse/ods_view.db/log_app1','tab_prefix','test_log','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/data_warehouse/ods_view.db/log_app1','product_code','test_product','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/data_warehouse/ods_view.db/log_app1','app_code','test_app','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/data_warehouse/ods_view.db/log_app1','log_type','test_type','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/data_warehouse/ods_view.db/log_app1','event_id','test_event','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/data_warehouse/ods_view.db/log_app1','key_day','20170620','app1','task1',false,now(),now());
+upsert into metadata.logfile_key_field_value values('/data_warehouse/ods_view.db/log_app1','key_hour','02','app1','task1',false,now(),now());
 
 
 --日志文件字段信息表
@@ -48,8 +50,8 @@ create table metadata.logfile_field_desc(
 );
 CREATE INDEX idx_logfile_field_desc_taskId ON metadata.logfile_field_desc(taskId);
 
-upsert into metadata.logfile_field_desc values('/logs/test_app1.json','userId','string','userId string','string','option string','task1',false,now(),now());
-upsert into metadata.logfile_field_desc values('/logs/test_app1.json','accountId','string','accountId string','string','option string','task1',false,now(),now());
+upsert into metadata.logfile_field_desc values('/data_warehouse/ods_view.db/log_app1','userId','string','userId string','string','option string','task1',false,now(),now());
+upsert into metadata.logfile_field_desc values('/data_warehouse/ods_view.db/log_app1','accountId','string','accountId string','string','option string','task1',false,now(),now());
 
 
 
@@ -70,5 +72,5 @@ create table metadata.logfile_task_info(
 );
 
 upsert into metadata.logfile_task_info
-values('task1','json2parquent',0,'',now(),null,'/logs/test_app1.json','/logs/test_app1.parquet',false,now(),now());
+values('task1','json2parquent',0,'',now(),null,'/data_warehouse/ods_view.db/log_app1','/logs/test_app1.parquet',false,now(),now());
 

@@ -149,21 +149,29 @@ ALTER TABLE  metadata.logtab_dml ADD createTime timestamp, updateTime timestamp;
 
 
 --数据初始化
-delete from metadata.applog_key_field_desc;
-upsert into metadata.applog_key_field_desc values('ALL','db_name',0,0,'ods_view',false,now(),now());
-upsert into metadata.applog_key_field_desc values('ALL','tab_prefix',1,0,'log',false,now(),now());
-upsert into metadata.applog_key_field_desc values('ALL','product_code',2,1,'',false,now(),now());
-upsert into metadata.applog_key_field_desc values('ALL','app_code',2,2,'',false,now(),now());
-upsert into metadata.applog_key_field_desc values('ALL','log_type',2,3,'',false,now(),now());
-upsert into metadata.applog_key_field_desc values('ALL','event_id',2,4,'',false,now(),now());
+
+--默认库名字段( #{fieldValue}.db )
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','db_name',0,0,'test',false,now(),now());
+
+--默认表名字段( #{fieldValue1}_#{fieldValue2}_...... )
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','tab_prefix',1,0,'log',false,now(),now());
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','product_code',1,1,'all',false,now(),now());
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','app_code',1,2,'',false,now(),now());
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','log_type',1,3,'',false,now(),now());
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','event_id',1,4,'',false,now(),now());
+
+--默认分区字段( #{fieldName1}=#{fieldValue1}/#{fieldName2}=#{fieldValue2}/...... )
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','key_day',2,0,'',false,now(),now());
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','key_hour',2,1,'',false,now(),now());
 
 
-upsert into metadata.logtab_field_desc(
-tabName,fieldName,seq,taskId,fieldType
-,fieldSql,isDeleted,createTime,updateTime)
-values('log_medusa_test','a',metadata.seq_logtab_field_desc,'task_test','string','a string',false,now(),now())
-    ON DUPLICATE KEY UPDATE seq = seq + 1;
-
-    select next value for metadata.seq_logtab_field_desc;
-    select next value for METADATA.SEQ_LOGTAB_FIELD_DESC;
+--appid初始化数据hive查询
+SELECT concat("upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('",app_id,"','product_code',1,1,'",replace(product_code,'.',''),"',false,now(),now());") as cmd
+from `metadata`.app_metadata_idinfo
+where app_id not like '%00000'
+union all
+SELECT concat("upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('",app_id,"','app_code',1,2,'",replace(app_code,'.',''),"',false,now(),now());") as cmd
+from `metadata`.app_metadata_idinfo
+where app_id not like '%00000'
+;
 
