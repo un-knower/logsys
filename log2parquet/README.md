@@ -70,6 +70,8 @@ val realLogType = if(EVENT == logType){
 4.除了logBody，还有哪些字段需要加入转parquet的json? all of them
 5.remoteIp和forwardedIp对应？find svr_forwarded_for,svr_remote_addr in log
 6.参考代码MedusaLog2Parquet?yes
+7.crash日志还需要校验md5吗？
+
 
 ####信息同步
 * 2.x 代码逻辑参考forest项目GenericActionLogGetProcessor类parseMedusa20Log方法。[由连凯做]
@@ -85,7 +87,6 @@ b.处理器:粒度最小的处理器
 
 
 ####思路：
-
 main函数，输入参数只有一个path，通过获得path下的所有appid获得处理器链
 输出路径
   通过appid读取[metadata.applog_key_field_desc]表，通过【表字段，分区字段（排序）】获得输出路径的非hive表非分区字段，
@@ -93,3 +94,8 @@ main函数，输入参数只有一个path，通过获得path下的所有appid获
   对于写出文件模块，要先以json格式写到临时文件，然后在读取临时文件目录里的json文件，转化为parquet文件。
 参考，线网log2parquet项目
 Json2ParquetUtil.saveAsParquet(jsonRdd,sqlContext,p,outputDate)
+
+
+
+####处理器（等同于 处理单元 概念）：
+removeInvalidKeys

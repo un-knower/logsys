@@ -30,8 +30,39 @@ object LogKeys {
     val LOG_PLAYQOS = "playqos"
 
 
+
+    //---用来log2parquet使用,start
+    //----------
     val LOG_APP_ID = "appId"
+    val LOG_LOG_ID = "logId"
+    val LOG_LOG_VERSION = "logVersion"
+    val LOG_LOG_TIME = "logTime"
+    val LOG_LOG_SYNC = "_sync"
+
+    //平展化logBody字段
+    val LOG_BODY = "logBody"
+
+    //新建key为_msg的的json结构体，将如下字段放入json结构体中
+    val LOG_SIGN_FLAG = "logSignFlag"
+    val LOG_MSG_SOURCE = "msgSource"
+    val LOG_MSG_VERSION = "msgVersion"
+    val LOG_MSG_SITE = "msgSite"
+    val LOG_MSG_SIGN_FLAG = "msgSignFlag"
+    val LOG_MSG_ID = "msgId"
+    val LOG_MSG_FORMAT = "msgFormat"
+    //新建key,_msg
+    val LOG_MSG_MSG = "_msg"
+
+    //----------logBody里字段定义
+    val LOG_LOG_TYPE = "logType"
+    val LOG_EVENT = "event"
+    val LOG_EVENT_ID = "eventId"
+    val LOG_START_END = "start_end"
+    val LOG_ACTION_ID = "actionId"
+    val LOG_BODY_METHOD = "svr_req_method"
 
 
+
+    //---用来log2parquet使用,end
 
 }
