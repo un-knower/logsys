@@ -1,21 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
     <property>
-        <name>GenericProcessorChain.medusa3xLogProcessor</name>
-        <value>Medusa3xLogProcessor</value>
-    </property>
-
-    <property>
-        <name>Medusa3xLogProcessor.class</name>
-        <value>cn.whaley.bi.logsys.log2parquet.processor.Medusa3xLogProcessor</value>
-    </property>
-
-    <property>
-        <name>Medusa3xLogProcessor.processors</name>
-        <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor,GenericActionLogCommProcessor</value>
-    </property>
-
-    <property>
         <name>GenericActionLogGetProcessor.class</name>
         <value>cn.whaley.bi.logsys.log2parquet.processingUnit.GenericActionLogGetProcessor</value>
     </property>

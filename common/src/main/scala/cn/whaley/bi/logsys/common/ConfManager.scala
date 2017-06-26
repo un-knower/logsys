@@ -260,6 +260,16 @@ class ConfManager(props: Properties, resources: Seq[String], classLoader: ClassL
         }
     }
 
+    /**
+      * 通过传入的正则表达式字符串，匹配Properties的key，返回满足正则表达的map
+      * @param regexString
+      * @return
+      */
+    def getKeyValueByRegex(regexString: String):scala.collection.mutable.Map[String,String] = {
+        val map=conf.getValByRegex(regexString)
+        map
+    }
+
 }
 
 object ConfManager {

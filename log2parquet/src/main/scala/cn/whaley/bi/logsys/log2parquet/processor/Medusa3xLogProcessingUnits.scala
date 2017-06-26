@@ -1,17 +1,17 @@
 package cn.whaley.bi.logsys.log2parquet.processor
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.log2parquet.entity.LogEntity
+import cn.whaley.bi.logsys.log2parquet.entity.LogFromEntity
 import cn.whaley.bi.logsys.log2parquet.{ProcessResult, ProcessResultCode}
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Created by fj on 16/11/11.
+ * Created by michael on 2017/6/22.
  *
- * 通用应用层日志处理器
+ * 电视猫3.x处理单元集合
  */
-class Medusa3xLogProcessor extends LogProcessorTrait {
+class Medusa3xLogProcessingUnits extends LogProcessorTrait {
 
 
     //应用层日志处理器表
@@ -36,9 +36,9 @@ class Medusa3xLogProcessor extends LogProcessorTrait {
       *
       * @return
      */
-    override def process(log: LogEntity): ProcessResult[LogEntity] = {
+    override def process(log: LogFromEntity): ProcessResult[LogFromEntity] = {
         //处理结果
-        var logs: ArrayBuffer[LogEntity] = ArrayBuffer(log)
+        var logs: ArrayBuffer[LogFromEntity] = ArrayBuffer(log)
         //记录处理路由
         val route = new ArrayBuffer[String]
         //链式处理，前一处理器输出为后一处理器输入
@@ -47,7 +47,7 @@ class Medusa3xLogProcessor extends LogProcessorTrait {
             val process = processes(i)
             route.append(process.name)
             //当前处理结果
-            var currLogs = new ArrayBuffer[LogEntity]
+            var currLogs = new ArrayBuffer[LogFromEntity]
             //记录流程是否应该中断，只有所有消息都要求中断的情况下才进行中断
             var isBreak = false
             logs.foreach(curr => {

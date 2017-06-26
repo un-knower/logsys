@@ -3,90 +3,90 @@ package cn.whaley.bi.logsys.log2parquet.entity
 import com.alibaba.fastjson.JSONObject
 
 /**
- * Created by michael on 2017/6/22.
- *
- * 电视猫3.x消息实体对象【处理前】
- */
-class MsgEntity(from: JSONObject) extends JSONObject(from) {
+  * Created by michael on 17/6/21.
+  *
+  * 电视猫3.x消息实体对象【处理前】
+  */
+class LogFromEntity(from: JSONObject) extends JSONObject(from) {
 
     def msgId: String = {
-        this.getString(MsgEntity.KEY_MSG_ID)
+        this.getString(LogFromEntity.KEY_MSG_ID)
     }
 
     def msgVersion: String = {
-        this.getString(MsgEntity.KEY_MSG_VERSION)
+        this.getString(LogFromEntity.KEY_MSG_VERSION)
     }
 
     def msgSite: String = {
-        this.getString(MsgEntity.KEY_MSG_SITE)
+        this.getString(LogFromEntity.KEY_MSG_SITE)
     }
 
     def msgSource: String = {
-        this.getString(MsgEntity.KEY_MSG_SOURCE)
+        this.getString(LogFromEntity.KEY_MSG_SOURCE)
     }
 
     def msgFormat: String = {
-        this.getString(MsgEntity.KEY_MSG_FORMAT)
+        this.getString(LogFromEntity.KEY_MSG_FORMAT)
     }
 
     def msgSignFlag: Int = {
-        this.getIntValue(MsgEntity.KEY_MSG_SIGN_FLAG)
+        this.getIntValue(LogFromEntity.KEY_MSG_SIGN_FLAG)
     }
 
     def msgBody: JSONObject = {
-        this.getJSONObject(MsgEntity.KEY_MSG_BODY)
+        this.getJSONObject(LogFromEntity.KEY_MSG_BODY)
     }
 
     def updateMsgBody(value: JSONObject): Unit = {
-        if (this.containsKey(MsgEntity.KEY_MSG_BODY)) {
-            this.getJSONObject(MsgEntity.KEY_MSG_BODY).asInstanceOf[java.util.Map[String, Object]].putAll(value)
+        if (this.containsKey(LogFromEntity.KEY_MSG_BODY)) {
+            this.getJSONObject(LogFromEntity.KEY_MSG_BODY).asInstanceOf[java.util.Map[String, Object]].putAll(value)
         } else {
-            this.put(MsgEntity.KEY_MSG_BODY, value)
+            this.put(LogFromEntity.KEY_MSG_BODY, value)
         }
     }
 
 
     def removeMsgBody: Unit = {
-        this.remove(MsgEntity.KEY_MSG_BODY)
+        this.remove(LogFromEntity.KEY_MSG_BODY)
     }
 
 
     def updateMsgId(value: String): Unit = {
-        this.put(MsgEntity.KEY_MSG_ID, value)
+        this.put(LogFromEntity.KEY_MSG_ID, value)
     }
 
 
     def updateMsgVersion(value: String): Unit = {
-        this.put(MsgEntity.KEY_MSG_VERSION, value)
+        this.put(LogFromEntity.KEY_MSG_VERSION, value)
     }
 
 
     def updateMsgSite(value: String): Unit = {
-        this.put(MsgEntity.KEY_MSG_SITE, value)
+        this.put(LogFromEntity.KEY_MSG_SITE, value)
     }
 
 
     def updateMsgSource(value: String): Unit = {
-        this.put(MsgEntity.KEY_MSG_SOURCE, value)
+        this.put(LogFromEntity.KEY_MSG_SOURCE, value)
     }
 
 
     def updateMsgFormat(value: String): Unit = {
-        this.put(MsgEntity.KEY_MSG_FORMAT, value)
+        this.put(LogFromEntity.KEY_MSG_FORMAT, value)
     }
 
 
     def updateMsgSignFlag(value: Int): Unit = {
-        this.put(MsgEntity.KEY_MSG_SIGN_FLAG, value)
+        this.put(LogFromEntity.KEY_MSG_SIGN_FLAG, value)
     }
 
     //将obj中的key对应的属性平展到obj,如果属性值不是JSONObject,则不做任何处理
     def extractObj(obj: JSONObject, key: String): JSONObject = {
-        MsgEntity.translateProp(obj, key, this, "")
+        LogFromEntity.translateProp(obj, key, this, "")
     }
 
     def extractObj(key: String): JSONObject = {
-        MsgEntity.translateProp(this, key, this, "")
+        LogFromEntity.translateProp(this, key, this, "")
     }
 
 
@@ -98,7 +98,30 @@ class MsgEntity(from: JSONObject) extends JSONObject(from) {
 }
 
 
-object MsgEntity {
+object LogFromEntity {
+    val KEY_APP_ID = "appId"
+    val KEY_LOG_ID = "logId"
+    val KEY_LOG_VERSION = "logVersion"
+    val KEY_LOG_TIME = "logTime"
+
+    //将被展开
+    val KEY_LOG_BODY = "logBody"
+
+
+    //保留原有json结构体
+    val KEY_SYNC = "_sync"
+
+    //下面以KEY_MSG_为前缀的字段将被放入key为_msg的json结构体内
+    val KEY_MSG_LOG_SIGIN_FLAG = "logSignFlag"
+    val KEY_MSG_MSG_SOURCE = "msgSource"
+    val KEY_MSG_MSG_VERSION = "msgVersion"
+    val KEY_MSG_MSG_SITE = "msgSite"
+    val KEY_MSG_MSG_SIGN_FLAG = "msgSignFlag"
+    val KEY_MSG_MSG_ID = "msgId"
+    val KEY_MSG_MSG_FORMAT = "msgFormat"
+
+
+
     val KEY_MSG_ID = "msgId"
     val KEY_MSG_VERSION = "msgVersion"
     val KEY_MSG_SITE = "msgSite"
@@ -107,14 +130,14 @@ object MsgEntity {
     val KEY_MSG_SIGN_FLAG = "msgSignFlag"
     val KEY_MSG_BODY = "msgBody"
 
-    def create(obj: JSONObject): MsgEntity = {
-        new MsgEntity(obj)
+    def create(obj: JSONObject): LogFromEntity = {
+        new LogFromEntity(obj)
     }
 
-    def copy(obj: JSONObject): MsgEntity = {
+    def copy(obj: JSONObject): LogFromEntity = {
         val copyObj = new JSONObject()
         copyObj.asInstanceOf[java.util.Map[String, Object]].putAll(obj)
-        new MsgEntity(copyObj)
+        new LogFromEntity(copyObj)
     }
 
 
@@ -150,6 +173,5 @@ object MsgEntity {
 
         return to
     }
-
-
 }
+

@@ -7,10 +7,10 @@ import cn.whaley.bi.logsys.log2parquet.traits.{ExecutedTrait, LogTrait}
 import org.apache.commons.cli.{BasicParser, OptionBuilder, Options}
 
 /**
-  * Created by fj on 16/11/20.
+  * Created by michael on 2017/6/22.
   */
 class MsgProcExecutor extends ExecutedTrait with LogTrait {
-  private var batchManager: MsgBatchManager = null
+  private var batchManager: MsgBatchManagerV3 = null
 
   case class Parameters(confValues: Properties, confFiles: Seq[String])
 
@@ -23,7 +23,7 @@ class MsgProcExecutor extends ExecutedTrait with LogTrait {
     }
     val parameters = parsed._2.get
     val confManager = new ConfManager(parameters.confValues, parameters.confFiles)
-    batchManager = new MsgBatchManager()
+    batchManager = new MsgBatchManagerV3()
     batchManager.init(confManager)
     try {
       batchManager.start()
@@ -33,7 +33,6 @@ class MsgProcExecutor extends ExecutedTrait with LogTrait {
         System.exit(-1)
       }
     }
-
   }
 
   override def shutdown(wait: Boolean = true): Unit = {

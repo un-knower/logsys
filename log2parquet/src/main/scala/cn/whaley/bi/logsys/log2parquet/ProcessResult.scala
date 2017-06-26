@@ -4,7 +4,7 @@ import cn.whaley.bi.logsys.log2parquet.ProcessResultCode.ProcessCode
 
 
 /**
- * Created by fj on 16/11/9.
+ * Created by michael on 2017/6/22.
  */
 
 case class ProcessResult[T](source: String, code: ProcessCode, message: String = "", result: Option[T] = None, ex: Option[Throwable] = None) {

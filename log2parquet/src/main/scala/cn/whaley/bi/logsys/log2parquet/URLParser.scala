@@ -8,7 +8,7 @@ import scala.collection.JavaConversions._
 
 
 /**
-  * Created by fj on 16/11/13.
+  * Created by michael on 2017/6/22.
  */
 class URLParser {
 

@@ -1,11 +1,11 @@
 package cn.whaley.bi.logsys.log2parquet.processor
 
 import cn.whaley.bi.logsys.log2parquet.ProcessResult
-import cn.whaley.bi.logsys.log2parquet.entity.LogEntity
+import cn.whaley.bi.logsys.log2parquet.entity.{LogFromEntity, LogEntity}
 import cn.whaley.bi.logsys.log2parquet.traits.{NameTrait, InitialTrait}
 
 /**
- * Created by fj on 16/11/9.
+ * Created by michael on 2017/6/22.
  *
  * 应用层日志处理器Trait
  */
@@ -16,5 +16,5 @@ trait LogProcessorTrait extends InitialTrait with NameTrait {
       *
       * @return
      */
-    def process(log: LogEntity): ProcessResult[LogEntity]
+    def process(log: LogFromEntity): ProcessResult[LogFromEntity]
 }

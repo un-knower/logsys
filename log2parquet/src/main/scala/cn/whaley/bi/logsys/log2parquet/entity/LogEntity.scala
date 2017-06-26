@@ -4,7 +4,7 @@ import cn.whaley.bi.logsys.log2parquet.utils.StringUtil
 import com.alibaba.fastjson.JSONObject
 
 /**
- * Created by fj on 16/11/9.
+ * Created by michael on 2017/6/22.
  *
  * 电视猫3.x消息实体对象【处理后】
  */

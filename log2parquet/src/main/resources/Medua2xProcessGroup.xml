@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <property>
+        <name>Medusa2xProcessGroup.Medusa2xLogProcessingUnits</name>
+        <value>Medusa2xLogProcessingUnits</value>
+    </property>
+
+    <property>
+        <name>Medusa2xLogProcessingUnits.class</name>
+        <value>cn.whaley.bi.logsys.log2parquet.processor.Medusa2xLogProcessingUnits</value>
+    </property>
+
+    <property>
+        <name>Medusa2xLogProcessingUnits.processors</name>
+        <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor,GenericActionLogCommProcessor</value>
+    </property>
+</configuration>

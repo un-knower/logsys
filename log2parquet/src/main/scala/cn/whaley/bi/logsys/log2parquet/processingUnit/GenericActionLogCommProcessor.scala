@@ -4,12 +4,12 @@ import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
 import cn.whaley.bi.logsys.log2parquet.utils.StringUtil
 import cn.whaley.bi.logsys.log2parquet.{ProcessResultCode, ProcessResult}
-import cn.whaley.bi.logsys.log2parquet.entity.{ActionLogPostEntity, MsgBodyEntity, LogEntity}
+import cn.whaley.bi.logsys.log2parquet.entity.{ActionLogPostEntity, LogFromEntity}
 import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTrait
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
 
 /**
- * Created by fj on 16/11/14.
+ * Created by michael on 2017/6/22.
  */
 class GenericActionLogCommProcessor extends LogProcessorTrait with LogTrait {
     /**
@@ -17,8 +17,8 @@ class GenericActionLogCommProcessor extends LogProcessorTrait with LogTrait {
       *
       * @return
      */
-    override def process(log: LogEntity): ProcessResult[LogEntity] = {
-        logTimeProc(log)
+    override def process(log: LogFromEntity): ProcessResult[LogFromEntity] = {
+        //logTimeProc(log)
         new ProcessResult(this.name, ProcessResultCode.processed, "", Some(log))
 
     }
@@ -46,7 +46,7 @@ class GenericActionLogCommProcessor extends LogProcessorTrait with LogTrait {
         happenTimeDeviationMillSec = confManager.getConfOrElseValue("GenericActionLogCommProcessor", "happenTime.deviation.sec", "3600").toLong * 1000
     }
 
-    private def logTimeProc(log: LogEntity): LogEntity = {
+    /*private def logTimeProc(log: LogFromEntity): LogFromEntity = {
         if (log.logBody == null) {
             return log
         }
@@ -72,7 +72,7 @@ class GenericActionLogCommProcessor extends LogProcessorTrait with LogTrait {
         }
         log.updateLogTime(logTime)
         log
-    }
+    }*/
 
     //特殊处理
     private def infoRevise(json: ActionLogPostEntity): Option[ActionLogPostEntity] = {

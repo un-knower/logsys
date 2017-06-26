@@ -72,11 +72,24 @@ val realLogType = if(EVENT == logType){
 6.参考代码MedusaLog2Parquet?yes
 
 ####信息同步
-2.x 代码逻辑参考forest项目GenericActionLogGetProcessor类parseMedusa20Log方法。
+* 2.x 代码逻辑参考forest项目GenericActionLogGetProcessor类parseMedusa20Log方法。[由连凯做]
+* 在原有log2parquet需要做一条日志解析为多条日志的行为，现有log2parquet无需此操作,因为已经在最新的forest[冯进]处理好了
+* 在开发最新log2parquet的时候，不需要考虑parameter的平展话过程，因为已经在最新的forest[冯进]处理好了
+* 将不确定的字段放在"_corrupt"的json结构体里
+
+####概念统一
+a.处理器组:处理器组由多个处理器组成。例如，电视猫3.x处理组，此处理组由黑名单处理单元、平展化处理器等构成。
+b.处理器:粒度最小的处理器
 
 
-在原有log2parquet需要做一条日志解析为多条日志的行为，现有log2parquet无需此操作.
 
 
+####思路：
 
-
+main函数，输入参数只有一个path，通过获得path下的所有appid获得处理器链
+输出路径
+  通过appid读取[metadata.applog_key_field_desc]表，通过【表字段，分区字段（排序）】获得输出路径的非hive表非分区字段，
+通过logTime获得key_day和key_hour获得hive表分区字段。
+  对于写出文件模块，要先以json格式写到临时文件，然后在读取临时文件目录里的json文件，转化为parquet文件。
+参考，线网log2parquet项目
+Json2ParquetUtil.saveAsParquet(jsonRdd,sqlContext,p,outputDate)

@@ -2,16 +2,16 @@ package cn.whaley.bi.logsys.log2parquet
 
 import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
-import cn.whaley.bi.logsys.log2parquet.entity.{LogFromEntity, LogEntity}
+import cn.whaley.bi.logsys.log2parquet.entity.LogFromEntity
 import cn.whaley.bi.logsys.log2parquet.traits._
+import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import com.alibaba.fastjson.{JSON, JSONObject}
 
 /**
   * Created by michael on 2017/6/22.
   */
-class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
+class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait {
 
   private val config = new SparkConf()
   private val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
@@ -35,27 +35,28 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     *
     */
   def start(): Unit = {
-    //加载数据
-    /*val appID=""
-    val startDate=""
-    val startHour=""
-    val partition=2000
-
-    val odsPath = PathUtil.getOdsOriginPath(appID,startDate, startHour)
-    val rdd_original = sparkSession.sparkContext.textFile(odsPath, partition)*/
-
     val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200)
     //按logType和eventId分类
     rdd_original.foreachPartition(
       partition => {
+        val confManager = new ConfManager(Array("MsgBatchManagerV2.xml", "settings.properties"))
+        val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
+        val processGroupInstance=instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
+
+        //分叉处理medusa2x
         initAllProcessGroup
+
         partition.foreach(line => {
-          val json = string2JsonObject(line)
-          if (null != json) {
-            if (json.containsKey(LogKeys.LOG_APP_ID)) {
-              val appID = json.getString(LogKeys.LOG_APP_ID)
-              val logFromEntity=new LogFromEntity(json)
-              initAllProcessGroup.get(appID).get.process(logFromEntity)
+          val jsonObject = string2JsonObject(line)
+          if (null != jsonObject) {
+            if (jsonObject.containsKey(LogKeys.LOG_APP_ID)) {
+              val appID = jsonObject.getString(LogKeys.LOG_APP_ID)
+              if("medusa2xappID".equalsIgnoreCase(appID)){
+                //进入分叉逻辑
+                initAllProcessGroup.get(appID).get.process(jsonObject)
+              }else{
+                processGroupInstance.process(jsonObject)
+              }
             }
           }
         })
@@ -68,30 +69,29 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     //val outputPath=PathUtil.getOdsViewPath(appID, startDate, startHour, "logType", "eventID")
   }
 
-  def initAllProcessGroup(): scala.collection.mutable.HashMap[String, ProcessGroupTrait] = {
-    val processGroupName2processGroupInstance = scala.collection.mutable.HashMap.empty[String, ProcessGroupTrait]
-    val confManager = new ConfManager(Array("MsgBatchManager.xml", "settings.properties"))
+  def initAllProcessGroup(): scala.collection.mutable.HashMap[String, ProcessGroupTraitV2] = {
+    val processGroupName2processGroupInstance = scala.collection.mutable.HashMap.empty[String, ProcessGroupTraitV2]
+    val confManager = new ConfManager(Array("MsgBatchManagerV3.xml", "settings.properties"))
     val allProcessGroup = confManager.getConf(this.name, "allProcessGroup")
     require(null != allProcessGroup)
     allProcessGroup.split(",").foreach(groupName => {
       val groupNameFromConfig = confManager.getConf(this.name, groupName)
-      val processGroup = instanceFrom(confManager, groupNameFromConfig).asInstanceOf[ProcessGroupTrait]
+      val processGroup = instanceFrom(confManager, groupNameFromConfig).asInstanceOf[ProcessGroupTraitV2]
       processGroup.init(confManager)
       processGroupName2processGroupInstance += (groupNameFromConfig -> processGroup)
     })
     val keyword="appIdForProcessGroup."
     val appId2ProcessGroupName=confManager.getKeyValueByRegex(keyword)
-    val appId2processGroupInstance = scala.collection.mutable.HashMap.empty[String, ProcessGroupTrait]
+    val appId2processGroupInstance = scala.collection.mutable.HashMap.empty[String, ProcessGroupTraitV2]
 
     appId2ProcessGroupName.foreach(e => {
       val appId=e._1
       val processGroupName=e._2
       val processGroupInstance=processGroupName2processGroupInstance.get(processGroupName).get
       appId2processGroupInstance.put(appId,processGroupInstance)
-     })
+    })
     appId2processGroupInstance
   }
-
 
   def string2JsonObject(log: String): JSONObject = {
     try {

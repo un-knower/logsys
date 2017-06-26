@@ -1,0 +1,2 @@
+ hadoop fs -cat /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=13/boikgpokn78sb95ktmsc1bnkechpgj9l_2017061413_raw_9_575885506.json.gz|zcat|grep player-sdk-startPlay|head
+
