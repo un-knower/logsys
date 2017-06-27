@@ -89,6 +89,7 @@ val realLogType = if(EVENT == logType){
 
 ####信息同步
 * 2.x 代码逻辑参考forest项目GenericActionLogGetProcessor类parseMedusa20Log方法。[由连凯做]
+* 黑白名单处理单元[由连凯做]
 * 在原有log2parquet需要做一条日志解析为多条日志的行为，现有log2parquet无需此操作,因为已经在最新的forest[冯进]处理好了
 * 在开发最新log2parquet的时候，不需要考虑parameter的平展话过程，因为已经在最新的forest[冯进]处理好了
 * 将不确定的字段放在"_corrupt"的json结构体里
@@ -115,3 +116,15 @@ Json2ParquetUtil.saveAsParquet(jsonRdd,sqlContext,p,outputDate)
 
 ####处理器（等同于 处理单元 概念）：
 removeInvalidKeys
+
+
+
+TODO:
+1. 拼接输出path，作为json的key[作为一个处理器]
+2. 字段名不允许出现"."
+3. eventId的中划线变下划线[同步冯进]
+4. 用户的黑名单设计由[连凯]给出方案
+5. 让[冯进]给出一个具体的appId的初始化数据
+6. realIp处理器
+7. metis
+8. metadata.logfile_key_field_value,metadata.logfile_field_desc，生成数据给parquet
