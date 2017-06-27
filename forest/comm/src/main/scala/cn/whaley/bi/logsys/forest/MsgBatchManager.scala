@@ -130,16 +130,15 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
          * @return
          */
         def stopProcess(waiting: Boolean): Unit = {
-
+            LOG.info(s"${this.getName} stopping process...")
             keepRunning = false
-            LOG.info("stop process...")
-
             this.interrupt()
             if (waiting) {
-                LOG.info("waiting to task thread complete.")
+                LOG.info(s"${this.getName} waiting to task thread complete.")
                 runningLatch.await()
-                LOG.info("task thread complete.")
+                LOG.info(s"${this.getName} task thread complete.")
             }
+            LOG.info(s"${this.getName} stopped process...")
         }
 
         override def run(): Unit = {
