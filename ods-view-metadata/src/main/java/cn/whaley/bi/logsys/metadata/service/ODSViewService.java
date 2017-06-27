@@ -250,7 +250,7 @@ public class ODSViewService {
      * @return 产生的DDL语句条数
      */
     List<LogTabDMLEntity> generateDML(LogFileTabKeyDesc desc) {
-        String partInfo = desc.parFieldNameAndValue.stream()
+        String partInfo = desc.getParFieldNameAndValue().stream()
                 .map(par -> String.format("%s='%s'", par[0], par[1]))
                 .collect(Collectors.joining(","));
 
@@ -292,7 +292,7 @@ public class ODSViewService {
             //目前设计分区字段全部为string类型
             String partDesc = desc.parFieldNameAndValue.stream().map(value -> value[0] + " string").collect(Collectors.joining(","));
             String fieldDesc = StringUtils.join(tabGroup.stream().map(entity -> entity.getFieldSql()).collect(Collectors.toList()), ",");
-            String ddlText = String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s (%s) PARTITIONED BY (%s) STORED AS " + desc.stored
+            String ddlText = String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s (%s) PARTITIONED BY (%s) STORED AS " + desc.getStored()
                     , tabFullName, fieldDesc, partDesc
             );
             LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
