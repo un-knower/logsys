@@ -1,0 +1,3 @@
+type=command
+command=sh ${working.dir}/../sbin/launch.sh --taskId=${taskId} --disableGenerateDDLAndDML=${disableGenerateDDLAndDML} --disableExecuteDDL=${disableExecuteDDL} --disableExecuteDML=${disableExecuteDML}
+

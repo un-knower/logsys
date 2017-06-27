@@ -57,6 +57,12 @@
                 <module-name>file-compressor-1.0-SNAPSHOT</module-name>
             </properties>
         </profile>
+        <profile>
+            <id>ods-view-metadata</id>
+            <properties>
+                <module-name>ods-view-metadata-1.0-SNAPSHOT</module-name>
+            </properties>
+        </profile>
     </profiles>
 
 </project>
