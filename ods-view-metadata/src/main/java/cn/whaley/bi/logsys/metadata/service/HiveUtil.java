@@ -37,8 +37,12 @@ public class HiveUtil {
 
 
     public static boolean implicitConvertible(String from, String to) {
-        return HiveUtil.implicitConvertible(TypeInfoUtils.getTypeInfoFromTypeString(from),
-                TypeInfoUtils.getTypeInfoFromTypeString(to));
+        try {
+            return HiveUtil.implicitConvertible(TypeInfoUtils.getTypeInfoFromTypeString(from),
+                    TypeInfoUtils.getTypeInfoFromTypeString(to));
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
     public static boolean implicitConvertible(TypeInfo from, TypeInfo to) {
