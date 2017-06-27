@@ -26,6 +26,12 @@ if [ -n "$CLASSPATH" ]; then
 else
    classpath="$path"
 fi
+if [ -f "/data/apps/azkaban/share/libs/phoenix-4.10.0-HBase-1.2.jar" ]; then
+    classpath="$classpath:/data/apps/azkaban/share/libs/phoenix-4.10.0-HBase-1.2.jar"
+fi
+if [ -f "/data/apps/azkaban/share/libs/hive-jdbc-2.1.1.jar" ]; then
+    classpath="$classpath:/data/apps/azkaban/share/libs/hive-jdbc.jar"
+fi
 
 javaXmx=${javaXmx:-4096m}
 javaXms=${javaXms:-1024m}

@@ -58,6 +58,7 @@
 				<exclude>junit:junit</exclude>
 			</excludes>
 		</dependencySet>
+		<!--
 		<dependencySet>
 			<outputDirectory>lib</outputDirectory>
 			<includes>
@@ -65,5 +66,6 @@
 			</includes>
 			<scope>system</scope>
 		</dependencySet>
+		-->
 	</dependencySets>
 </assembly>

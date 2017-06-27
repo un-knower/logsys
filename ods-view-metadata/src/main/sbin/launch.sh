@@ -19,5 +19,5 @@ echo "pid file: ${pidFile}"
 echo "log file: ${logFile}"
 echo "gc file: ${gcFile}"
 
-../bin/ods_view_metadata.sh $@
+sh ../bin/ods_view_metadata.sh $@
 
