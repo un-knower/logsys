@@ -348,7 +348,9 @@ public class ODSViewService {
                     boolean isConvertible = TypeInfoUtils.implicitConvertible(TypeInfoUtils.getTypeInfoFromTypeString(oldFieldType),
                             TypeInfoUtils.getTypeInfoFromTypeString(newFieldType));
                     String targetFieldType = isConvertible ? newFieldType : "string";
-                    LOG.info("{}->{} implicitConvertible=false, targetFieldType={}", new Object[]{oldFieldType, newFieldType, targetFieldType});
+                    if (!isConvertible) {
+                        LOG.info("{} -> {} implicitConvertible=false, targetFieldType={}", new Object[]{oldFieldType, newFieldType, targetFieldType});
+                    }
                     String ddlText = String.format("ALTER TABLE %s CHANGE COLUMN %s %s %s"
                             , tabFullName, fieldName, fieldName, targetFieldType);
                     LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
