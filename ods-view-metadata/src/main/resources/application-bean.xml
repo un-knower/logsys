@@ -24,6 +24,14 @@
 
     <!-- org.springframework.jdbc.datasource.DriverManagerDataSource [非连接池数据源实现]-->
 
+    <bean id="metadataDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${phoenix-jdbc.driverClassName}"/>
+        <property name="url" value="${phoenix-jdbc.url}"/>
+        <property name="username" value="${phoenix-jdbc.username}"/>
+        <property name="password" value="${phoenix-jdbc.password}"/>
+    </bean>
+
+    <!--
     <bean id="metadataDataSource" class="com.alibaba.druid.pool.DruidDataSource">
         <property name="driverClassName" value="${phoenix-jdbc.driverClassName}"/>
         <property name="url" value="${phoenix-jdbc.url}"/>
@@ -32,12 +40,21 @@
         <property name="testWhileIdle" value="${phoenix-jdbc.testWhileIdle}"/>
         <property name="validationQuery" value="${phoenix-jdbc.validationQuery}"/>
     </bean>
+    -->
 
     <bean id="metadataJdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate" lazy-init="true">
         <constructor-arg index="0" ref="metadataDataSource"/>
         <constructor-arg index="1" value="true"/>
     </bean>
 
+    <bean id="hiveDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${hive-jdbc.driverClassName}"/>
+        <property name="url" value="${hive-jdbc.url}"/>
+        <property name="username" value="${hive-jdbc.username}"/>
+        <property name="password" value="${hive-jdbc.password}"/>
+    </bean>
+
+    <!--
     <bean id="hiveDataSource" class="com.alibaba.druid.pool.DruidDataSource">
         <property name="driverClassName" value="${hive-jdbc.driverClassName}"/>
         <property name="url" value="${hive-jdbc.url}"/>
@@ -46,6 +63,7 @@
         <property name="testWhileIdle" value="${hive-jdbc.testWhileIdle}"/>
         <property name="validationQuery" value="${hive-jdbc.validationQuery}"/>
     </bean>
+    -->
 
     <bean id="hiveJdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate" lazy-init="true">
         <constructor-arg index="0" ref="hiveDataSource"/>

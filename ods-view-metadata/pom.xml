@@ -14,7 +14,12 @@
     <properties>
         <version-spring-boot>1.5.4.RELEASE</version-spring-boot>
         <version-springframework>4.3.9.RELEASE</version-springframework>
+        <package-dependency-scope>compile</package-dependency-scope>
+        <package-format>dir</package-format>
+        <package-output-dir>${project.build.directory}</package-output-dir>
+        <package-includeBaseDirectory>true</package-includeBaseDirectory>
     </properties>
+
 
     <dependencyManagement>
         <dependencies>
@@ -45,8 +50,8 @@
         <dependency>
             <groupId>org.apache.phoenix</groupId>
             <artifactId>phoenix-4.10.0-HBase</artifactId>
-            <scope>system</scope>
             <version>1.2</version>
+            <scope>system</scope>
             <systemPath>${project.basedir}/../lib/phoenix-4.10.0-HBase-1.2-thin-client.jar</systemPath>
         </dependency>
 
@@ -89,6 +94,8 @@
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-jdbc</artifactId>
             <version>2.1.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../lib/hive-jdbc.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -103,10 +110,19 @@
             <version>3.5</version>
         </dependency>
 
+        <!--
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>druid</artifactId>
             <version>1.0.31</version>
+        </dependency>
+        -->
+
+        <!-- https://mvnrepository.com/artifact/apache-xerces/xercesImpl -->
+        <dependency>
+            <groupId>apache-xerces</groupId>
+            <artifactId>xercesImpl</artifactId>
+            <version>2.9.1</version>
         </dependency>
 
         <dependency>
@@ -122,5 +138,95 @@
 
     </dependencies>
 
+    <build>
+        <!-- 如果一个应用的包含多个deploy模块，如果使用同样的包名， 如果把它们复制的一个目录中可能会失败，所以包名加了 artifactId以示区分 -->
+        <finalName>${project.artifactId}-${project.version}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>assemble</id>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <attach>false</attach>
+                    <descriptors>
+                        <descriptor>${basedir}/src/main/assembly/release.xml</descriptor>
+                    </descriptors>
+                    <outputDirectory>${package-output-dir}</outputDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <excludes>
+                            <exclude>**/*.properties</exclude>
+                            <exclude>**/*.xml</exclude>
+                            <exclude>**/*.yml</exclude>
+                        </excludes>
+                        <filtering>true</filtering>
+                    </resource>
+                </resources>
+            </build>
+            <activation>
+                <property>
+                    <name>env</name>
+                    <value>release</value>
+                </property>
+            </activation>
+            <properties>
+                <package-dependency-scope>provided</package-dependency-scope>
+                <package-format>tar.gz</package-format>
+                <package-includeBaseDirectory>true</package-includeBaseDirectory>
+                <package-output-dir>${project.parent.build.directory}</package-output-dir>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>azkaban</id>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <excludes>
+                            <exclude>**/*.properties</exclude>
+                            <exclude>**/*.xml</exclude>
+                            <exclude>**/*.yml</exclude>
+                        </excludes>
+                        <filtering>true</filtering>
+                    </resource>
+                </resources>
+            </build>
+            <activation>
+                <property>
+                    <name>env</name>
+                    <value>release</value>
+                </property>
+            </activation>
+            <properties>
+                <package-dependency-scope>provided</package-dependency-scope>
+                <package-format>dir</package-format>
+                <package-includeBaseDirectory>false</package-includeBaseDirectory>
+                <package-output-dir>${project.parent.basedir}/azkaban-support/src/modules/</package-output-dir>
+            </properties>
+
+        </profile>
+
+    </profiles>
 
 </project>

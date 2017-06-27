@@ -345,8 +345,7 @@ public class ODSViewService {
                             .map(fieldInfo -> fieldInfo.getDataType())
                             .findFirst().get();
 
-                    boolean isConvertible = TypeInfoUtils.implicitConvertible(TypeInfoUtils.getTypeInfoFromTypeString(oldFieldType),
-                            TypeInfoUtils.getTypeInfoFromTypeString(newFieldType));
+                    boolean isConvertible = HiveUtil.implicitConvertible(oldFieldType, newFieldType);
                     String targetFieldType = isConvertible ? newFieldType : "string";
                     if (!isConvertible) {
                         LOG.info("{} -> {} implicitConvertible=false, targetFieldType={}", new Object[]{oldFieldType, newFieldType, targetFieldType});
