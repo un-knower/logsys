@@ -33,7 +33,7 @@ select * from METADATA.APPLOG_SPECIAL_FIELD_DESC_TEST;
 hadoop@bigdata-appsvr-130-5
 cd /opt/phoenix/bin
 ./sqlline.py bigdata-cmpt-128-1:2181
-s
+
 2.命令行例子
 !describe METADATA.APPLOG_SPECIAL_FIELD_DESC
 
@@ -106,6 +106,9 @@ b.处理器:粒度最小的处理器
 main函数，输入参数只有一个path，通过获得path下文件中（而不是路径信息所带的appId）所有appid获得处理器链
   通过appid读取[metadata.applog_key_field_desc]表，通过【表字段，分区字段（排序）】获得输出路径的非hive表非分区字段，
 通过logTime获得key_day和key_hour获得hive表分区字段。
+boikgpokn78sb95ktmsc1bnkechpgj9l->log_medusa_main3x_${log_type}_${event_id}/key_day=${key_day}/key_hour=${key_hour}
+
+
   对于写出文件模块，要先以json格式写到临时文件，然后在读取临时文件目录里的json文件，转化为parquet文件。
 参考，线网log2parquet项目
 Json2ParquetUtil.saveAsParquet(jsonRdd,sqlContext,p,outputDate)
@@ -124,7 +127,8 @@ TODO:
 2. 字段名不允许出现"."
 3. eventId的中划线变下划线[同步冯进]
 4. 用户的黑名单设计由[连凯]给出方案
-5. 让[冯进]给出一个具体的appId的初始化数据
 6. realIp处理器
 7. metis
 8. metadata.logfile_key_field_value,metadata.logfile_field_desc，生成数据给parquet
+
+

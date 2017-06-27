@@ -76,3 +76,43 @@ event_id   ccc  FIELDORDER 4  ， FIELDFLAG为2
 
 /data_warehouse/ods_view.db/log_all_aaa/event_id=ccc/key_day=${yyyymmdd}/key_hour=${HH}
 
+
+-----------
+case 4 [通过具体的APPID获得表明]
+
+
+select * from metadata.applog_key_field_desc where APPID='ALL' and ISDELETED=false and FIELDFLAG=1 order by FIELDORDER ;
++--------+---------------+------------+-------------+---------------+------------+--------------------------+--------------------------+
+| APPID  |   FIELDNAME   | FIELDFLAG  | FIELDORDER  | FIELDDEFAULT  | ISDELETED  |        CREATETIME        |        UPDATETIME        |
++--------+---------------+------------+-------------+---------------+------------+--------------------------+--------------------------+
+| ALL    | tab_prefix    | 1          | 0           | log           | false      | 2017-06-26 08:54:07.026  | 2017-06-26 08:54:07.026  |
+| ALL    | product_code  | 1          | 1           | all           | false      | 2017-06-26 09:33:02.208  | 2017-06-26 09:33:02.208  |
+| ALL    | app_code      | 1          | 2           |               | false      | 2017-06-26 08:54:07.093  | 2017-06-26 08:54:07.093  |
+| ALL    | log_type      | 1          | 3           |               | false      | 2017-06-26 08:54:07.131  | 2017-06-26 08:54:07.131  |
+| ALL    | event_id      | 1          | 4           |               | false      | 2017-06-26 08:54:07.148  | 2017-06-26 08:54:07.148  |
++--------+---------------+------------+-------------+---------------+------------+--------------------------+--------------------------+
+
+select * from metadata.applog_key_field_desc where APPID='boikgpokn78sb95ktmsc1bnkechpgj9l' and ISDELETED=false and FIELDFLAG=1 order by FIELDORDER;
++-----------------------------------+---------------+------------+-------------+---------------+------------+--------------------------+--------------------------+
+|               APPID               |   FIELDNAME   | FIELDFLAG  | FIELDORDER  | FIELDDEFAULT  | ISDELETED  |        CREATETIME        |        UPDATETIME        |
++-----------------------------------+---------------+------------+-------------+---------------+------------+--------------------------+--------------------------+
+| boikgpokn78sb95ktmsc1bnkechpgj9l  | product_code  | 1          | 1           | medusa        | false      | 2017-06-26 10:41:07.296  | 2017-06-26 10:41:07.296  |
+| boikgpokn78sb95ktmsc1bnkechpgj9l  | app_code      | 1          | 2           | main3x        | false      | 2017-06-26 10:41:08.469  | 2017-06-26 10:41:08.469  |
++-----------------------------------+---------------+------------+-------------+---------------+------------+--------------------------+--------------------------+
+
+表名称为log_medusa_main3x_${log_type}_${event_id}
+log_type,event_id在这个具体的APPID中，没有配置，需要到日志中提取
+
+case 4 [通过具体的APPID获得分区字段]
+a. select * from metadata.applog_key_field_desc where APPID='ALL' and ISDELETED=false and FIELDFLAG=2 order by FIELDORDER;
+b. select * from metadata.applog_key_field_desc where APPID='boikgpokn78sb95ktmsc1bnkechpgj9l' and ISDELETED=false and FIELDFLAG=2 order by FIELDORDER;
+两个查询做merge，b优先级高于a
++--------+------------+------------+-------------+---------------+------------+--------------------------+--------------------------+
+| APPID  | FIELDNAME  | FIELDFLAG  | FIELDORDER  | FIELDDEFAULT  | ISDELETED  |        CREATETIME        |        UPDATETIME        |
++--------+------------+------------+-------------+---------------+------------+--------------------------+--------------------------+
+| ALL    | key_day    | 2          | 0           |               | false      | 2017-06-26 08:54:07.171  | 2017-06-26 08:54:07.171  |
+| ALL    | key_hour   | 2          | 1           |               | false      | 2017-06-26 08:54:07.230  | 2017-06-26 08:54:07.230  |
++--------+------------+------------+-------------+---------------+------------+--------------------------+--------------------------+
+分区字段为：
+key_day=xxx/key_hour=yyy
+通过logTime获得key_day和key_hour
