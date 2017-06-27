@@ -4,6 +4,7 @@ import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
 import cn.whaley.bi.logsys.log2parquet.entity.LogFromEntity
 import cn.whaley.bi.logsys.log2parquet.traits._
+import cn.whaley.bi.logsys.log2parquet.utils.PhoenixUtils
 import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
@@ -24,9 +25,16 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait {
     */
   override def init(confManager: ConfManager): Unit = {
     inputPath = confManager.getConf("inputPath")
-    //val processorChainName = confManager.getConf(this.name, "processorChain")
-    //processorChain = instanceFrom(confManager, processorChainName).asInstanceOf[GenericProcessorChain]
-    //sparkSession=SparkSession.builder().config(config).getOrCreate()
+
+
+    //批量加载metadata.applog_key_field_desc表
+    //批量加载metadata.applog_special_field_desc表
+    //将数据结构作为广播变量
+
+    val stat=PhoenixUtils.getStatement
+    stat.execute("select ")
+
+
   }
 
   /**
@@ -59,10 +67,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait {
               if("medusa2xappID".equalsIgnoreCase(appID)){
                 //进入分叉逻辑
                 val jsonObjectAfter=initAllProcessGroup.get(appID).get.process(jsonObject).result.get
-                (jsonObjectAfter.toJSONString)
+                //val log_type=jsonObjectAfter.getString(LogKeys.LOG_BODY_REAL_LOG_TYPE)
+                //(log_type,jsonObjectAfter.toJSONString)
               }else{
                 val jsonObjectAfter=processGroupInstance.process(jsonObject).result.get
-                (jsonObjectAfter.toJSONString)
+                //(jsonObjectAfter.toJSONString)
               }
             }
           }
