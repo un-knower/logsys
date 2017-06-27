@@ -20,6 +20,8 @@ CREATE TEMPORARY FUNCTION JsonArrayStrExplode AS 'cn.whaley.bi.logsys.hive.funct
 USING JAR 'hdfs:///libs/common/hive-functions-1.0-SNAPSHOT.jar';
 
 select JsonArrayStrExplode('[{"rowId":"1"},{"rowId":"2"}]');
+
+explain
 select s.*,t.row_num,t.row_value
 from sys.dual s lateral view JsonArrayStrExplode('[{"rowId":"1"},{"rowId":"2"}]') t as row_num,row_value;
 
@@ -48,5 +50,10 @@ hive-cli工具: 可在.hiverc中添加初始化脚本
 
 ====Issue====
 1. jar包更新需要重启会话,意味着hiveserver2需要重启或HiveCli进程需要退出重启
+
+explain
+select *,rank() over(partition by org_code order by product_code,app_code) as r
+from metadata.app_metadata_idinfo
+;
 
 
