@@ -9,6 +9,7 @@ import cn.whaley.bi.logsys.forest.entity.LogEntity
 
 /**
  * Created by fj on 2017/6/27.
+ * 该类是一个组合sink, 组合调用多个sink, 并返回第一个sink的返回值
  */
 class CombinedMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with LogTrait {
     /**
