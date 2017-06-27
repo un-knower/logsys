@@ -1,0 +1,43 @@
+---------metadata.applog_special_field_desc表使用---------
+applog_special_field_desc 表用来做黑白名单使用。
+通过从日志中拼接出来的输出路径，与这个表里logPathReg做匹配，
+logPathReg string --日志文件路径正则匹配表达式
+
+fieldNameReg string --字段名正则匹配表达式
+specialType string --特例类型, blackList=黑名单,rename=重命名
+specialValue string --特例值,如重命名值
+specialOrder int --排序值
+isDeleted boolean --记录是否删除  （表示这个字段在这个表里是失效的？yes） 取字段时候加where条件
+
+构建一个内存map,Map<logPathReg,Map<fieldNameReg_specialType,List<specialOrder排序后的有序链表>>>,命名为mapA
+例如，
+通过程序拼接出的输出路径为,命名为拼接路径A：
+/data_warehouse/ods_view.db/log_medusa_main3x/logType=play/eventId=xxx/key_day=20170626/key_hour=13
+
+疑问：
+拼接路径A去mapA里做正则匹配，当有logPathReg多个匹配如何选择？是根据specialOrder做优先选择?
+回答：yes。specialOrder的粒度为logPathReg
+
+case 1
+logPathReg=/data_warehouse/ods_view.db/log_medusa_main3x*
+fieldNameReg=uSERid
+specialType=rename_and_convert
+specialValue=
+specialOrder=0
+处理方式：能够匹配上logPathReg的目录下的uSERid字段重命名为userId（不会存在userId,uSERid两个字段在一个文件中的情况?处理方式，覆盖正常userId）
+
+case 2
+有两个logPathReg，其中一个比另一个正则更具体(通过specialOrder来排序？yes)
+logPathReg=/data_warehouse/ods_view.db/log_medusa_main3x*
+logPathReg=/data_warehouse/ods_view.db/log_medusa_main3x/logType=play
+
+case 3
+logPathReg=/data_warehouse/ods_view.db/log_medusa_main3x*
+fieldNameReg=uSERid
+specialType=blacklist
+specialValue=
+specialOrder=0
+处理方式：能够匹配上logPathReg的目录下的uSERid字段,在jsonObject里面去除
+
+
+
