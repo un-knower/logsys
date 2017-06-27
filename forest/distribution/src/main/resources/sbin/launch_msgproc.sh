@@ -56,8 +56,8 @@ if [ -n "$taskId" ]; then
 fi
 
 export pidFile=${pwd}/../logs/${taskName}.pid
-export logFile=/data/logs/forest/msgproc_${taskName}.log
-export gcFile=/data/logs/forest/gc_msgproc_${taskName}.log
+export logFile=/data/logs/forest-dist/msgproc_${taskName}.log
+export gcFile=/data/logs/forest-dist/gc_msgproc_${taskName}.log
 
 
 echo "pid file: ${pidFile}"
