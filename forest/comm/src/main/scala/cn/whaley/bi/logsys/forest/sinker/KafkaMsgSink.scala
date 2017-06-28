@@ -3,7 +3,7 @@ package cn.whaley.bi.logsys.forest.sinker
 import java.net.Socket
 
 import cn.whaley.bi.logsys.common.{ConfManager, KafkaUtil}
-import cn.whaley.bi.logsys.forest.{ProcessResultCode, ProcessResult}
+import cn.whaley.bi.logsys.forest.{ProcessResult}
 import cn.whaley.bi.logsys.forest.Traits.{InitialTrait, LogTrait, NameTrait}
 import cn.whaley.bi.logsys.forest.entity.LogEntity
 import com.alibaba.fastjson.{JSON, JSONObject}
@@ -36,6 +36,12 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
 
         //目标topic名前缀
         targetTopicPrefix = confManager.getConfOrElseValue(this.name, "targetTopicPrefix", targetTopicPrefix)
+
+        //lobBody过滤对象
+        logFilter = JSON.parseObject(confManager.getConfOrElseValue(this.name, "logFilter", "{}"))
+
+        //是否保存错误数据
+        saveErrorData = confManager.getConfOrElseValue(this.name, "saveErrorData", "true").toBoolean
 
     }
 
@@ -106,7 +112,7 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
         var count = 0
         val items = datas.flatMap(data => {
             data._2.result.get.map(log => (data._1, log))
-        })
+        }).filter(item => isOK(item._2, logFilter))
         items.foreach(item => {
             val message: KafkaMessage = item._1
             val log: LogEntity = item._2
@@ -120,27 +126,51 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
         count
     }
 
+
     /**
      * 保存错误数据
      * @param datas
      */
     private def saveError(datas: Seq[(KafkaMessage, ProcessResult[Seq[LogEntity]])]): Int = {
         var count = 0
-        datas.foreach(item => {
-            val message: KafkaMessage = item._1
-            val syncInfo = buildSyncInfo(item._1)
-            val errData = buildErrorData(item._1, item._2)
-            val errorTopic: String = getErrTopic(message.topic())
+        if (saveErrorData) {
+            datas.foreach(item => {
+                val message: KafkaMessage = item._1
+                val syncInfo = buildSyncInfo(item._1)
+                val errData = buildErrorData(item._1, item._2)
+                val errorTopic: String = getErrTopic(message.topic())
 
-            val key: Array[Byte] = syncInfo.toJSONString.getBytes()
-            val value: Array[Byte] = errData.toJSONString.getBytes()
-            val record = new ProducerRecord[Array[Byte], Array[Byte]](errorTopic, key, value)
-            kafkaProducer.send(record)
-            count = count + 1
-        })
+                val key: Array[Byte] = syncInfo.toJSONString.getBytes()
+                val value: Array[Byte] = errData.toJSONString.getBytes()
+                val record = new ProducerRecord[Array[Byte], Array[Byte]](errorTopic, key, value)
+                kafkaProducer.send(record)
+                count = count + 1
+            })
+        }
         count
     }
 
+    private def isOK(target: JSONObject, filter: JSONObject): Boolean = {
+        var ok = true
+        if (filter != null && filter.keySet().size() > 0) {
+            val it = filter.keySet().iterator()
+            while (it.hasNext && ok) {
+                val key = it.next()
+                val targetObj = target.get(key)
+                val filterObj = filter.get(key)
+                if (filterObj.isInstanceOf[JSONObject]) {
+                    if (targetObj != null && targetObj.isInstanceOf[JSONObject]) {
+                        ok = ok && isOK(targetObj.asInstanceOf[JSONObject], filterObj.asInstanceOf[JSONObject])
+                    } else {
+                        ok = false
+                    }
+                } else {
+                    ok = ok && target.containsKey(key) && filter.get(key).equals(target.get(key))
+                }
+            }
+        }
+        ok
+    }
 
     private def getTargetTopic(sourceTopic: String, logEntity: LogEntity): String = {
         val targetTopic =
@@ -216,6 +246,9 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
     private var kafkaUtil: KafkaUtil = null
     private var bootstrapServers: String = null
     private var targetTopicPrefix = "log-origin"
+    //日志过滤器,LogEntity应该是logFilter的一个超集,不能存在属性值不一致
+    private var logFilter: JSONObject = null
+    private var saveErrorData: Boolean = true
 
 
 }
