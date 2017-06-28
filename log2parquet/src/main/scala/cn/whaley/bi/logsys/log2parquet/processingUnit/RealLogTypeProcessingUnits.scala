@@ -38,7 +38,8 @@ class RealLogTypeProcessingUnits extends LogProcessorTraitV2 with LogTrait {
     }else false
   }
   /**
-    * 解析出realLogType，并校验realLogType是否有效
+    * 解析出realLogType，并校验realLogType是否有效,
+    * 在jsonObject中，将realLogType的值替换原有logType的值
     *
     * @return
     */

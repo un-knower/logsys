@@ -29,19 +29,12 @@ class RemoveInvalidKeysProcessingUnits extends LogProcessorTraitV2 with LogTrait
     * @return
     */
   def isValidKey(product:String,logType:String,key:String):Boolean = {
-   /* if(key != null && key.nonEmpty) {
-      if(!keyWhiteList.contains(key)){
-        regexKey findFirstIn key match {
-          case Some(_) => !FieldNameListUtil.isBlack(product,logType,key)
-          case None => false
-        }
-      }else true
-    }else false*/
+
     false
   }
 
   /**
-    * 解析出realLogType，并校验realLogType是否有效
+    * 黑白名单处理器
     *
     * @return
     */

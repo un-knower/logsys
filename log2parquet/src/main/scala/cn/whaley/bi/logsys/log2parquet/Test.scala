@@ -1,9 +1,14 @@
 package cn.whaley.bi.logsys.log2parquet
 
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.regex.Pattern
 
-import cn.whaley.bi.logsys.log2parquet.utils.{MetaDataUtils, PhoenixUtils}
+import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
+import cn.whaley.bi.logsys.log2parquet.processingUnit.OutputPathProcessingUnits
+import cn.whaley.bi.logsys.log2parquet.utils.{DateFormatUtils, MetaDataUtils, PhoenixUtils}
+import com.alibaba.fastjson.JSONObject
 
 /**
   * Created by baozhiwang on 2017/6/22.
@@ -23,11 +28,69 @@ object Test {
       println(e._1+"->"+e._2)
     })*/
 
-    val appId2OutputPathTemplateMap=getAppId2OutputPathTemplateMap
+   /* val appId2OutputPathTemplateMap=getAppId2OutputPathTemplateMap
     appId2OutputPathTemplateMap.foreach(e=>{
       println(e._1+"->"+e._2)
-    })
+    })*/
+
+    testOutputPath
+
+
+
   }
+
+
+def testOutputPath(): Unit ={
+   var outputPathTemplate= Some("log_medusa_main3x_${log_type}_${event_id}/key_day=${key_day}/key_hour=${key_hour}").get
+  val jsonObject=new JSONObject()
+   jsonObject.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,"play")
+   jsonObject.put(LogKeys.LOG_BODY_EVENT_ID,"helios-player-sdk-startPlay")
+   jsonObject.put(LogKeys.LOG_KEY_DAY,"20170628")
+   jsonObject.put(LogKeys.LOG_KEY_HOUR,"05")
+   if(outputPathTemplate.nonEmpty){
+     if(outputPathTemplate.contains("${log_type}")&&jsonObject.containsKey(LogKeys.LOG_BODY_REAL_LOG_TYPE)){
+      val realLogType=jsonObject.getString(LogKeys.LOG_BODY_REAL_LOG_TYPE)
+      println("realLogType:"+realLogType)
+      outputPathTemplate=outputPathTemplate.replace("${log_type}",realLogType)
+    }else{
+      //remove ${log_type} from tableName
+      println("not in:")
+      outputPathTemplate=outputPathTemplate.replace("_${log_type}","")
+
+      println("aa_${log_type}".replace("_${log_type}",""))
+    }
+
+    if(outputPathTemplate.contains("${event_id}")&&jsonObject.containsKey(LogKeys.LOG_BODY_EVENT_ID)){
+      val eventId=jsonObject.getString(LogKeys.LOG_BODY_EVENT_ID)
+      outputPathTemplate=outputPathTemplate.replace("${event_id}",eventId).replace(".","_").replace("-","_")
+    }else{
+      //remove ${event_id} from tableName
+      outputPathTemplate=outputPathTemplate.replace("_${event_id}","")
+    }
+
+     if(outputPathTemplate.contains("${key_day}")&&jsonObject.containsKey(LogKeys.LOG_KEY_DAY)){
+       val key_day=jsonObject.getString(LogKeys.LOG_KEY_DAY)
+       outputPathTemplate=outputPathTemplate.replace("${key_day}",key_day)
+     }else{
+       //remove ${event_id} from tableName
+       outputPathTemplate=outputPathTemplate.replace("key_day=${key_day}","")
+     }
+
+     if(outputPathTemplate.contains("${key_hour}")&&jsonObject.containsKey(LogKeys.LOG_KEY_HOUR)){
+       val key_hour=jsonObject.getString(LogKeys.LOG_KEY_HOUR)
+       outputPathTemplate=outputPathTemplate.replace("${key_hour}",key_hour)
+     }else{
+       //remove ${event_id} from tableName
+       outputPathTemplate=outputPathTemplate.replace("key_hour=${key_hour}","")
+     }
+
+
+    jsonObject.put(LogKeys.LOG_OUTPUT_PATH,outputPathTemplate)
+  }
+  println("----"+jsonObject.get(LogKeys.LOG_OUTPUT_PATH))
+
+}
+
 
   def getAppId2OutputPathTemplateMap: scala.collection.mutable.HashMap[String,String] ={
     val appId2OutputPathTemplateMap = scala.collection.mutable.HashMap.empty[String,String]

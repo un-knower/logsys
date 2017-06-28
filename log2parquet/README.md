@@ -92,7 +92,7 @@ val realLogType = if(EVENT == logType){
 * 黑白名单处理单元[由连凯做]
 * 在原有log2parquet需要做一条日志解析为多条日志的行为，现有log2parquet无需此操作,因为已经在最新的forest[冯进]处理好了
 * 在开发最新log2parquet的时候，不需要考虑parameter的平展话过程，因为已经在最新的forest[冯进]处理好了
-* 将不确定的字段放在"_corrupt"的json结构体里
+* 将不确定的字段放在"_corrupt"的json结构体里?暂时扔掉
 
 ####概念统一
 a.处理器组:处理器组由多个处理器组成。例如，电视猫3.x处理组，此处理组由黑名单处理单元、平展化处理器等构成。
@@ -124,8 +124,8 @@ removeInvalidKeys
 
 TODO:
 1. 拼接输出path，作为json的key[作为一个处理器]
-2. 字段名不允许出现"."
-3. eventId的中划线变下划线[同步冯进]
+2. 字段名不允许出现"."和"-"
+3. eventId的中划线变下划线[同步冯进]？eventId的value作为输出路径的值的时候，将.或-变为_;eventId的value在jsonObject不用变
 4. 用户的黑名单设计由[连凯]给出方案
 6. realIp处理器
 7. metis

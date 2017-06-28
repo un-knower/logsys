@@ -63,8 +63,19 @@ object LogKeys {
 
 
 
-    //中间字段
+
+
+
+
+  //----------拼接输出路径使用
+   //logTime计算出来的字段
+    val LOG_KEY_DAY = "key_day"
+    val LOG_KEY_HOUR = "key_hour"
+    val LOG_OUTPUT_PATH = "output_path"
+  //逻辑处理得到的字段
     val LOG_BODY_REAL_LOG_TYPE = "realLogType"
+
+
 
 
 
