@@ -36,16 +36,16 @@ class OutputPathProcessingUnits extends LogProcessorTraitV2 with LogTrait {
       //boikgpokn78sb95ktmsc1bnkechpgj9l->log_medusa_main3x_${log_type}_${event_id}/key_day=${key_day}/key_hour=${key_hour}
 
       if (outputPathTemplate.nonEmpty) {
-        if (outputPathTemplate.contains("${log_type}") && jsonObject.containsKey(LogKeys.LOG_BODY_REAL_LOG_TYPE)) {
-          val realLogType = jsonObject.getString(LogKeys.LOG_BODY_REAL_LOG_TYPE)
-          outputPathTemplate = outputPathTemplate.replace("${log_type}", realLogType)
+        if (outputPathTemplate.contains("${log_type}") && jsonObject.containsKey(LogKeys.LOG_BODY_LOG_TYPE)) {
+          val logType = jsonObject.getString(LogKeys.LOG_BODY_LOG_TYPE)
+          outputPathTemplate = outputPathTemplate.replace("${log_type}", logType)
         } else {
           outputPathTemplate = outputPathTemplate.replace("_${log_type}", "")
         }
 
-        if (outputPathTemplate.contains("${event_id}") && jsonObject.containsKey(LogKeys.LOG_BODY_EVENT_ID)) {
-          val eventId = jsonObject.getString(LogKeys.LOG_BODY_EVENT_ID)
-          outputPathTemplate = outputPathTemplate.replace("${event_id}", eventId)
+        if (outputPathTemplate.contains("${event_id}") && jsonObject.containsKey(LogKeys.LOG_BODY_REAL_LOG_TYPE)) {
+          val realLogType = jsonObject.getString(LogKeys.LOG_BODY_REAL_LOG_TYPE)
+          outputPathTemplate = outputPathTemplate.replace("${event_id}", realLogType)
         } else {
           outputPathTemplate = outputPathTemplate.replace("_${event_id}", "")
         }
