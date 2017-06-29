@@ -1,7 +1,9 @@
 package cn.whaley.bi.logsys.log2parquet.processingUnit
 
+import java.io.File
+
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
+import cn.whaley.bi.logsys.log2parquet.constant.{Constants, LogKeys}
 import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTraitV2
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
 import cn.whaley.bi.logsys.log2parquet.{MsgBatchManagerV3, ProcessResult, ProcessResultCode}
@@ -61,7 +63,7 @@ class OutputPathProcessingUnits extends LogProcessorTraitV2 with LogTrait {
         } else {
           outputPathTemplate = outputPathTemplate.replace("key_hour=${key_hour}", "")
         }
-        jsonObject.put(LogKeys.LOG_OUTPUT_PATH, outputPathTemplate)
+        jsonObject.put(LogKeys.LOG_OUTPUT_PATH, Constants.ODS_VIEW_HDFS_OUTPUT_PATH+File.separator+outputPathTemplate)
       }
       new ProcessResult(this.name, ProcessResultCode.processed, "", Some(jsonObject))
     } catch {
