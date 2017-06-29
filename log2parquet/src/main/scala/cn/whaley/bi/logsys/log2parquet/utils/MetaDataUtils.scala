@@ -274,9 +274,9 @@ object MetaDataUtils {
         if (tabNameFields.isEmpty) tabNameFields = tabNameFieldMap.get("ALL")
         if (parFields.isEmpty) parFields = parFieldMap.get("ALL")
 
-        val dbNameStr = getOrDefault(logObj, dbNameFields)
-        val tabNameStr = getOrDefault(logObj, tabNameFields)
-        val parStr = getOrDefault(logObj, parFields)
+        val dbNameStr = getOrDefault(0, logObj, dbNameFields)
+        val tabNameStr = getOrDefault(1, logObj, tabNameFields)
+        val parStr = getOrDefault(2, logObj, parFields)
 
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
@@ -285,9 +285,9 @@ object MetaDataUtils {
     }
 
     //优先级: jsonObj字段值 -> conf字段值 , 如果两者都为空,则忽略该字段
-    def getOrDefault(jsonObj: JSONObject, conf: Option[List[(String, String, String, Int)]]): String = {
+    def getOrDefault(fieldFlag: Int, jsonObj: JSONObject, conf: Option[List[(String, String, String, Int)]]): String = {
         if (conf.isDefined) {
-            conf.get.map(field => {
+            val fields = conf.get.map(field => {
                 val fieldName = field._2
                 var fieldValue = field._3
                 val fieldOrder = field._4
@@ -299,7 +299,7 @@ object MetaDataUtils {
                 } else if (fieldName == "key_hour" && !jsonObj.containsKey("key_hour")) {
                     val logTime = new Date()
                     logTime.setTime(jsonObj.getLongValue("logTime"))
-                    fieldValue = new SimpleDateFormat("HHmm").format(logTime)
+                    fieldValue = new SimpleDateFormat("HH").format(logTime)
                 }
 
                 if (jsonObj.containsKey(fieldName)
@@ -312,7 +312,12 @@ object MetaDataUtils {
                 } else {
                     None
                 }
-            }).filter(item => item.isDefined).map(item => item.get).sortBy(item => item._3).map(item => item._2).mkString("_")
+            }).filter(item => item.isDefined).map(item => item.get).sortBy(item => item._3)
+            if (fieldFlag == 0 || fieldFlag == 1) {
+                fields.map(item => item._2).mkString("_")
+            } else {
+                fields.map(item => s"${item._1}=${item._2}").mkString("/")
+            }
         } else {
             ""
         }
