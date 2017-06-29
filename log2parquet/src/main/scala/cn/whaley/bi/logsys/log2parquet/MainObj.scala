@@ -28,6 +28,13 @@ object MainObj {
     def main(args: Array[String]) {
         require(args.length >= 1)
 
+        println("args:")
+        for (elem<-args){
+            println(elem)
+        }
+
+
+
         val cls = args(0)
         val index = cls.indexOf('.')
         val clsQualityName = if (index < 0) {
@@ -42,6 +49,10 @@ object MainObj {
         val executedTrait = clz.newInstance().asInstanceOf[ExecutedTrait]
 
         val execArgs = args.toList.tail.toArray
+        println("execArgs:")
+        for (elem<-execArgs){
+            println(elem)
+        }
         executedTrait.execute(execArgs)
     }
 }
