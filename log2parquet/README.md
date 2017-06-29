@@ -130,7 +130,8 @@ TODO:
 3. realIp处理器
 4. metis?
 5. metadata.logfile_key_field_value,metadata.logfile_field_desc，生成数据给parquet
-
+1. 表名称字段需要灵活设计，使用ArrayBuffer按顺序存储表名称字段，广播，然后在拼接路径处理单元中，从jsonObject中取值，替换原有模版站位（原有模版优化：
+   不使用string replace）
 
 
 问题：
@@ -143,7 +144,11 @@ TODO:
  "realLogType":"medusa-keyevent-key",
 
 拼接出的表名称
-log_medusa_main3x_medusa-keyevent-key_medusa-keyevent-key
+log_medusa_main3x_medusa-keyevent-key_medusa-keyevent-key 错
+正确的拼接路径是
+log_medusa_main3x_event_medusa_keyevent_key [中划线和点 替换为 下划线]
  
 boikgpokn78sb95ktmsc1bnkechpgj9l->log_medusa_main3x_${log_type}_${event_id}/key_day=${key_day}/key_hour=${key_hour}
-"output_path":"/data_warehouse/ods_view.db/log_medusa_main3x_medusa-keyevent-key_medusa-keyevent-key/key_day=20170614/key_hour=13",
+"output_path":"/data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_keyevent_key/key_day=20170614/key_hour=13"
+
+
