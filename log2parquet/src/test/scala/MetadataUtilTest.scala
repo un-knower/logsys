@@ -32,7 +32,7 @@ class MetadataUtilTest {
     @Test
     def testParseLogObjRddPath(): Unit = {
         val context = getSparkContext()
-        val rdd = context.textFile(testPath).map(row =>JSON.parseObject(row))
+        val rdd = context.textFile(testPath).map(row => JSON.parseObject(row))
         MetaDataUtils.parseLogObjRddPath(rdd).take(10).foreach(row => {
             println(row._1 + "\t" + row._2.toJSONString)
         })
@@ -42,6 +42,16 @@ class MetadataUtilTest {
     def testResolveAppLogKeyFieldDescConfig(): Unit = {
         val conf = MetaDataUtils.resolveAppLogKeyFieldDescConfig(1)
         conf.foreach(println)
+    }
+
+    @Test
+    def testParseSpecialRules(): Unit = {
+        val context = getSparkContext()
+        val rdd = context.textFile(testPath).map(row => JSON.parseObject(row))
+        val pathRdd = MetaDataUtils.parseLogObjRddPath(rdd)
+        MetaDataUtils.parseSpecialRules(pathRdd).take(10).foreach(row => {
+            println(row)
+        })
     }
 
 }

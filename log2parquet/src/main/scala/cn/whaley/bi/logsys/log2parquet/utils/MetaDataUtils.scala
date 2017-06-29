@@ -324,13 +324,20 @@ object MetaDataUtils {
      * @param rdd
      * @return Map[logPath,(字段重命名清单,字段黑名单,行过滤器)]
      */
-    def parseSpecialRules(rdd: RDD[(String, JSONObject)]): Map[String, (Seq[(String, String)], Seq[String], Seq[(String, String)])] = {
+    def parseSpecialRules(rdd: RDD[(String, JSONObject)]): Array[AppLogFieldSpecialRules] = {
 
         //特例字段配置数据
         val specialFieldDescConf = queryAppLogSpecialFieldDescConf
 
         //路径及其所有字段集合
-        val pathAndFields = rdd.map(row => (row._1, row._2.keySet().asScala)).reduceByKey((set1, set2) => set1 ++ set2).collect()
+        val pathAndFields = rdd.map(row => (row._1, row._2.keySet().toArray(new Array[String](0)))).reduceByKey((set1, set2) => {
+            val set = set1.filter(item => set2.contains(item) == false)
+            if (!set.isEmpty) {
+                set ++ set2
+            } else {
+                set2
+            }
+        }).collect()
 
         val rules = pathAndFields.map(item => {
             val path = item._1
@@ -338,43 +345,48 @@ object MetaDataUtils {
 
             //匹配当前路径的配置,且排序值最小的一组配置
             var pathSpecialConf = specialFieldDescConf.filter(conf => conf._1.r.findFirstMatchIn(path).isDefined)
-            val order = pathSpecialConf.minBy(conf => conf._5)
-            pathSpecialConf = pathSpecialConf.filter(conf => conf._5 == order)
+            if (!pathSpecialConf.isEmpty) {
+                val order = pathSpecialConf.minBy(conf => conf._5)
+                pathSpecialConf = pathSpecialConf.filter(conf => conf._5 == order)
 
-            //字段过滤器: Seq[源字段名]
-            val fieldFilterList = pathSpecialConf.filter(conf => conf._3 == "blackList").flatMap(conf => {
-                val specialValue = conf._4
-                val fieldPattern = if (specialValue.charAt(0) == '1') {
-                    Pattern.compile(conf._2, Pattern.CASE_INSENSITIVE)
-                }
-                else {
-                    Pattern.compile(conf._2)
-                }
-                val isReserve = specialValue.charAt(0) == '0'
-                (Pattern.compile(conf._2, Pattern.CASE_INSENSITIVE), isReserve)
-                fields.filter(field => fieldPattern.matcher(field).find()).map(field => (field, isReserve))
-            })
-            //剔除白名单字段
-            val whiteList = fieldFilterList.filter(item => item._2 == true)
-            val blackList = fieldFilterList.filter(item => whiteList.exists(p => p._1 == item._1) == false).map(item => item._1)
+                //字段过滤器: Seq[源字段名]
+                val fieldFilterList = pathSpecialConf.filter(conf => conf._3 == "blackList").flatMap(conf => {
+                    val specialValue = conf._4
+                    val fieldPattern = if (specialValue.charAt(0) == '1') {
+                        Pattern.compile(conf._2, Pattern.CASE_INSENSITIVE)
+                    }
+                    else {
+                        Pattern.compile(conf._2)
+                    }
+                    val isReserve = specialValue.charAt(0) == '0'
+                    (Pattern.compile(conf._2, Pattern.CASE_INSENSITIVE), isReserve)
+                    fields.filter(field => fieldPattern.matcher(field).find()).map(field => (field, isReserve))
+                })
+
+                //剔除白名单字段
+                val whiteList = fieldFilterList.filter(item => item._2 == true)
+                val blackList = fieldFilterList.filter(item => whiteList.exists(p => p._1 == item._1) == false).map(item => item._1)
 
 
-            //字段重命名: Seq[(源字段名,字段目标名)]
-            val rename = pathSpecialConf.filter(conf => conf._3 == "rename").flatMap(conf => {
-                fields.filter(field => conf._2.r.findFirstMatchIn(field).isDefined).map(field => (field, conf._4))
-            })
+                //字段重命名: Seq[(源字段名,字段目标名)]
+                val rename = pathSpecialConf.filter(conf => conf._3 == "rename").flatMap(conf => {
+                    fields.filter(field => conf._2.r.findFirstMatchIn(field).isDefined).map(field => (field, conf._4))
+                })
 
-            //行过滤器: Seq[(字段名,字段值)]
-            val rowBlackFilter = pathSpecialConf.filter(conf => conf._3 == "rowBlackFilter").flatMap(conf => {
-                fields.filter(field => conf._2.r.findFirstMatchIn(field).isDefined).map(field => (field, conf._4))
-            })
-
-            (path, (rename, blackList, rowBlackFilter))
-        }).toMap
+                //行过滤器: Seq[(字段名,字段值)]
+                val rowBlackFilter = pathSpecialConf.filter(conf => conf._3 == "rowBlackFilter").flatMap(conf => {
+                    fields.filter(field => conf._2.r.findFirstMatchIn(field).isDefined).map(field => (field, conf._4))
+                })
+                AppLogFieldSpecialRules(path, rename, blackList, rowBlackFilter)
+            } else {
+                AppLogFieldSpecialRules(path, Array[(String, String)](), Array[String](), Array[(String, String)]())
+            }
+        })
 
         rules
 
     }
 
+    case class AppLogFieldSpecialRules(path: String, rename: Seq[(String, String)], blackList: Seq[String], rowBlackFilter: Seq[(String, String)])
 
 }
