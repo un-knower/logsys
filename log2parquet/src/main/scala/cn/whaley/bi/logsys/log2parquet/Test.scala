@@ -9,6 +9,8 @@ import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
 import cn.whaley.bi.logsys.log2parquet.processingUnit.OutputPathProcessingUnits
 import cn.whaley.bi.logsys.log2parquet.utils.{DateFormatUtils, MetaDataUtils, PhoenixUtils}
 import com.alibaba.fastjson.JSONObject
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
 
 /**
   * Created by baozhiwang on 2017/6/22.
@@ -33,10 +35,22 @@ object Test {
       println(e._1+"->"+e._2)
     })*/
 
-    testOutputPath
+   // testOutputPath
+    testSparkSession
 
 
 
+
+  }
+
+
+  def testSparkSession(): Unit ={
+    val inputPath="/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=13/boikgpokn78sb95ktmsc1bnkechpgj9l_2017061413_raw_7_575892351.json.gz"
+    val config = new SparkConf()
+    config.setMaster("local[2]")
+    val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
+    val rdd=sparkSession.sparkContext.textFile(inputPath, 2)
+    println(rdd.count())
   }
 
 

@@ -23,6 +23,7 @@ class MsgProcExecutor extends ExecutedTrait with LogTrait {
     }
     val parameters = parsed._2.get
     val confManager = new ConfManager(parameters.confValues, parameters.confFiles)
+
     batchManager = new MsgBatchManagerV3()
     batchManager.init(confManager)
     try {
@@ -84,7 +85,7 @@ class MsgProcExecutor extends ExecutedTrait with LogTrait {
     val confFiles = if (cmdLine.hasOption("f")) {
       cmdLine.getOptionValue("f").split(",")
     } else {
-      Array("MsgBatchManager.xml")
+      Array("MsgBatchManagerV3.xml")
     }
     val parameters = Parameters(confValues, confFiles)
 

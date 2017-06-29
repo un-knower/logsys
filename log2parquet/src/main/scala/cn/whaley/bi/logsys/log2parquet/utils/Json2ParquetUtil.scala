@@ -18,6 +18,11 @@ object Json2ParquetUtil {
     def saveAsParquet(logRdd: RDD[(String, String)], sqlContext: SQLContext /*,params: Params, outputDate: String*/) = {
         val conf = new Configuration()
         val fs = FileSystem.get(conf)
+
+
+//  /tmp/data_warehouse/ods_origin.db/
+
+
         /*********  写json文件阶段 ************/
         logRdd.foreachPartition(iter => {
             val partId = UUID.randomUUID().toString

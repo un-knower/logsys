@@ -29,4 +29,8 @@ object PathUtil {
     path
   }
 
+  def tableNameStandard(originalName:String):String={
+    originalName.replace("-","_").replace(".","_")
+  }
+
 }

@@ -12,7 +12,7 @@ import org.apache.spark.sql.SparkSession
 /**
   * Created by michael on 2017/6/22.
   */
-class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait {
+class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with java.io.Serializable {
 
 
   /**
@@ -41,64 +41,55 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait {
     *
     */
   def start(): Unit = {
-    val rdd_original = MsgBatchManagerV3.sparkSession.sparkContext.textFile(MsgBatchManagerV3.inputPath, 200)
+    val rdd_original = MsgBatchManagerV3.sparkSession.sparkContext.textFile(MsgBatchManagerV3.inputPath, 2)
+    println("rdd_original.count():"+rdd_original.count())
+    LOG.info("rdd_original.count():"+rdd_original.count())
 
-    //初始化元数据表
-
-    //按logType和eventId分类
     val rdd_result = rdd_original.mapPartitions(
       partition => {
-        val confManager = new ConfManager(Array("MsgBatchManagerV2.xml", "settings.properties"))
-        val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
+        val confManager = new ConfManager(Array("MsgBatchManagerV3.xml", "settings.properties"))
+        val logProcessGroupName = confManager.getConf(this.name,"LogProcessGroup")
+        println("---logProcessGroupName:"+logProcessGroupName)
         val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
 
         //分叉处理medusa2x的处理器组初始化
-        initAllProcessGroup
+        //initAllProcessGroup
 
         partition
           .map(line => string2JsonObject(line))
           .filter(obj => obj != null)
           .map(jsonObject => {
             val appID = jsonObject.getString(LogKeys.LOG_APP_ID)
-            val ret = if ("boikgpokn78sb95ktmsc1bnken8tuboa".equalsIgnoreCase(appID)) {
+            val ret = if ("xxxxxxxxxxxxx_boikgpokn78sb95ktmsc1bnken8tuboa".equalsIgnoreCase(appID)) {
               //进入分叉逻辑
-              initAllProcessGroup.get(appID).get.process(jsonObject)
-              //val jsonObjectAfter=initAllProcessGroup.get(appID).get.process(jsonObject).result.get
-              //val outputPath= jsonObjectAfter.get("outputPath")
-              //(outputPath,jsonObjectAfter.toJSONString)
+              //initAllProcessGroup.get(appID).get.process(jsonObject)
+              processGroupInstance.process(jsonObject)
             } else {
               processGroupInstance.process(jsonObject)
-
-              //val jsonObjectAfter=processGroupInstance.process(jsonObject).result.get
-              //val outputPath= jsonObjectAfter.get("outputPath")
-              //(outputPath,jsonObjectAfter.toJSONString)
             }
+            //println(ret)
             ret
           })
-
       })
 
-    val errRows = rdd_result.filter(row => row.hasErr)
+
+
+   /* val errRows = rdd_result.filter(row => row.hasErr).map(row => {
+      val outputPath = row.result.get.getString(LogKeys.LOG_OUTPUT_PATH)
+      (outputPath, row.result.get)
+    })*/
 
     val okRows=rdd_result.filter(row => row.hasErr == false).map(row => {
-      val outputPath = row.result.get.getString("outputPath")
+      val outputPath = row.result.get.getString(LogKeys.LOG_OUTPUT_PATH)
       (outputPath, row.result.get)
     })
+    println("okRows.count():"+okRows.count())
+    println("okRows.first():"+okRows.first())
 
 
-    val rdd1=okRows.groupByKey(200)
-    //mapPartitionsWithIndex
+    //errRows.saveAsTextFile("/data_warehouse/ods_view.db/test_error_row")
+    //okRows.saveAsTextFile("/data_warehouse/ods_view.db/test_ok_row")
 
-
-
-    /** 输出路径
-      * 通过appid读取[metadata.applog_key_field_desc]表，通过【表字段，分区字段（排序）】获得输出路径的非hive表非分区字段，
-      * 通过logTime获得key_day和key_hour获得hive表分区字段。
-      *
-      * boikgpokn78sb95ktmsc1bnkechpgj9l->log_medusa_main3x_${log_type}_${event_id}/key_day=${key_day}/key_hour=${key_hour}
-      *
-      */
-    //val outputPath=PathUtil.getOdsViewPath(appID, startDate, startHour, "logType", "eventID")
   }
 
   def initAllProcessGroup(): scala.collection.mutable.HashMap[String, ProcessGroupTraitV2] = {
@@ -150,6 +141,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait {
 
 object MsgBatchManagerV3 {
   val config = new SparkConf()
+  config.setMaster("local[2]")
   val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
   var inputPath = ""
   var appId2OutputPathTemplateMapBroadCast: Broadcast[scala.collection.mutable.HashMap[String, String]] = _

@@ -4,6 +4,7 @@ import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
 import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTraitV2
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
+import cn.whaley.bi.logsys.log2parquet.utils.{PathUtil}
 import cn.whaley.bi.logsys.log2parquet.{ProcessResult, ProcessResultCode}
 import com.alibaba.fastjson.JSONObject
 
@@ -39,9 +40,8 @@ class RealLogTypeProcessingUnits extends LogProcessorTraitV2 with LogTrait {
   }
   /**
     * 解析出realLogType，并校验realLogType是否有效,
-    * 在jsonObject中，将realLogType的值替换原有logType的值
     *
-    * @return
+    * @return ProcessResult[JSONObject]
     */
   def process(jsonObject: JSONObject): ProcessResult[JSONObject] = {
     try {
@@ -56,13 +56,12 @@ class RealLogTypeProcessingUnits extends LogProcessorTraitV2 with LogTrait {
         }
 
         if(isValidLogType(realLogType)){
-          jsonObject.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
+          jsonObject.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,PathUtil.tableNameStandard(realLogType))
           new ProcessResult(this.name, ProcessResultCode.processed, "", Some(jsonObject))
         }else{
-          //do nothing
+          //discard record
           new ProcessResult(this.name, ProcessResultCode.discard, "", Some(jsonObject))
         }
-
       }else{
         //do nothing
         new ProcessResult(this.name, ProcessResultCode.skipped, "", Some(jsonObject))

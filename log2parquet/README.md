@@ -132,3 +132,18 @@ TODO:
 5. metadata.logfile_key_field_value,metadata.logfile_field_desc，生成数据给parquet
 
 
+
+问题：
+1. 
+原有日志
+ "logType":"event",
+  "eventId":"medusa-keyevent-key",
+
+逻辑判断后，获得
+ "realLogType":"medusa-keyevent-key",
+
+拼接出的表名称
+log_medusa_main3x_medusa-keyevent-key_medusa-keyevent-key
+ 
+boikgpokn78sb95ktmsc1bnkechpgj9l->log_medusa_main3x_${log_type}_${event_id}/key_day=${key_day}/key_hour=${key_hour}
+"output_path":"/data_warehouse/ods_view.db/log_medusa_main3x_medusa-keyevent-key_medusa-keyevent-key/key_day=20170614/key_hour=13",
