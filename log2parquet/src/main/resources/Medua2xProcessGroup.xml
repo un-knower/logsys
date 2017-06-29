@@ -12,6 +12,6 @@
 
     <property>
         <name>Medusa2xLogProcessingUnits.processors</name>
-        <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor,GenericActionLogCommProcessor</value>
+        <value></value>
     </property>
 </configuration>
