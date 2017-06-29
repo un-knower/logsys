@@ -3,6 +3,7 @@ package cn.whaley.bi.logsys.log2parquet
 import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
 import cn.whaley.bi.logsys.log2parquet.traits._
+import cn.whaley.bi.logsys.log2parquet.utils.MetaDataUtils.AppLogFieldSpecialRules
 import cn.whaley.bi.logsys.log2parquet.utils.{MetaDataUtils}
 import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.spark.SparkConf
@@ -33,6 +34,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       **/
     val appId2OutputPathTemplateMap = MetaDataUtils.getAppId2OutputPathTemplateMap
     MsgBatchManagerV3.appId2OutputPathTemplateMapBroadCast = MsgBatchManagerV3.sparkSession.sparkContext.broadcast(appId2OutputPathTemplateMap)
+
+    //广播规则库
+    val rdd_original = MsgBatchManagerV3.sparkSession.sparkContext.textFile(MsgBatchManagerV3.inputPath, 2)
+    val pathRdd = MetaDataUtils.parseLogStrRddPath(rdd_original)
+    val specialRuels= MetaDataUtils.parseSpecialRules(pathRdd)
+    MsgBatchManagerV3.specialRulesBroadCase = MsgBatchManagerV3.sparkSession.sparkContext.broadcast(specialRuels)
+
   }
 
   /**
@@ -145,4 +153,5 @@ object MsgBatchManagerV3 {
   val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
   var inputPath = ""
   var appId2OutputPathTemplateMapBroadCast: Broadcast[scala.collection.mutable.HashMap[String, String]] = _
+  var specialRulesBroadCase:Broadcast[Array[AppLogFieldSpecialRules]]=_
 }
