@@ -1,6 +1,8 @@
 package cn.whaley.bi.logsys.log2parquet.utils
 
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.regex.Pattern
 
 import com.alibaba.fastjson.{JSONObject, JSON}
@@ -205,20 +207,19 @@ object MetaDataUtils {
      */
     def resolveAppLogKeyFieldDescConfig(confs: Seq[JSONObject]): Map[String, List[(String, String, String, Int)]] = {
         val rs = confs.map(row => (row.getString("APPID"), row.getString("FIELDNAME"), row.getString("FIELDDEFAULT"), row.getInteger("FIELDORDER").toInt))
-        rs.map(row => row._1).distinct.map(id => {
-            val fields = rs.filter(row => row._1 == "ALL" || row._1 == id)
-                .groupBy(row => row._4).map(group => {
-                //同一顺序只允许一个字段名
-                val size = group._2.map(item => item._2).distinct.size
-                assert(size == 1)
-                //合并,最多两行,ALL行和appId行
-                if (size == 1 || group._2.head._1 != "ALL") {
+        rs.map(row => row._1).distinct.map(appId => {
+            //同一顺序只允许一个字段名
+            //合并,最多两行,ALL行和appId行
+            val appFields = rs.filter(row => row._1 == "ALL" || row._1 == appId)
+            val fields = appFields.groupBy(row => row._4).map(group => {
+                assert(group._2.map(item => item._2).distinct.size == 1)
+                if (group._2.size == 1 || group._2.head._1 != "ALL") {
                     group._2(0)
                 } else {
                     group._2(1)
                 }
             }).toList.sortBy(row => row._4)
-            (id, fields)
+            (appId, fields)
         }).toMap
     }
 
@@ -265,16 +266,20 @@ object MetaDataUtils {
                         , parFieldMap: Map[String, List[(String, String, String, Int)]]
                            ): (String, JSONObject) = {
         val appId = logObj.getString("appId")
-        val dbNameFields = dbNameFieldMap.get(appId)
-        val tabNameFields = tabNameFieldMap.get(appId)
-        val parFields = parFieldMap.get(appId)
+        var dbNameFields = dbNameFieldMap.get(appId)
+        var tabNameFields = tabNameFieldMap.get(appId)
+        var parFields = parFieldMap.get(appId)
+
+        if (dbNameFields.isEmpty) dbNameFields = dbNameFieldMap.get("ALL")
+        if (tabNameFields.isEmpty) tabNameFields = tabNameFieldMap.get("ALL")
+        if (parFields.isEmpty) parFields = parFieldMap.get("ALL")
 
         val dbNameStr = getOrDefault(logObj, dbNameFields)
         val tabNameStr = getOrDefault(logObj, tabNameFields)
         val parStr = getOrDefault(logObj, parFields)
 
-        //未设置的部分将被忽略
-        val path = (dbNameStr :: tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/")
+        var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
+        if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
         (path, logObj)
 
     }
@@ -284,19 +289,30 @@ object MetaDataUtils {
         if (conf.isDefined) {
             conf.get.map(field => {
                 val fieldName = field._2
-                var fieldDefault = field._3
+                var fieldValue = field._3
                 val fieldOrder = field._4
+
+                if (fieldName == "key_day" && !jsonObj.containsKey("key_day")) {
+                    val logTime = new Date()
+                    logTime.setTime(jsonObj.getLongValue("logTime"))
+                    fieldValue = new SimpleDateFormat("yyyyMMdd").format(logTime)
+                } else if (fieldName == "key_hour" && !jsonObj.containsKey("key_hour")) {
+                    val logTime = new Date()
+                    logTime.setTime(jsonObj.getLongValue("logTime"))
+                    fieldValue = new SimpleDateFormat("HHmm").format(logTime)
+                }
+
                 if (jsonObj.containsKey(fieldName)
                     && jsonObj.get(fieldName) != null
                     && jsonObj.get(fieldName).toString.trim.length > 0) {
-                    fieldDefault = jsonObj.get(fieldName).toString
+                    fieldValue = jsonObj.get(fieldName).toString
                 }
-                if (fieldDefault != null && fieldDefault.trim.length > 0) {
-                    Some((fieldName, fieldDefault, fieldOrder))
+                if (fieldValue != null && fieldValue.trim.length > 0) {
+                    Some((fieldName, fieldValue, fieldOrder))
                 } else {
                     None
                 }
-            }).filter(item => item.isDefined).map(item => item.get).sortBy(item => item._3).mkString("_")
+            }).filter(item => item.isDefined).map(item => item.get).sortBy(item => item._3).map(item => item._2).mkString("_")
         } else {
             ""
         }
