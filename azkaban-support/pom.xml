@@ -63,6 +63,12 @@
                 <module-name>ods-view-metadata-1.0-SNAPSHOT</module-name>
             </properties>
         </profile>
+        <profile>
+            <id>log2parquet</id>
+            <properties>
+                <module-name>log2parquet-1.0-SNAPSHOT</module-name>
+            </properties>
+        </profile>
     </profiles>
 
 </project>
