@@ -14,17 +14,22 @@ object PhoenixUtils {
     /** It is not necessary to pool Phoenix JDBC Connections.
       * https://phoenix.apache.org/faq.html#Should_I_pool_Phoenix_JDBC_Connections */
     def getConnection: Connection = {
-        Class.forName("org.apache.phoenix.jdbc.PhoenixDriver")
-        val con = DriverManager.getConnection("jdbc:phoenix:bigdata-cmpt-128-1,bigdata-cmpt-128-13,bigdata-cmpt-128-25:2181")
-        con
+        val className="org.apache.phoenix.queryserver.client.Driver"
+        val jdbcUrl="jdbc:phoenix:thin:url=http://bigdata-appsvr-130-7:8765;serialization=PROTOBUF"
+        Class.forName(className)
+        DriverManager.getConnection(jdbcUrl)
+        //Class.forName("org.apache.phoenix.jdbc.PhoenixDriver")
+        //val con = DriverManager.getConnection("jdbc:phoenix:bigdata-cmpt-128-1,bigdata-cmpt-128-13,bigdata-cmpt-128-25:2181")
+        //con
     }
 
 
     def getStatement: Statement = {
-        Class.forName("org.apache.phoenix.jdbc.PhoenixDriver")
-        val con = DriverManager.getConnection("jdbc:phoenix:bigdata-cmpt-128-1,bigdata-cmpt-128-13,bigdata-cmpt-128-25:2181")
-        val stat = con.createStatement()
-        stat
+        getConnection.createStatement()
+        //Class.forName("org.apache.phoenix.jdbc.PhoenixDriver")
+        //val con = DriverManager.getConnection("jdbc:phoenix:bigdata-cmpt-128-1,bigdata-cmpt-128-13,bigdata-cmpt-128-25:2181")
+        //val stat = con.createStatement()
+        //stat
     }
 
     def closeConnection(con: Connection) = {
