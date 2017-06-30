@@ -335,7 +335,7 @@ object MetaDataUtils {
         val specialFieldDescConf = queryAppLogSpecialFieldDescConf
 
         //路径及其所有字段集合
-        val pathAndFields = rdd.map(row => (row._1, row._2.keySet().toArray(new Array[String](0)))).reduceByKey((set1, set2) => {
+        val pathAndFields = rdd.map(row => (row._1, row._2.getJSONObject("logBody").keySet().toArray(new Array[String](0)))).reduceByKey((set1, set2) => {
             val set = set1.filter(item => set2.contains(item) == false)
             if (!set.isEmpty) {
                 set ++ set2
@@ -350,12 +350,15 @@ object MetaDataUtils {
 
             //匹配当前路径的配置,且排序值最小的一组配置
             var pathSpecialConf = specialFieldDescConf.filter(conf => conf._1.r.findFirstMatchIn(path).isDefined)
+            println(s"${path}: all specialConf.length=${pathSpecialConf.length},pathFields.length=${fields.length}")
             if (!pathSpecialConf.isEmpty) {
+                //排序值最小的一组配置
                 val order = pathSpecialConf.minBy(conf => conf._5)
-                pathSpecialConf = pathSpecialConf.filter(conf => conf._5 == order)
+                pathSpecialConf = pathSpecialConf.filter(conf => conf._5 == order._5)
+                println(s"${path}: actual specialConf.length=${pathSpecialConf.length}")
 
                 //字段过滤器: Seq[源字段名]
-                val fieldFilterList = pathSpecialConf.filter(conf => conf._3 == "blackList").flatMap(conf => {
+                val fieldFilterList = pathSpecialConf.filter(conf => conf._3 == "fieldFilter").flatMap(conf => {
                     val specialValue = conf._4
                     val fieldPattern = if (specialValue.charAt(0) == '1') {
                         Pattern.compile(conf._2, Pattern.CASE_INSENSITIVE)
@@ -363,7 +366,7 @@ object MetaDataUtils {
                     else {
                         Pattern.compile(conf._2)
                     }
-                    val isReserve = specialValue.charAt(0) == '0'
+                    val isReserve = specialValue.charAt(1) == '0'
                     (Pattern.compile(conf._2, Pattern.CASE_INSENSITIVE), isReserve)
                     fields.filter(field => fieldPattern.matcher(field).find()).map(field => (field, isReserve))
                 })

@@ -1,5 +1,6 @@
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.regex.Pattern
 
 import cn.whaley.bi.logsys.log2parquet.utils.MetaDataUtils
 import com.alibaba.fastjson.JSON
@@ -11,7 +12,7 @@ import org.junit.Test
  */
 class MetadataUtilTest {
 
-    val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95k7id7n8eb8dc5mlsr/key_day=20170629/key_hour=15/boikgpokn78sb95k7id7n8eb8dc5mlsr_2017062915_raw_5_15257483.json.gz"
+    val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendoj8ilnoi7/key_day=20170630/key_hour=04/boikgpokn78sb95kjhfrendoj8ilnoi7_2017063004_raw_7_337326252.json.gz"
 
     def getSparkContext() = {
         val conf = new SparkConf()
@@ -47,14 +48,28 @@ class MetadataUtilTest {
     @Test
     def testParseSpecialRules(): Unit = {
         val context = getSparkContext()
-        val rdd = context.textFile(testPath).map(row => JSON.parseObject(row))
+        val rdd = context.textFile(testPath).map(row => {
+            val jsonObj= JSON.parseObject(row)
+            jsonObj.getJSONObject("logBody").put("playStat5s","test")
+            jsonObj.getJSONObject("logBody").put("pro","test")
+            jsonObj
+        })
 
         val pathRdd = MetaDataUtils.parseLogObjRddPath(rdd)
-
+        pathRdd.take(10).foreach(println)
         MetaDataUtils.parseSpecialRules(pathRdd).take(10).foreach(row => {
             println(row)
         })
 
     }
+
+    @Test
+    def testReg() = {
+        val pattern = Pattern.compile("whaleytv")
+        println(pattern.matcher("/dw/whaleytv_dd/").find())
+
+        println("whaleytv".r.findFirstMatchIn("ods_view.db/log_whaleytv_wui20/key_day=20170630/key_hour=04").isDefined)
+    }
+
 
 }
