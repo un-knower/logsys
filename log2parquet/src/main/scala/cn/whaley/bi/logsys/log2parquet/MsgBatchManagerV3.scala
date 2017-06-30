@@ -149,7 +149,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
 object MsgBatchManagerV3 {
   val config = new SparkConf()
-  config.setMaster("local[2]")
+  //config.setMaster("local[2]")
   val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
   var inputPath = ""
   var appId2OutputPathTemplateMapBroadCast: Broadcast[scala.collection.mutable.HashMap[String, String]] = _
