@@ -20,10 +20,19 @@
 
     <dependencies>
         <!-- 开源项目依赖-->
+        <!--
         <dependency>
             <groupId>org.apache.phoenix</groupId>
             <artifactId>phoenix-core</artifactId>
             <version>${version-phoenix}</version>
+        </dependency>
+        -->
+        <dependency>
+            <groupId>org.apache.phoenix</groupId>
+            <artifactId>phoenix-4.10.0-HBase</artifactId>
+            <version>1.2</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../lib/phoenix-4.10.0-HBase-1.2-thin-client-without-hadoop.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -49,6 +58,7 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
@@ -57,12 +67,19 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
         </dependency>
+        -->
 
         <!-- 本地项目依赖-->
         <dependency>
             <groupId>cn.whaley.bi.logsys</groupId>
             <artifactId>common</artifactId>
             <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

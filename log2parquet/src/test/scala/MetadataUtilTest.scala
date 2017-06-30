@@ -48,10 +48,13 @@ class MetadataUtilTest {
     def testParseSpecialRules(): Unit = {
         val context = getSparkContext()
         val rdd = context.textFile(testPath).map(row => JSON.parseObject(row))
+
         val pathRdd = MetaDataUtils.parseLogObjRddPath(rdd)
+
         MetaDataUtils.parseSpecialRules(pathRdd).take(10).foreach(row => {
             println(row)
         })
+
     }
 
 }
