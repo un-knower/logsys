@@ -274,9 +274,10 @@ object MetaDataUtils {
         if (tabNameFields.isEmpty) tabNameFields = tabNameFieldMap.get("ALL")
         if (parFields.isEmpty) parFields = parFieldMap.get("ALL")
 
-        val dbNameStr = getOrDefault(0, logObj, dbNameFields)
-        val tabNameStr = getOrDefault(1, logObj, tabNameFields)
-        val parStr = getOrDefault(2, logObj, parFields)
+        val logBody=logObj.getJSONObject("logBody")
+        val dbNameStr = getOrDefault(0, logBody, dbNameFields)
+        val tabNameStr = getOrDefault(1, logBody, tabNameFields)
+        val parStr = getOrDefault(2, logBody, parFields)
 
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
