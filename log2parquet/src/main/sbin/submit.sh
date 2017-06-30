@@ -66,7 +66,7 @@ do
     fi
 done
 
-for file in /data/apps/azkaban/etl/lib/*.jar
+for file in /app/log2parquet/lib/*.jar
 do
     if [[ "$file" == *${spark_mainJarName} ]]; then
         echo "skip $file"
@@ -78,6 +78,11 @@ do
         fi
     fi
 done
+
+#if [ -f "/data/apps/azkaban/share/libs/phoenix-4.10.0-HBase-1.2-thin-client-without-hadoop.jar" ]; then
+#    jarFiles="$jarFiles,/data/apps/azkaban/share/libs/phoenix-4.10.0-HBase-1.2-thin-client-without-hadoop.jar"
+#fi
+
 ts=`date +%Y%m%d_%H%M%S`
 set -x
 $spark_home/bin/spark-submit -v \
