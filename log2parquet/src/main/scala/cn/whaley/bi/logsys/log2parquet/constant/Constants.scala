@@ -6,6 +6,7 @@ package cn.whaley.bi.logsys.log2parquet.constant
 object Constants {
   val ODS_ORIGIN_HDFS_INPUT_PATH: String = "/data_warehouse/ods_origin.db/log_origin"
   val ODS_VIEW_HDFS_OUTPUT_PATH: String = "/data_warehouse/ods_view.db"
+  val DATA_WAREHOUSE: String = "/data_warehouse"
   val PATH_KEY_APPID="key_appId"
   val PATH_KEY_DAY="key_day"
   val PATH_KEY_HOUR="key_hour"

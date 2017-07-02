@@ -1,27 +1,37 @@
 package cn.whaley.bi.logsys.log2parquet.utils
 
-import java.util.UUID
+import java.util.{Date, UUID}
 import java.util.concurrent.{Callable, Executors, TimeUnit}
 
+import cn.whaley.bi.logsys.log2parquet.ProcessResult
+import com.alibaba.fastjson.JSONObject
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{SQLContext, SaveMode}
+import org.apache.spark.sql.{ SaveMode}
 
 import scala.collection.mutable
 
 /**
- * Created by kassell on 2017/1/19.
+ * Created by michael on 2017/7/2.
  */
 object Json2ParquetUtil {
 
-    def saveAsParquet(logRdd: RDD[(String, String)], sqlContext: SQLContext /*,params: Params, outputDate: String*/) = {
+    def saveAsParquet(logRdd: RDD[(String, ProcessResult[JSONObject])], sparkSession: SparkSession /*,params: Params, outputDate: String*/) = {
         val conf = new Configuration()
         val fs = FileSystem.get(conf)
-
-
-//  /tmp/data_warehouse/ods_origin.db/
-
+        val date=new Date
+        //time用来多个azkaban任务一起运行
+        val time=date.getTime
+        val outputPathTmp = s"/log/default/parquet/ods_view/${time}"
+        val jsonDir = s"${outputPathTmp}_json"
+        val tmpDir = s"${outputPathTmp}_tmp"
+        //运行任务之前重建临时文件目录
+        fs.delete(new Path(jsonDir), true)
+        fs.delete(new Path(tmpDir), true)
+        fs.mkdirs(new Path(jsonDir))
+        fs.mkdirs(new Path(tmpDir))
 
         /*********  写json文件阶段 ************/
         logRdd.foreachPartition(iter => {
@@ -36,8 +46,8 @@ object Json2ParquetUtil {
                 val outputPath = item._1
                 val logData = item._2
                 val info = fsMap.getOrElseUpdate(outputPath, {
-                    val tmpFilePath = new Path(s"${outputPath}/tmp/${partId}.tmp")
-                    val jsonFilePath = new Path(s"${outputPath}/tmp/${partId}.json")
+                    val tmpFilePath = new Path(s"${tmpDir}/${outputPath}/${partId}.tmp")
+                    val jsonFilePath = new Path(s"${jsonDir}/${outputPath}/${partId}.json")
 
                     //如果文件存在则删除文件
                     if(fs.exists(tmpFilePath)){
@@ -54,7 +64,7 @@ object Json2ParquetUtil {
                     (tmpFilePath, jsonFilePath, stream, System.currentTimeMillis())
                 })
                 val stream = info._3
-                val bytes = logData.getBytes("utf-8")
+                val bytes = logData.result.get.getBytes("utf-8")
                 stream.write(bytes)
                 stream.write('\n')
             })
@@ -75,41 +85,29 @@ object Json2ParquetUtil {
                 val ts = System.currentTimeMillis() - item._2._4
                 println(s"finished tmp file[${ts},${tmpSize / 1024L}k]: $tmpFilePath -> $jsonFilePath")
             })
-
         })
 
         /** *******  写parquet文件阶段 ************/
 
-        //按照logType对文件进行分组
-
-        val outputPathRdd=logRdd.map(e=>e._1).distinct()
-        val fileGroups= outputPathRdd.map(outputPath=>{
-            val inPath=s"${outputPath}/tmp"
-            val logTypeSize = fs.getContentSummary(new Path(outputPath)).getLength
-            (logTypeSize, inPath, outputPath)
+        //按照outputPath对文件进行分组
+        val status = fs.listStatus(new Path(s"$jsonDir"))
+        val fileGroups = status.map(item => {
+            val outputPathType = item.getPath.getName
+            val outputPathTypeSize = fs.getContentSummary(item.getPath).getLength
+            val inPath = s"$jsonDir/${outputPathType}"
+            val outPath = s"$outputPathType"
+            (outputPathTypeSize, inPath, outPath)
         })
 
-
-
-       /* val status = fs.listStatus(new Path(s"$jsonDir"))
-        val fileGroups = status.map(item => {
-            val logType = item.getPath.getName
-            val logTypeSize = fs.getContentSummary(item.getPath).getLength
-            val inPath = s"$jsonDir/${logType}"
-            val outPath = s"$outputPathValue/$logType"
-            (logTypeSize, inPath, outPath)
-        })*/
 
         println("all files:")
         fileGroups.foreach(println)
 
-        //val jsonProcCount = params.paramMap.getOrElse("jsonProcCount", Math.min(100, fileGroups.length).toString).toInt
-        //val jsonProcCount =Math.min(100, fileGroups.count())
-        val executor = Executors.newFixedThreadPool(50)
+        val executor = Executors.newFixedThreadPool(10)
         //每类logType用一个任务处理
         val futures = fileGroups.filter(_._1 > 0).map(group => {
             println(s"submit task : $group")
-            val callable = new ProcessCallable(group._1, group._2, group._3, sqlContext, fs, null)
+            val callable = new ProcessCallable(group._1, group._2, group._3, sparkSession, fs, null)
             executor.submit(callable)
         })
         //等待执行结果
@@ -125,8 +123,8 @@ object Json2ParquetUtil {
         executor.awaitTermination(1, TimeUnit.MINUTES)
         println("shutdown.")
 
-        //删除json文件 TODO
-        /*val preserveJsonDir = false
+        //删除json文件
+        val preserveJsonDir = false
         val preserveTmpDir = false
        if (!preserveTmpDir) {
            fs.delete(new Path(tmpDir), true)
@@ -147,12 +145,11 @@ object Json2ParquetUtil {
                fs.delete(new Path(jsonDir), true)
                println(s"delete empty dir:$jsonDir")
            }
-       }*/
-
+       }
     }
 }
 
-private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: String, sqlContext: SQLContext, fs: FileSystem, paramMap: Map[String, String]) extends Callable[String] {
+private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: String, sparkSession: SparkSession, fs: FileSystem, paramMap: Map[String, String]) extends Callable[String] {
     override def call(): String = {
         val tsFrom = System.currentTimeMillis()
 
@@ -163,10 +160,10 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
             val jsonSplitNum = Math.ceil(inputSize.toDouble / jsonSplitSize.toDouble).toInt
             //jons转parquet
             println(s"process file[${jsonSplitNum},${jsonSplitSize}]: $inputPath -> $outputPath")
-            sqlContext.read.json(inputPath).coalesce(jsonSplitNum).write.mode(SaveMode.Overwrite).parquet(outputPath)
+            sparkSession.read.json(inputPath).coalesce(jsonSplitNum).write.mode(SaveMode.Overwrite).parquet(outputPath)
             println(s"write file: $outputPath")
             //删除输入目录
-            // TODO fs.delete(new Path(inputPath), true)
+            fs.delete(new Path(inputPath), true)
             val outputSize = fs.getContentSummary(new Path(outputPath)).getLength
             s"convert file: $inputPath(${inputSize / 1024}k) -> $outputPath(${outputSize / 1024}k),ts:${System.currentTimeMillis() - tsFrom}"
 

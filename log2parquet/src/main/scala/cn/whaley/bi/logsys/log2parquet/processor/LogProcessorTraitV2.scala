@@ -7,7 +7,7 @@ import com.alibaba.fastjson.JSONObject
 /**
   * Created by baozhiwang on 2017/6/23.
   */
-trait LogProcessorTraitV2  extends InitialTrait with NameTrait {
+trait LogProcessorTraitV2  extends InitialTrait with NameTrait with java.io.Serializable{
 
   /**
     * 解析日志消息体

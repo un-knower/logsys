@@ -151,4 +151,6 @@ log_medusa_main3x_event_medusa_keyevent_key [中划线和点 替换为 下划线
 boikgpokn78sb95ktmsc1bnkechpgj9l->log_medusa_main3x_${log_type}_${event_id}/key_day=${key_day}/key_hour=${key_hour}
 "output_path":"/data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_keyevent_key/key_day=20170614/key_hour=13"
 
+2.
+getOrDefault方法里面，取日期的logTime不再logBody方法体里面[冯进]
 

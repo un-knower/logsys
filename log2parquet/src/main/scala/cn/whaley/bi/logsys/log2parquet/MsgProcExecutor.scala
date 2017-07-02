@@ -25,9 +25,9 @@ class MsgProcExecutor extends ExecutedTrait with LogTrait {
     val confManager = new ConfManager(parameters.confValues, parameters.confFiles)
 
     batchManager = new MsgBatchManagerV3()
-    batchManager.init(confManager)
+    //batchManager.init(confManager)
     try {
-      batchManager.start()
+      batchManager.start(confManager)
     } catch {
       case e: Throwable => {
         LOG.error("batchManager start failure.", e)
