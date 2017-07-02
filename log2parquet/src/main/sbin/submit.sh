@@ -57,7 +57,7 @@ spark_yarn_queue=$(getSparkProp $MainClass "spark.yarn.queue")
 
 
 
-for file in ../conf/*
+for file in /app/log2parquet/conf/*
 do
 	if [ -n "$resFiles" ]; then
 		resFiles="$resFiles,$file"
