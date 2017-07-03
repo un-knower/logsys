@@ -250,13 +250,13 @@ object MetaDataUtils {
      * @return
      */
     def parseLogObjRddPath(rdd: RDD[JSONObject]): RDD[(String, JSONObject)] = {
-      /*  val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
-        val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
-        val parFieldMap = resolveAppLogKeyFieldDescConfig(2)*/
+        /*  val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
+          val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
+          val parFieldMap = resolveAppLogKeyFieldDescConfig(2)*/
 
-        val d=Map("ALL"->List(("ALL","db_name","ods_view",0)))
-        val t=Map("boikgpokn78sb95ktmsc1bnkechpgj9l"->List(("ALL","tab_prefix","log",0), ("boikgpokn78sb95ktmsc1bnkechpgj9l","product_code","medusa",1), ("boikgpokn78sb95ktmsc1bnkechpgj9l","app_code","main3x",2), ("ALL","logType",null,3), ("ALL","eventId",null,4)))
-        val partitionMap=Map("ALL"->List(("ALL","key_day",null,0), ("ALL","key_hour",null,1)))
+        val d = Map("ALL" -> List(("ALL", "db_name", "ods_view", 0)))
+        val t = Map("boikgpokn78sb95ktmsc1bnkechpgj9l" -> List(("ALL", "tab_prefix", "log", 0), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "product_code", "medusa", 1), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "app_code", "main3x", 2), ("ALL", "logType", null, 3), ("ALL", "eventId", null, 4)))
+        val partitionMap = Map("ALL" -> List(("ALL", "key_day", null, 0), ("ALL", "key_hour", null, 1)))
         rdd.map(jsonObj => parseLogObjPath(jsonObj, d, t, partitionMap))
     }
 
@@ -265,9 +265,9 @@ object MetaDataUtils {
           val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
           val parFieldMap = resolveAppLogKeyFieldDescConfig(2)*/
 
-        val d=Map("ALL"->List(("ALL","db_name","ods_view",0)))
-        val t=Map("boikgpokn78sb95ktmsc1bnkechpgj9l"->List(("ALL","tab_prefix","log",0), ("boikgpokn78sb95ktmsc1bnkechpgj9l","product_code","medusa",1), ("boikgpokn78sb95ktmsc1bnkechpgj9l","app_code","main3x",2), ("ALL","logType",null,3), ("ALL","eventId",null,4)))
-        val partitionMap=Map("ALL"->List(("ALL","key_day",null,0), ("ALL","key_hour",null,1)))
+        val d = Map("ALL" -> List(("ALL", "db_name", "ods_view", 0)))
+        val t = Map("boikgpokn78sb95ktmsc1bnkechpgj9l" -> List(("ALL", "tab_prefix", "log", 0), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "product_code", "medusa", 1), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "app_code", "main3x", 2), ("ALL", "logType", null, 3), ("ALL", "eventId", null, 4)))
+        val partitionMap = Map("ALL" -> List(("ALL", "key_day", null, 0), ("ALL", "key_hour", null, 1)))
         rdd.map(jsonObj => parseLogObjPath(jsonObj, d, t, partitionMap))
     }
 
@@ -290,10 +290,9 @@ object MetaDataUtils {
         if (tabNameFields.isEmpty) tabNameFields = tabNameFieldMap.get("ALL")
         if (parFields.isEmpty) parFields = parFieldMap.get("ALL")
 
-        val logBody=logObj.getJSONObject("logBody")
-        val dbNameStr = getOrDefault(0, logBody, dbNameFields)
-        val tabNameStr = getOrDefault(1, logBody, tabNameFields)
-        val parStr = getOrDefault(2, logBody, parFields)
+        val dbNameStr = getOrDefault(0, logObj, dbNameFields)
+        val tabNameStr = getOrDefault(1, logObj, tabNameFields)
+        val parStr = getOrDefault(2, logObj, parFields)
 
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
@@ -304,25 +303,26 @@ object MetaDataUtils {
     //优先级: jsonObj字段值 -> conf字段值 , 如果两者都为空,则忽略该字段
     def getOrDefault(fieldFlag: Int, jsonObj: JSONObject, conf: Option[List[(String, String, String, Int)]]): String = {
         if (conf.isDefined) {
+            val logBody = jsonObj.getJSONObject("logBody")
             val fields = conf.get.map(field => {
                 val fieldName = field._2
                 var fieldValue = field._3
                 val fieldOrder = field._4
 
-                if (fieldName == "key_day" && !jsonObj.containsKey("key_day")) {
+                if (fieldName == "key_day" && !logBody.containsKey("key_day")) {
                     val logTime = new Date()
                     logTime.setTime(jsonObj.getLongValue("logTime"))
                     fieldValue = new SimpleDateFormat("yyyyMMdd").format(logTime)
-                } else if (fieldName == "key_hour" && !jsonObj.containsKey("key_hour")) {
+                } else if (fieldName == "key_hour" && !logBody.containsKey("key_hour")) {
                     val logTime = new Date()
                     logTime.setTime(jsonObj.getLongValue("logTime"))
                     fieldValue = new SimpleDateFormat("HH").format(logTime)
                 }
 
-                if (jsonObj.containsKey(fieldName)
-                    && jsonObj.get(fieldName) != null
-                    && jsonObj.get(fieldName).toString.trim.length > 0) {
-                    fieldValue = jsonObj.get(fieldName).toString
+                if (logBody.containsKey(fieldName)
+                    && logBody.get(fieldName) != null
+                    && logBody.get(fieldName).toString.trim.length > 0) {
+                    fieldValue = logBody.get(fieldName).toString
                 }
                 if (fieldValue != null && fieldValue.trim.length > 0) {
                     Some((fieldName, fieldValue, fieldOrder))
