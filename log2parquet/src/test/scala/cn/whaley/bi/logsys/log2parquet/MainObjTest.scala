@@ -1,5 +1,9 @@
 package cn.whaley.bi.logsys.log2parquet
 
+import java.io.File
+import java.util.Date
+
+import cn.whaley.bi.logsys.log2parquet.constant.Constants
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
@@ -28,6 +32,15 @@ class MainObjTest extends LogTrait{
         val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
         val rdd=sparkSession.sparkContext.textFile(inputPath, 2)
         println(rdd.count())
+    }
+
+    @Test
+    def testVar(): Unit ={
+        val date=new Date
+        //time字段，用来多个azkaban任务一起运行时，区分不同任务写入的目录
+        val time=date.getTime
+        val outputPathTmp = s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP}${File.separator}${time}"
+        println("outputPathTmp:"+outputPathTmp)
     }
 
 }

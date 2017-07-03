@@ -14,21 +14,7 @@ object Constants {
   val PATH_APP_CODE="appCode"
   val PATH_LOG_TYPE="logType"
   val PATH_EVENT_ID="eventId"
-/**
-  * /data_warehouse/ods_view.db/t_log
-/productCode=..
-/appCode=..
-/logType=..
-/eventId=..
-/key_day=${yyyymmdd}
-/key_hour=${HH}
-
-
-
-  /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95k0000000000000000
-/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kbqei6cc98dc5mlsr
-
-  hadoop fs -ls /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kbqei6cc98dc5mlsr/key_day=20170614/key_hour=13
-  * */
+  val ODS_VIEW_HDFS_OUTPUT_PATH_TMP="/log/default/parquet/ods_view"
+  val ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR="/log/default/parquet/ods_view/error"
 
 }
