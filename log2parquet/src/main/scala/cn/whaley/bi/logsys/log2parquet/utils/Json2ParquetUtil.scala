@@ -56,8 +56,6 @@ object Json2ParquetUtil {
                     (tmpFilePath, jsonFilePath, stream, System.currentTimeMillis())
                 })
                 val stream = info._3
-                println("logData.result.get"+logData.result.get.toJSONString)
-                println("item:"+item)
                 val bytes = logData.result.get.toJSONString.getBytes("utf-8")
                 stream.write(bytes)
                 stream.write('\n')
