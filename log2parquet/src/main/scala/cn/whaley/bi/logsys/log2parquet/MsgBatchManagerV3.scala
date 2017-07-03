@@ -46,6 +46,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     if(confManager.getConf("masterURL")!=null){
       config.setMaster(confManager.getConf("masterURL"))
     }
+
+    val logProcessGroupName = confManager.getConf(this.name,"LogProcessGroup")
+    println("logProcessGroupName:"+logProcessGroupName)
+    val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
+
     val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
 
     //val rdd_original = MsgBatchManagerV3.sparkSession.sparkContext.textFile(MsgBatchManagerV3.inputPath, 2)
@@ -62,9 +67,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     LOG.info("pathRdd.count():"+pathRdd.count())
     pathRdd.take(10).foreach(println)
 
-    val logProcessGroupName = confManager.getConf(this.name,"LogProcessGroup")
-    val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
-    val resultRdd=pathRdd.map(e=>{
+   val resultRdd=pathRdd.map(e=>{
       val jsonObject=e._2
       val jsonObjectProcessed = processGroupInstance.process(jsonObject)
       (Constants.DATA_WAREHOUSE+File.separator+e._1,jsonObjectProcessed)
