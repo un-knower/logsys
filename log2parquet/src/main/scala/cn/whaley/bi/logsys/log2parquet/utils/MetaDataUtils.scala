@@ -250,14 +250,10 @@ object MetaDataUtils {
      * @return
      */
     def parseLogObjRddPath(rdd: RDD[JSONObject]): RDD[(String, JSONObject)] = {
-        /*  val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
+          val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
           val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
-          val parFieldMap = resolveAppLogKeyFieldDescConfig(2)*/
-
-        val d = Map("ALL" -> List(("ALL", "db_name", "ods_view", 0)))
-        val t = Map("boikgpokn78sb95ktmsc1bnkechpgj9l" -> List(("ALL", "tab_prefix", "log", 0), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "product_code", "medusa", 1), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "app_code", "main3x", 2), ("ALL", "logType", null, 3), ("ALL", "eventId", null, 4)))
-        val partitionMap = Map("ALL" -> List(("ALL", "key_day", null, 0), ("ALL", "key_hour", null, 1)))
-        rdd.map(jsonObj => parseLogObjPath(jsonObj, d, t, partitionMap))
+          val parFieldMap = resolveAppLogKeyFieldDescConfig(2)
+        rdd.map(jsonObj => parseLogObjPath(jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap))
     }
 
     def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject)] = {
