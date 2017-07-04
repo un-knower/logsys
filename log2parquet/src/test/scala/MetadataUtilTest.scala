@@ -2,10 +2,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.regex.Pattern
 
-import cn.whaley.bi.logsys.log2parquet.MainObj
-import cn.whaley.bi.logsys.log2parquet.utils.{ParquetHiveUtils, MetaDataUtils}
+import cn.whaley.bi.logsys.log2parquet.utils.MetaDataUtils
 import com.alibaba.fastjson.JSON
-import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
 import org.junit.Test
 
@@ -14,8 +12,7 @@ import org.junit.Test
  */
 class MetadataUtilTest {
 
-    //val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendoj8ilnoi7/key_day=20170630/key_hour=04/boikgpokn78sb95kjhfrendoj8ilnoi7_2017063004_raw_7_337326252.json.gz"
-    val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=13/boikgpokn78sb95ktmsc1bnkechpgj9l_2017061413_raw_7_575892351.json.gz"
+    val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendoj8ilnoi7/key_day=20170630/key_hour=04/boikgpokn78sb95kjhfrendoj8ilnoi7_2017063004_raw_7_337326252.json.gz"
 
     def getSparkContext() = {
         val conf = new SparkConf()
@@ -44,7 +41,7 @@ class MetadataUtilTest {
 
     @Test
     def testResolveAppLogKeyFieldDescConfig(): Unit = {
-        val conf = MetaDataUtils.resolveAppLogKeyFieldDescConfig(2)
+        val conf = MetaDataUtils.resolveAppLogKeyFieldDescConfig(1)
         conf.foreach(println)
     }
 
@@ -73,4 +70,6 @@ class MetadataUtilTest {
 
         println("whaleytv".r.findFirstMatchIn("ods_view.db/log_whaleytv_wui20/key_day=20170630/key_hour=04").isDefined)
     }
+
+
 }
