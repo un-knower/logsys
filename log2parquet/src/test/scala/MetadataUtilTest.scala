@@ -14,6 +14,8 @@ class MetadataUtilTest {
 
     val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendoj8ilnoi7/key_day=20170630/key_hour=04/boikgpokn78sb95kjhfrendoj8ilnoi7_2017063004_raw_7_337326252.json.gz"
 
+    def getUtils()=new MetaDataUtils( "http://localhost:8084")
+
     def getSparkContext() = {
         val conf = new SparkConf()
         conf.setMaster("local[2]")
@@ -25,7 +27,8 @@ class MetadataUtilTest {
     def testParseLogStrRddPath(): Unit = {
         val context = getSparkContext()
         val rdd = context.textFile(testPath)
-        MetaDataUtils.parseLogStrRddPath(rdd).take(10).foreach(row => {
+
+        getUtils.parseLogStrRddPath(rdd).take(10).foreach(row => {
             println(row._1 + "\t" + row._2.toJSONString)
         })
     }
@@ -34,19 +37,20 @@ class MetadataUtilTest {
     def testParseLogObjRddPath(): Unit = {
         val context = getSparkContext()
         val rdd = context.textFile(testPath).map(row => JSON.parseObject(row))
-        MetaDataUtils.parseLogObjRddPath(rdd).take(10).foreach(row => {
+        getUtils.parseLogObjRddPath(rdd).take(10).foreach(row => {
             println(row._1 + "\t" + row._2.toJSONString)
         })
     }
 
     @Test
     def testResolveAppLogKeyFieldDescConfig(): Unit = {
-        val conf = MetaDataUtils.resolveAppLogKeyFieldDescConfig(1)
+        val conf = getUtils.resolveAppLogKeyFieldDescConfig(1)
         conf.foreach(println)
     }
 
     @Test
     def testParseSpecialRules(): Unit = {
+        val utils=getUtils()
         val context = getSparkContext()
         val rdd = context.textFile(testPath).map(row => {
             val jsonObj= JSON.parseObject(row)
@@ -55,9 +59,9 @@ class MetadataUtilTest {
             jsonObj
         })
 
-        val pathRdd = MetaDataUtils.parseLogObjRddPath(rdd)
+        val pathRdd = utils.parseLogObjRddPath(rdd)
         pathRdd.take(10).foreach(println)
-        MetaDataUtils.parseSpecialRules(pathRdd).take(10).foreach(row => {
+        utils.parseSpecialRules(pathRdd).take(10).foreach(row => {
             println(row)
         })
 
