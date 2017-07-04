@@ -250,14 +250,10 @@ object MetaDataUtils {
      * @return
      */
     def parseLogObjRddPath(rdd: RDD[JSONObject]): RDD[(String, JSONObject)] = {
-        /*  val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
+          val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
           val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
-          val parFieldMap = resolveAppLogKeyFieldDescConfig(2)*/
-
-        val d = Map("ALL" -> List(("ALL", "db_name", "ods_view", 0)))
-        val t = Map("boikgpokn78sb95ktmsc1bnkechpgj9l" -> List(("ALL", "tab_prefix", "log", 0), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "product_code", "medusa", 1), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "app_code", "main3x", 2), ("ALL", "logType", null, 3), ("ALL", "eventId", null, 4)))
-        val partitionMap = Map("ALL" -> List(("ALL", "key_day", null, 0), ("ALL", "key_hour", null, 1)))
-        rdd.map(jsonObj => parseLogObjPath(jsonObj, d, t, partitionMap))
+          val parFieldMap = resolveAppLogKeyFieldDescConfig(2)
+        rdd.map(jsonObj => parseLogObjPath(jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap))
     }
 
     def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject)] = {
@@ -344,7 +340,7 @@ object MetaDataUtils {
     /**
      * 解析字段特例规则库
      * @param rdd
-     * @return Map[logPath,(字段重命名清单,字段黑名单,行过滤器)]
+     * @return Map[logPath,(字段黑名单,字段重命名清单,行过滤器)]
      */
     def parseSpecialRules(rdd: RDD[(String, JSONObject)]): Array[AppLogFieldSpecialRules] = {
 
@@ -390,7 +386,7 @@ object MetaDataUtils {
 
                 //剔除白名单字段
                 val whiteList = fieldFilterList.filter(item => item._2 == true)
-                val blackList = fieldFilterList.filter(item => whiteList.exists(p => p._1 == item._1) == false).map(item => item._1)
+                val fieldBlackFilter = fieldFilterList.filter(item => whiteList.exists(p => p._1 == item._1) == false).map(item => item._1)
 
 
                 //字段重命名: Seq[(源字段名,字段目标名)]
@@ -402,9 +398,9 @@ object MetaDataUtils {
                 val rowBlackFilter = pathSpecialConf.filter(conf => conf._3 == "rowBlackFilter").flatMap(conf => {
                     fields.filter(field => conf._2.r.findFirstMatchIn(field).isDefined).map(field => (field, conf._4))
                 })
-                AppLogFieldSpecialRules(path, rename, blackList, rowBlackFilter)
+                AppLogFieldSpecialRules(path, fieldBlackFilter, rename, rowBlackFilter)
             } else {
-                AppLogFieldSpecialRules(path, Array[(String, String)](), Array[String](), Array[(String, String)]())
+                AppLogFieldSpecialRules(path, Array[String](), Array[(String, String)](), Array[(String, String)]())
             }
         })
 
@@ -412,6 +408,6 @@ object MetaDataUtils {
 
     }
 
-    case class AppLogFieldSpecialRules(path: String, rename: Seq[(String, String)], blackList: Seq[String], rowBlackFilter: Seq[(String, String)])
+    case class AppLogFieldSpecialRules(path: String, fieldBlackFilter: Seq[String], rename: Seq[(String, String)], rowBlackFilter: Seq[(String, String)])
 
 }
