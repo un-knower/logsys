@@ -4,9 +4,9 @@ import java.io.File
 import java.util.Date
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.log2parquet.constant.{Constants}
+import cn.whaley.bi.logsys.log2parquet.constant.Constants
 import cn.whaley.bi.logsys.log2parquet.traits._
-import cn.whaley.bi.logsys.log2parquet.utils.{Json2ParquetUtil, MetaDataUtils}
+import cn.whaley.bi.logsys.log2parquet.utils.{ParquetHiveUtils, Json2ParquetUtil, MetaDataUtils}
 import com.alibaba.fastjson.JSONObject
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
@@ -43,14 +43,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     */
   def start(confManager: ConfManager): Unit = {
     val config = new SparkConf()
-    val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
 
     //check if run on mac use MainObjTests
     if (confManager.getConf("masterURL") != null) {
       config.setMaster(confManager.getConf("masterURL"))
       println("---local master url:" + confManager.getConf("masterURL"))
     }
-
+    val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
 
 
     //读取原始文件
@@ -80,17 +79,43 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //将经过处理器处理后，正常状态的记录使用规则库过滤【字段黑名单、重命名、行过滤】
     val okRowsRdd = processedRdd.filter(e=>e._2.hasErr==false)
     val afterRuleRdd=ruleHandle(pathRdd,okRowsRdd)
+    println("afterRuleRdd.count():" + afterRuleRdd.count())
+    LOG.info("afterRuleRdd.count():" + afterRuleRdd.count())
+    afterRuleRdd.take(10).foreach(println)
+
     //输出正常记录到HDFS文件
-    Json2ParquetUtil.saveAsParquet(afterRuleRdd, sparkSession)
+    //Json2ParquetUtil.saveAsParquet(afterRuleRdd, sparkSession)
 
     //输出异常记录到HDFS文件
     val errRowsRdd = processedRdd.filter(row => row._2.hasErr).map(row => {
       row._2
     })
+    println("errRowsRdd.count():" + errRowsRdd.count())
+    LOG.info("errRowsRdd.count():" + errRowsRdd.count())
+    errRowsRdd.take(10).foreach(println)
+
     val time=new Date().getTime
-    errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
+    //errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
 
     //TODO 读parquet文件，生成元数据信息给元数据模块使用
+
+
+  }
+
+  def debug(rdd:RDD[(String, JSONObject)]): Unit ={
+
+  }
+
+  def generateMetaData(): Unit ={
+    /*val path=
+    ParquetHiveUtils.parseSQLFieldInfos("")*/
+
+
+    /**1.distinct output path
+      *2.read
+      *
+      *
+      * */
 
   }
 
