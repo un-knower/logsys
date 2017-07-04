@@ -2,8 +2,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.regex.Pattern
 
-import cn.whaley.bi.logsys.log2parquet.utils.MetaDataUtils
+import cn.whaley.bi.logsys.log2parquet.MainObj
+import cn.whaley.bi.logsys.log2parquet.utils.{ParquetHiveUtils, MetaDataUtils}
 import com.alibaba.fastjson.JSON
+import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
 import org.junit.Test
 
@@ -70,6 +72,19 @@ class MetadataUtilTest {
         println(pattern.matcher("/dw/whaleytv_dd/").find())
 
         println("whaleytv".r.findFirstMatchIn("ods_view.db/log_whaleytv_wui20/key_day=20170630/key_hour=04").isDefined)
+    }
+
+    @Test
+    def testMainObjTest: Unit = {
+        val args = Array("MsgProcExecutor","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=13/boikgpokn78sb95ktmsc1bnkechpgj9l_2017061413_raw_7_575892351.json.gz","--c","masterURL=local[2]")
+        MainObj.main(args)
+    }
+
+    @Test
+    def parseSQLFieldInfos(): Unit ={
+        val path=new Path("/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=13/boikgpokn78sb95ktmsc1bnkechpgj9l_2017061413_raw_7_575892351.json.gz")
+        val result=ParquetHiveUtils.parseSQLFieldInfos(path)
+        result.map(e=>println(e))
     }
 
 
