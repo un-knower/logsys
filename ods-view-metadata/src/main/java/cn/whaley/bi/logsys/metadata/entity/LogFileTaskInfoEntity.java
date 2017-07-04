@@ -1,6 +1,10 @@
 package cn.whaley.bi.logsys.metadata.entity;
 
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Created by fj on 2017/6/14.
  */
@@ -8,6 +12,11 @@ package cn.whaley.bi.logsys.metadata.entity;
 public class LogFileTaskInfoEntity extends BaseTableEntity {
 
     public static final String TABLE_NAME = "metdata.logfile_task_info";
+    public static final Set<String> KEY_FIELDS;
+    static {
+        KEY_FIELDS = new HashSet<>();
+        KEY_FIELDS.addAll(Arrays.asList("taskId".split(",")));
+    }
 
     private String taskId;
     private String taskType;
