@@ -3,10 +3,11 @@ package cn.whaley.bi.logsys.log2parquet
 import java.io.File
 import java.util.Date
 
-import cn.whaley.bi.logsys.common.ConfManager
+import cn.whaley.bi.logsys.common.{IdGenerator, ConfManager}
 import cn.whaley.bi.logsys.log2parquet.constant.Constants
 import cn.whaley.bi.logsys.log2parquet.traits._
-import cn.whaley.bi.logsys.log2parquet.utils.{ParquetHiveUtils, Json2ParquetUtil, MetaDataUtils}
+import cn.whaley.bi.logsys.log2parquet.utils.{Json2ParquetUtil, MetaDataUtils}
+import cn.whaley.bi.logsys.metadata.entity.LogFileFieldDescEntity
 import com.alibaba.fastjson.JSONObject
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
@@ -36,6 +37,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //val appId2OutputPathTemplateMap = MetaDataUtils.getAppId2OutputPathTemplateMap
     //MsgBatchManagerV3.appId2OutputPathTemplateMapBroadCast = MsgBatchManagerV3.sparkSession.sparkContext.broadcast(appId2OutputPathTemplateMap)
     val metadataService=confManager.getConf("metadataService")
+    println("-----metadataService:"+metadataService)
     metaDataUtils=new MetaDataUtils(metadataService)
   }
 
@@ -44,8 +46,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     */
   def start(confManager: ConfManager): Unit = {
     val config = new SparkConf()
-
-
 
     //check if run on mac use MainObjTests
     if (confManager.getConf("masterURL") != null) {
@@ -69,6 +69,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
+    println("------logProcessGroupName:"+logProcessGroupName)
     val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
     val processedRdd = pathRdd.map(e => {
       val jsonObject = e._2
@@ -105,11 +106,47 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
   }
 
-  def debug(rdd:RDD[(String, JSONObject)]): Unit ={
 
-  }
-
+  /**
+    *
+    * 1. metadata.logfile_field_desc
+    *
+    * Json2ParquetUtil.saveAsParquet 方法返回Seq[不同的output目录]
+    *   for output in (Seq[output目录])
+    *      val metadata= ParquetHiveUtils.parseSQLFieldInfos(output)
+    *      val logFileFieldDescEntity=generateLogFileFieldDescEntity(metadata)
+    *      logFileFieldDescEntity放入List
+    *   end
+    *
+    *   for e in logFileFieldDescEntityList
+    *      发送post请求
+    *   end
+    *
+    * 2.metadata.logfile_key_field_value
+    *   在拿原始数据遍历生成Seq[LogFileKeyFieldValueEntity],
+    *   类似 val pathRdd = MetaDataUtils.parseLogStrRddPath(rdd_original) 逻辑
+    *
+    * data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_player_sdk_inner_outer_auth_parse/key_day=19700101/key_hour=08
+    *  fieldName       fieldValue
+    *  -----------------------
+    *  logPath         ...key_hour=08
+    *  db_name         ods_view
+    *  product_code    medusa
+    *  app_code        main3x
+    *  logType         event
+    *  eventId         medusa_player_sdk_inner_outer_auth_parse
+    *  key_day         19700101
+    *  key_hour        08
+    *
+    *
+    * */
   def generateMetaData(): Unit ={
+    val generator = IdGenerator.defaultInstance
+    val taskId=generator.nextId()
+
+
+    val q=new LogFileFieldDescEntity
+
     /*val path=
     ParquetHiveUtils.parseSQLFieldInfos("")*/
 
