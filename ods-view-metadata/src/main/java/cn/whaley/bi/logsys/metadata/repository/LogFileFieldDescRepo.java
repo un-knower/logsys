@@ -29,25 +29,20 @@ public class LogFileFieldDescRepo extends MetadataBaseRepo<LogFileFieldDescEntit
     }
 
     /**
-     * 删除操作,taskId和logPath两者不能同时为空
+     * 删除操作
+     *
      * @param taskId
-     * @param logPath
      * @return
      */
-    public Integer delete(String taskId, String logPath) {
-        Map<String, Object> where = new HashMap<>();
-        if (StringUtils.hasText(taskId)) {
-            where.put("taskId", taskId);
-        }
-        if (StringUtils.hasText(logPath)) {
-            where.put("logPath", logPath);
-        }
-
-        Assert.isTrue(where.size() > 0, "taskId logPath 参数不能同时为空.");
+    public Integer delete(String taskId) {
+        Assert.isTrue(StringUtils.hasText(taskId), "taskId must be provided.");
 
         Map<String, Object> update = new HashMap<>();
-        where.put("isDeleted", true);
-        where.put("updateTime", new Date());
+        update.put("isDeleted", true);
+        update.put("updateTime", new Date());
+
+        Map<String, Object> where = new HashMap<>();
+        where.put("taskId", taskId);
 
         Integer ret = update(LogFileFieldDescEntity.KEY_FIELDS, update, where);
         return ret;

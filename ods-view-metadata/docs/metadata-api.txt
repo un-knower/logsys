@@ -1,0 +1,61 @@
+
+==========applog_key_field_desc相关操作=============================
+
+1. 查询所有applog_key_field_desc记录
+url: /metadata/applog_key_field_desc/all
+method: GET
+params: 无
+result: List<AppLogKeyFieldDescEntity>的json字符串
+
+==========logfile_key_field_value相关操作=============================
+
+1.查询所有applog_special_field_desc记录
+url: /metadata/applog_special_field_desc/all
+method: GET
+params: 无
+result: List<AppLogSpecialFieldDescEntity>的json字符串
+
+==========logfile_key_field_value相关操作=============================
+
+1. 插入一批logfile_key_field_value记录
+url: /logfile_key_field_value
+method: PUT
+params: List<LogFileKeyFieldValueEntity>的json字符串
+result: ResponseEntity的json字符串
+
+2. 删除某个taskId对应的所有logfile_key_field_value记录
+url: /logfile_key_field_value/{taskId}
+method: DELETE
+params: taskId取url中的{taskId},all代表所有
+result: ResponseEntity的json字符串
+
+==========logfile_field_desc相关操作=============================
+
+1. 插入一批logfile_field_desc记录
+url: /logfile_field_desc
+method: PUT
+params: List<LogFileFieldDescEntity>的json字符串
+result: ResponseEntity的json字符串
+
+2. 删除某个taskId对应的所有logfile_field_desc记录
+url: /logfile_field_desc/{taskId}
+method: DELETE
+params: taskId取url中的{taskId},all代表所有
+result: ResponseEntity的json字符串
+
+==========logfile_task_info相关操作=============================
+1. 插入一批logfile_task_info记录
+url: /logfile_task_info
+method: PUT
+params: List<LogFileTaskInfoEntity>的json字符串
+result: ResponseEntity的json字符串
+
+
+==========元数据解析任务相关操作=============================
+1. 处理某批任务
+url: /processTask/{taskId}/{taskFlag}
+method: POST
+params: taskId取url中的{taskId},taskFlag取url中的{taskFlag}
+result: ResponseEntity的json字符串
+
+
