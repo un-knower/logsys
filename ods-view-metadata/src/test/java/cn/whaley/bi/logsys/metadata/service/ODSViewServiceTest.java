@@ -2,6 +2,7 @@ package cn.whaley.bi.logsys.metadata.service;
 
 import cn.whaley.bi.logsys.metadata.entity.*;
 import cn.whaley.bi.logsys.metadata.repository.LogTabDDLRepo;
+import com.alibaba.fastjson.JSON;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -72,6 +74,22 @@ public class ODSViewServiceTest {
         LogTabDDLRepo repo = service.getLogTabDDLRepo();
         Integer ret = repo.deleteByTaskId(taskId);
         LOG.info("ret=" + ret);
+    }
+
+
+    @Test
+    public void printStr(){
+        List<LogFileFieldDescEntity> entities=new ArrayList<>();
+        LogFileFieldDescEntity entity=new LogFileFieldDescEntity();
+        entity.setFieldName("productCode");
+        entity.setFieldSql("`productCode` string");
+        entity.setFieldType("string");
+        entity.setLogPath("/test/file1.txt");
+        entity.setRawInfo("STRING");
+        entity.setRawType("BYTE");
+        entity.setTaskId("task1");
+        entities.add(entity);
+        LOG.info(JSON.toJSONString(entities));
     }
 
 }

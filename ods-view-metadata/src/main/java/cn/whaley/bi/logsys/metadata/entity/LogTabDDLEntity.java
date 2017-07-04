@@ -1,15 +1,24 @@
 package cn.whaley.bi.logsys.metadata.entity;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by fj on 2017/6/14.
  */
 
-public class LogTabDDLEntity extends BaseTableEntity  implements SeqEntity {
+public class LogTabDDLEntity extends BaseTableEntity implements SeqEntity {
 
     public static final String TABLE_NAME = "metadata.logtab_ddl";
     public static final String SEQ_NAME = "metadata.seq_logtab_ddl";
+    public static final Set<String> KEY_FIELDS;
+
+    static {
+        KEY_FIELDS = new HashSet<>();
+        KEY_FIELDS.addAll(Arrays.asList("dbName,tabName,seq".split(",")));
+    }
 
     private String dbName;
     private String tabName;

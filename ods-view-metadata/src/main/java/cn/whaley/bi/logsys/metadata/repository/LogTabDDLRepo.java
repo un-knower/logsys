@@ -12,12 +12,6 @@ import java.util.*;
 @Repository
 public class LogTabDDLRepo extends MetadataBaseRepo<LogTabDDLEntity> {
 
-    private static final Set<String> LOG_TAB_DDL_KEYOG_TAB_FIELDS;
-
-    static {
-        LOG_TAB_DDL_KEYOG_TAB_FIELDS = new HashSet<>();
-        LOG_TAB_DDL_KEYOG_TAB_FIELDS.addAll(Arrays.asList("dbName,tabName,seq".split(",")));
-    }
 
     public LogTabDDLRepo() {
         super(LogTabDDLEntity.class);
@@ -30,7 +24,7 @@ public class LogTabDDLRepo extends MetadataBaseRepo<LogTabDDLEntity> {
      * @return
      */
     @Transactional(readOnly = true)
-    public List<LogTabDDLEntity> queryByTaskId(String taskId,boolean isDeleted) {
+    public List<LogTabDDLEntity> queryByTaskId(String taskId, boolean isDeleted) {
         Map<String, Object> where = new HashMap<>();
         where.put("taskId", taskId);
         where.put("isDeleted", isDeleted);
@@ -49,7 +43,7 @@ public class LogTabDDLRepo extends MetadataBaseRepo<LogTabDDLEntity> {
         wheres.put("taskId", taskId);
         wheres.put("isDeleted", false);
 
-        return update(LOG_TAB_DDL_KEYOG_TAB_FIELDS, updates, wheres);
+        return update(LogTabDDLEntity.KEY_FIELDS, updates, wheres);
 
     }
 
@@ -65,7 +59,7 @@ public class LogTabDDLRepo extends MetadataBaseRepo<LogTabDDLEntity> {
         wheres.put("tabName", entity.getTabName());
         wheres.put("seq", entity.getSeq());
 
-        return update(LOG_TAB_DDL_KEYOG_TAB_FIELDS, updates, wheres);
+        return update(LogTabDDLEntity.KEY_FIELDS, updates, wheres);
     }
 
 

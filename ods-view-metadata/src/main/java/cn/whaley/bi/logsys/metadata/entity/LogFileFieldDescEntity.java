@@ -1,6 +1,10 @@
 package cn.whaley.bi.logsys.metadata.entity;
 
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Created by fj on 2017/6/14.
  */
@@ -8,6 +12,12 @@ package cn.whaley.bi.logsys.metadata.entity;
 public class LogFileFieldDescEntity extends BaseTableEntity {
 
     public static final String TABLE_NAME = "metadata.logfile_field_desc";
+    public static final Set<String> KEY_FIELDS;
+
+    static {
+        KEY_FIELDS = new HashSet<>();
+        KEY_FIELDS.addAll(Arrays.asList("logPath,fieldName".split(",")));
+    }
 
     private String logPath;
     private String fieldName;

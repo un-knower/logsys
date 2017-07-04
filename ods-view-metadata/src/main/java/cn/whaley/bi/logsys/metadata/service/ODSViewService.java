@@ -3,7 +3,6 @@ package cn.whaley.bi.logsys.metadata.service;
 import cn.whaley.bi.logsys.metadata.entity.*;
 import cn.whaley.bi.logsys.metadata.repository.*;
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +31,7 @@ public class ODSViewService {
     LogFileFieldDescRepo logFileFieldDescRepo;
 
     @Autowired
-    LogFileKeyFieldDescRepo logFileKeyFieldDescRepo;
+    LogFileKeyFieldValueRepo logFileKeyFieldValueRepo;
 
     @Autowired
     LogTabDDLRepo logTabDDLRepo;
@@ -67,12 +66,12 @@ public class ODSViewService {
         this.logFileFieldDescRepo = logFileFieldDescRepo;
     }
 
-    public LogFileKeyFieldDescRepo getLogFileKeyFieldDescRepo() {
-        return logFileKeyFieldDescRepo;
+    public LogFileKeyFieldValueRepo getLogFileKeyFieldValueRepo() {
+        return logFileKeyFieldValueRepo;
     }
 
-    public void setLogFileKeyFieldDescRepo(LogFileKeyFieldDescRepo logFileKeyFieldDescRepo) {
-        this.logFileKeyFieldDescRepo = logFileKeyFieldDescRepo;
+    public void setLogFileKeyFieldValueRepo(LogFileKeyFieldValueRepo logFileKeyFieldValueRepo) {
+        this.logFileKeyFieldValueRepo = logFileKeyFieldValueRepo;
     }
 
     public LogTabDDLRepo getLogTabDDLRepo() {
@@ -108,7 +107,7 @@ public class ODSViewService {
     @Transactional(readOnly = false)
     public Integer[] generateDDLAndDML(String taskId) {
         List<AppLogKeyFieldDescEntity> appLogKeyFieldDescEntities = appLogKeyFieldDescRepo.findAll();
-        List<LogFileKeyFieldDescEntity> logFileKeyFieldDescEntities = logFileKeyFieldDescRepo.findByTaskId(taskId);
+        List<LogFileKeyFieldValueEntity> logFileKeyFieldDescEntities = logFileKeyFieldValueRepo.findByTaskId(taskId);
         List<LogFileFieldDescEntity> logFileFieldDescEntities = logFileFieldDescRepo.findByTaskId(taskId);
 
 
@@ -196,7 +195,7 @@ public class ODSViewService {
      * @return
      */
     List<TabFieldDescItem> generateTabFieldDesc(List<AppLogKeyFieldDescEntity> appLogKeyFieldDescEntities
-            , List<LogFileKeyFieldDescEntity> logFileKeyFieldDescEntities
+            , List<LogFileKeyFieldValueEntity> logFileKeyFieldDescEntities
             , List<LogFileFieldDescEntity> logFileFieldDescEntities
     ) {
 
@@ -368,7 +367,7 @@ public class ODSViewService {
 
 
     //解析日志文件关键信息
-    LogFileTabKeyDesc resolveKeyDesc(String logPath, String appId, List<LogFileKeyFieldDescEntity> logFileKeyFieldDescEntities, List<AppLogKeyFieldDescEntity> appLogKeyFieldDescEntities) {
+    LogFileTabKeyDesc resolveKeyDesc(String logPath, String appId, List<LogFileKeyFieldValueEntity> logFileKeyFieldDescEntities, List<AppLogKeyFieldDescEntity> appLogKeyFieldDescEntities) {
 
         LogFileTabKeyDesc desc = new LogFileTabKeyDesc();
         desc.setLogPath(logPath);
@@ -382,7 +381,7 @@ public class ODSViewService {
         //日志文件关键字段值Map
         Map<String, String> fileKeyFieldDescMap = logFileKeyFieldDescEntities.stream()
                 .filter(entity -> entity.getAppId().equals(appId) && entity.getLogPath().equals(logPath))
-                .collect(Collectors.toMap(LogFileKeyFieldDescEntity::getFieldName, LogFileKeyFieldDescEntity::getFieldValue));
+                .collect(Collectors.toMap(LogFileKeyFieldValueEntity::getFieldName, LogFileKeyFieldValueEntity::getFieldValue));
 
         String dbName = mergedDbNameFieldDesc.stream()
                 .sorted(new AppLogKeyFieldOrderComparator())

@@ -15,9 +15,7 @@ if [ -n "$CLASSPATH" ]; then
 else
    classpath="$path"
 fi
-if [ -f "/data/apps/azkaban/share/libs/phoenix-4.10.0-HBase-1.2-thin-client.jar" ]; then
-    classpath="$classpath:/data/apps/azkaban/share/libs/phoenix-4.10.0-HBase-1.2-thin-client.jar"
-fi
+
 if [ -f "/data/apps/azkaban/share/libs/hive-jdbc.jar" ]; then
     classpath="$classpath:/data/apps/azkaban/share/libs/hive-jdbc.jar"
 fi
