@@ -13,11 +13,11 @@ class GenericProcessorChainTest {
     @Test
     def testProcessor: Unit = {
         val chain = new GenericProcessorChain()
-        val confManager = new ConfManager(Array("GenericProcessorChain.xml"))
+        val confManager = new ConfManager(Array("settings.properties","GenericProcessorChain.xml"))
         chain.init(confManager)
 
 
-        val stream = this.getClass.getClassLoader.getResourceAsStream("boikgpokn78sb95kjhfrendoj8ilnoi7.log")
+        val stream = this.getClass.getClassLoader.getResourceAsStream("data/data1.txt")
         val source = scala.io.Source.fromInputStream(stream)
         val filelines = source.getLines().toArray
         val lines = new ArrayBuffer[String]()

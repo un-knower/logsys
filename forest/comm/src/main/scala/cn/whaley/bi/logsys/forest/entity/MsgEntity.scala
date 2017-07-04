@@ -1,6 +1,6 @@
 package cn.whaley.bi.logsys.forest.entity
 
-import com.alibaba.fastjson.JSONObject
+import com.alibaba.fastjson.{JSON, JSONObject}
 
 /**
  * Created by fj on 16/11/8.
@@ -112,8 +112,7 @@ object MsgEntity {
     }
 
     def copy(obj: JSONObject): MsgEntity = {
-        val copyObj = new JSONObject()
-        copyObj.asInstanceOf[java.util.Map[String, Object]].putAll(obj)
+        val copyObj = JSON.parseObject(obj.toJSONString)
         new MsgEntity(copyObj)
     }
 

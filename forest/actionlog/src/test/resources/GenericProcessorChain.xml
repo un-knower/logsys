@@ -22,6 +22,12 @@
         <name>GenericMsgDecoder.ngxLogDecode</name>
         <value>true</value>
     </property>
+    <property>
+        <name>GenericMsgDecoder.filebeatDecode</name>
+        <value>false</value>
+    </property>
+
+
 
     <!-- GenericMsgProcessor -->
     <property>

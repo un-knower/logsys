@@ -74,12 +74,12 @@ class LogEntity(from: MsgEntity) extends MsgEntity(from) {
         val normalizeMsgBody = normalizeMsgBodyObj()
         this.removeMsgBody
         val size = normalizeMsgBody.size
-        for (i <- 0 to size - 1) yield {
+        val entities = for (i <- 0 to size - 1) yield {
             //只有一个消息体则可避免一次不必要的复制
             val entity = if (i == 0) this else LogEntity.copy(this)
             val logId = this.msgId + StringUtil.fixLeftLen(Integer.toHexString(i), '0', 4)
             entity.updateLogId(logId)
-            entity.updateLogBody(normalizeMsgBody(0))
+            entity.updateLogBody(normalizeMsgBody(i))
 
             //提升公共字段
             MsgEntity.translateProp(entity.logBody, LogEntity.KEY_APP_ID, entity, LogEntity.KEY_APP_ID)
@@ -89,7 +89,7 @@ class LogEntity(from: MsgEntity) extends MsgEntity(from) {
 
             entity
         }
-
+        entities
     }
 
 }
