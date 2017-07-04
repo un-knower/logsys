@@ -17,7 +17,7 @@ import org.apache.spark.sql.SparkSession
   */
 class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with java.io.Serializable {
 
-  var metaDataUtils :MetaDataUtils
+  var metaDataUtils :MetaDataUtils=null
 
   /**
     * 初始化方法
