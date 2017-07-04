@@ -3,8 +3,9 @@ package cn.whaley.bi.logsys.log2parquet
 import java.io.File
 import java.util.Date
 
-import cn.whaley.bi.logsys.log2parquet.constant.Constants
-import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
+import _root_.cn.whaley.bi.logsys.log2parquet.constant.Constants
+import _root_.cn.whaley.bi.logsys.log2parquet.traits.LogTrait
+
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.junit.Test
@@ -42,5 +43,7 @@ class MainObjTest extends LogTrait{
         val outputPathTmp = s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP}${File.separator}${time}"
         println("outputPathTmp:"+outputPathTmp)
     }
+
+
 
 }
