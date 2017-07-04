@@ -17,6 +17,7 @@ import org.apache.spark.sql.SparkSession
   */
 class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with java.io.Serializable {
 
+  var metaDataUtils :MetaDataUtils
 
   /**
     * 初始化方法
@@ -34,8 +35,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //appId2OutputPathTemplateMap.put("boikgpokn78sb95ktmsc1bnkechpgj9l","log_medusa_main3x_${log_type}_${event_id}/key_day=${key_day}/key_hour=${key_hour}")
     //val appId2OutputPathTemplateMap = MetaDataUtils.getAppId2OutputPathTemplateMap
     //MsgBatchManagerV3.appId2OutputPathTemplateMapBroadCast = MsgBatchManagerV3.sparkSession.sparkContext.broadcast(appId2OutputPathTemplateMap)
-
-
+    val metadataService=confManager.getConf("metadataService")
+    metaDataUtils=new MetaDataUtils(metadataService)
   }
 
   /**
@@ -43,6 +44,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     */
   def start(confManager: ConfManager): Unit = {
     val config = new SparkConf()
+
+
 
     //check if run on mac use MainObjTests
     if (confManager.getConf("masterURL") != null) {
@@ -59,7 +62,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     LOG.info("rdd_original.count():" + rdd_original.count())
 
     //解析出输出目录
-    val pathRdd = MetaDataUtils.parseLogStrRddPath(rdd_original)
+    val pathRdd = metaDataUtils.parseLogStrRddPath(rdd_original)
     println("pathRdd.count():" + pathRdd.count())
     LOG.info("pathRdd.count():" + pathRdd.count())
     pathRdd.take(10).foreach(println)
@@ -122,7 +125,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   /**记录使用规则库过滤【字段黑名单、重命名、行过滤】*/
   def ruleHandle(pathRdd:RDD[(String, JSONObject)],resultRdd: RDD[(String, ProcessResult[JSONObject])]):RDD[(String, JSONObject)] ={
     // 获得规则库的每条规则
-    val rules = MetaDataUtils.parseSpecialRules(pathRdd)
+    val rules = metaDataUtils.parseSpecialRules(pathRdd)
 
     val afterRuleRdd = resultRdd.map(e => {
       val path = e._1
