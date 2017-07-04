@@ -28,7 +28,7 @@ class GenericActionLogPostProcessorTest {
 
     @Test
     def testPost: Unit = {
-        val stream = this.getClass.getClassLoader.getResourceAsStream("boikgpokn78sb95kjhfrendoj8ilnoi7.log")
+        val stream = this.getClass.getClassLoader.getResourceAsStream("data/boikgpokn78sb95kjhfrendoj8ilnoi7.log-2017050718-bigdata-extsvr-log1")
         val source = scala.io.Source.fromInputStream(stream)
         //val lines = source.getLines().toArray
         val fileLines = source.getLines().map(item => StringUtil.decodeNgxStrToString(item)).toArray
