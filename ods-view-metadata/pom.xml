@@ -219,7 +219,7 @@
         </profile>
 
         <profile>
-            <id>azkaban</id>
+            <id>local</id>
             <build>
                 <resources>
                     <resource>
@@ -243,7 +243,6 @@
                 <package-dependency-scope>provided</package-dependency-scope>
                 <package-format>dir</package-format>
                 <package-includeBaseDirectory>false</package-includeBaseDirectory>
-                <package-output-dir>${project.parent.basedir}/azkaban-support/src/modules/</package-output-dir>
             </properties>
 
         </profile>

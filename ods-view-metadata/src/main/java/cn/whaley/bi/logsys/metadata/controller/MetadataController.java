@@ -44,7 +44,7 @@ public class MetadataController {
     //-------------------applog_key_field_desc--------------------------
     //查询所有
     @RequestMapping(value = "/applog_key_field_desc/all", method = RequestMethod.GET, produces = {"application/json"})
-    public List<AppLogKeyFieldDescEntity> getAllAppLogKeyFieldDescList() {
+    public List<AppLogKeyFieldDescEntity> getAllAppLogKeyFieldDesc() {
         List<AppLogKeyFieldDescEntity> all = appLogKeyFieldDescRepo.findAll();
         return all;
     }
@@ -52,7 +52,7 @@ public class MetadataController {
     //-------------------applog_special_field_desc--------------------------
     //查询所有
     @RequestMapping(value = "/applog_special_field_desc/all", method = RequestMethod.GET, produces = {"application/json"})
-    public List<AppLogSpecialFieldDescEntity> getAllAppLogSpecialFieldDescList() {
+    public List<AppLogSpecialFieldDescEntity> getAllAppLogSpecialFieldDesc() {
         List<AppLogSpecialFieldDescEntity> all = appLogSpecialFieldDescRepo.findAll();
         return all;
     }
@@ -60,7 +60,7 @@ public class MetadataController {
     //-------------------logfile_key_field_value--------------------------
     //插入操作
     @RequestMapping(value = "/logfile_key_field_value", method = RequestMethod.PUT, produces = {"application/json"}, consumes = {"application/json"})
-    public ResponseEntity insertLogFileKeyFieldValue(@RequestBody List<LogFileKeyFieldValueEntity> entities) {
+    public ResponseEntity putLogFileKeyFieldValue(@RequestBody List<LogFileKeyFieldValueEntity> entities) {
         ResponseEntity<Integer> retEntity = new ResponseEntity();
         try {
             Integer ret = logFileKeyFieldValueRepo.insert(entities);
@@ -92,7 +92,7 @@ public class MetadataController {
     //-------------------logfile_field_desc--------------------------
     //插入操作
     @RequestMapping(value = "/logfile_field_desc", method = RequestMethod.PUT, produces = {"application/json"}, consumes = {"application/json"})
-    public ResponseEntity insertLogFileFieldDesc(@RequestBody List<LogFileFieldDescEntity> entities) {
+    public ResponseEntity putLogFileFieldDesc(@RequestBody List<LogFileFieldDescEntity> entities) {
         ResponseEntity<Integer> retEntity = new ResponseEntity();
         try {
             Integer ret = logFileFieldDescRepo.insert(entities);
@@ -124,7 +124,7 @@ public class MetadataController {
     //-------------------logfile_task_info--------------------------
     //插入
     @RequestMapping(value = "/logfile_task_info", method = RequestMethod.PUT, produces = {"application/json"}, consumes = {"application/json"})
-    public ResponseEntity insertLogFileTaskInfo(@RequestBody List<LogFileTaskInfoEntity> entities) {
+    public ResponseEntity putLogFileTaskInfo(@RequestBody List<LogFileTaskInfoEntity> entities) {
         ResponseEntity<Integer> retEntity = new ResponseEntity();
         try {
             Integer ret = logFileTaskInfoRepo.insert(entities);
