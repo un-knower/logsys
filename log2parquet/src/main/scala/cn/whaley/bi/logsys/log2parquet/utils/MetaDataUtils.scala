@@ -31,7 +31,8 @@ class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
      * @return Map[appId, List[(appId, fieldName, fieldDefault, fieldOrder)]
      */
     def resolveAppLogKeyFieldDescConfig(fieldFlag: Int): Map[String, List[(String, String, String, Int)]] = {
-        val items = metadataService.getAllAppLogKeyFieldDesc().toList.filter(item => item.isDeleted == false)
+        val items = metadataService.getAllAppLogKeyFieldDesc()
+            .filter(item => item.getFieldFlag == fieldFlag && item.isDeleted == false)
         resolveAppLogKeyFieldDescConfig(items)
     }
 
