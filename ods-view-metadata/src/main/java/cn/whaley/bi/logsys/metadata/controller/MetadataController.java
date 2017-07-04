@@ -67,6 +67,7 @@ public class MetadataController {
             retEntity.setResult(ret);
             return retEntity;
         } catch (Throwable ex) {
+            LOG.error("",ex);
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
             return retEntity;
@@ -83,6 +84,7 @@ public class MetadataController {
             retEntity.setResult(ret);
             return retEntity;
         } catch (Throwable ex) {
+            LOG.error("",ex);
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
             return retEntity;
@@ -99,6 +101,7 @@ public class MetadataController {
             retEntity.setResult(ret);
             return retEntity;
         } catch (Throwable ex) {
+            LOG.error("",ex);
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
             return retEntity;
@@ -115,6 +118,7 @@ public class MetadataController {
             retEntity.setResult(ret);
             return retEntity;
         } catch (Throwable ex) {
+            LOG.error("",ex);
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
             return retEntity;
@@ -131,6 +135,7 @@ public class MetadataController {
             retEntity.setResult(ret);
             return retEntity;
         } catch (Throwable ex) {
+            LOG.error("",ex);
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
             return retEntity;

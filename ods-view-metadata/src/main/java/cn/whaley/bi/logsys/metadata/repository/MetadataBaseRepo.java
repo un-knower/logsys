@@ -40,6 +40,17 @@ public class MetadataBaseRepo<T extends BaseTableEntity> {
         return ret;
     }
 
+    /**
+     * 原生方式执行更新语句
+     *
+     * @param sql  SQL语句
+     * @param args 参数列表
+     * @return
+     */
+    public Integer update(String sql, Object... args) {
+        return jdbcTemplate.update(sql, args);
+    }
+
 
     /**
      * 原生方式查询符合条件的对象列表
@@ -51,6 +62,7 @@ public class MetadataBaseRepo<T extends BaseTableEntity> {
     public <R> List<R> query(String sql, EntityMapper<R> mapper, Object... args) {
         return jdbcTemplate.query(sql, mapper, args);
     }
+
 
     /**
      * 查询所有对象

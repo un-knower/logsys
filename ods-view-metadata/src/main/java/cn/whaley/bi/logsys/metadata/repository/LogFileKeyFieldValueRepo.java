@@ -35,17 +35,9 @@ public class LogFileKeyFieldValueRepo extends MetadataBaseRepo<LogFileKeyFieldVa
      * @return
      */
     public Integer delete(String taskId) {
-
         Assert.isTrue(StringUtils.hasText(taskId), "taskId must be provided.");
-
-        Map<String, Object> update = new HashMap<>();
-        update.put("isDeleted", true);
-        update.put("updateTime", new Date());
-
-        Map<String, Object> where = new HashMap<>();
-        where.put("taskId", taskId);
-
-        Integer ret = update(LogFileKeyFieldValueEntity.KEY_FIELDS, update, where);
+        String sql = "delete from " + LogFileKeyFieldValueEntity.TABLE_NAME + " where taskId=?";
+        Integer ret = update(sql, taskId);
         return ret;
     }
 

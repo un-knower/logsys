@@ -36,15 +36,8 @@ public class LogFileFieldDescRepo extends MetadataBaseRepo<LogFileFieldDescEntit
      */
     public Integer delete(String taskId) {
         Assert.isTrue(StringUtils.hasText(taskId), "taskId must be provided.");
-
-        Map<String, Object> update = new HashMap<>();
-        update.put("isDeleted", true);
-        update.put("updateTime", new Date());
-
-        Map<String, Object> where = new HashMap<>();
-        where.put("taskId", taskId);
-
-        Integer ret = update(LogFileFieldDescEntity.KEY_FIELDS, update, where);
+        String sql = "delete from " + LogFileFieldDescEntity.TABLE_NAME + " where taskId=?";
+        Integer ret = update(sql, taskId);
         return ret;
     }
 

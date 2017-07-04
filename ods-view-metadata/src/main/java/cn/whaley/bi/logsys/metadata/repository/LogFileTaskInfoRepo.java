@@ -1,7 +1,6 @@
 package cn.whaley.bi.logsys.metadata.repository;
 
 
-import cn.whaley.bi.logsys.metadata.entity.LogFileFieldDescEntity;
 import cn.whaley.bi.logsys.metadata.entity.LogFileTaskInfoEntity;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
@@ -30,22 +29,14 @@ public class LogFileTaskInfoRepo extends MetadataBaseRepo<LogFileTaskInfoEntity>
 
     /**
      * 删除操作
+     *
      * @param taskId
      * @return
      */
     public Integer delete(String taskId) {
-        Map<String, Object> where = new HashMap<>();
-        if (StringUtils.hasText(taskId)) {
-            where.put("taskId", taskId);
-        }
-
-        Assert.isTrue(where.size() > 0, "taskId must be not null.");
-
-        Map<String, Object> update = new HashMap<>();
-        where.put("isDeleted", true);
-        where.put("updateTime", new Date());
-
-        Integer ret = update(LogFileTaskInfoEntity.KEY_FIELDS, update, where);
+        Assert.isTrue(StringUtils.hasText(taskId), "taskId must be provided.");
+        String sql = "delete from " + LogFileTaskInfoEntity.TABLE_NAME + " where taskId=?";
+        Integer ret = update(sql, taskId);
         return ret;
     }
 
