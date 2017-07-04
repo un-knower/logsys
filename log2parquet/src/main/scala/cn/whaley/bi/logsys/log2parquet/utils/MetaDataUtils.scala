@@ -10,9 +10,9 @@ import org.apache.spark.rdd.RDD
 
 import scala.collection.JavaConverters._
 
-class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
+case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
-    val metadataService = new MetadataService(metadataServer, readTimeOut)
+    def metadataService() = new MetadataService(metadataServer, readTimeOut)
 
     /**
      * 查询字段特例表
