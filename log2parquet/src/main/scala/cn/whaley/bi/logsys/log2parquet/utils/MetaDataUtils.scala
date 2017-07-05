@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.regex.Pattern
 
+import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
 import cn.whaley.bi.logsys.metadata.entity.AppLogKeyFieldDescEntity
 import com.alibaba.fastjson.{JSONObject, JSON}
 import org.apache.spark.rdd.RDD
@@ -16,7 +17,8 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
     /**
      * 查询字段特例表
-     * @return Seq[(logPathReg,fieldNameReg,specialType,specialValue,specialOrder)]
+      *
+      * @return Seq[(logPathReg,fieldNameReg,specialType,specialValue,specialOrder)]
      */
     def queryAppLogSpecialFieldDescConf(): Seq[(String, String, String, String, Int)] = {
         val items = metadataService.getAllAppLogSpecialFieldDesc().toList.filter(item => item.isDeleted == false)
@@ -27,7 +29,8 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
     /**
      * 解析合并了ALL全局配置的字段配置
-     * @param fieldFlag
+      *
+      * @param fieldFlag
      * @return Map[appId, List[(appId, fieldName, fieldDefault, fieldOrder)]
      */
     def resolveAppLogKeyFieldDescConfig(fieldFlag: Int): Map[String, List[(String, String, String, Int)]] = {
@@ -38,7 +41,8 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
     /**
      * 解析某一类合并了ALL全局配置的字段配置
-     * @param confs 某一类型fieldFlag的配置项
+      *
+      * @param confs 某一类型fieldFlag的配置项
      * @return Map[appId, List[(appId, fieldName, fieldDefault, fieldOrder)]
      */
     def resolveAppLogKeyFieldDescConfig(confs: Seq[AppLogKeyFieldDescEntity]): Map[String, List[(String, String, String, Int)]] = {
@@ -62,10 +66,11 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
     /**
      * 对RDD的每条记录解析其输出路径,格式错误的行将被忽略
-     * @param rdd
+      *
+      * @param rdd
      * @return
      */
-    def parseLogStrRddPath(rdd: RDD[String]): RDD[(String, JSONObject)] = {
+    def parseLogStrRddPath(rdd: RDD[String]): RDD[(String, JSONObject, scala.collection.mutable.Map[String,String])] = {
         val jsonObjRdd = rdd.map(row => {
             try {
                 Some(JSON.parseObject(row))
@@ -81,17 +86,18 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
     /**
      * 对RDD的每条记录解析其输出路径
-     * @param rdd
+      *
+      * @param rdd
      * @return
      */
-    def parseLogObjRddPath(rdd: RDD[JSONObject]): RDD[(String, JSONObject)] = {
+    def parseLogObjRddPath(rdd: RDD[JSONObject]): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
         val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
         val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
         val parFieldMap = resolveAppLogKeyFieldDescConfig(2)
         rdd.map(jsonObj => parseLogObjPath(jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap))
     }
 
-    def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject)] = {
+    def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
         /*  val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
           val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
           val parFieldMap = resolveAppLogKeyFieldDescConfig(2)*/
@@ -104,15 +110,16 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
     /**
      * 解析某条日志记录的输出路径
-     * @param logObj
+      *
+      * @param logObj
      * @return
      */
     def parseLogObjPath(logObj: JSONObject
                         , dbNameFieldMap: Map[String, List[(String, String, String, Int)]]
                         , tabNameFieldMap: Map[String, List[(String, String, String, Int)]]
                         , parFieldMap: Map[String, List[(String, String, String, Int)]]
-                           ): (String, JSONObject) = {
-        val appId = logObj.getString("appId")
+                           ): (String,JSONObject, scala.collection.mutable.Map[String,String]) = {
+        val appId = logObj.getString(LogKeys.LOG_APP_ID)
         var dbNameFields = dbNameFieldMap.get(appId)
         var tabNameFields = tabNameFieldMap.get(appId)
         var parFields = parFieldMap.get(appId)
@@ -121,18 +128,27 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         if (tabNameFields.isEmpty) tabNameFields = tabNameFieldMap.get("ALL")
         if (parFields.isEmpty) parFields = parFieldMap.get("ALL")
 
-        val dbNameStr = getOrDefault(0, logObj, dbNameFields)
-        val tabNameStr = getOrDefault(1, logObj, tabNameFields)
-        val parStr = getOrDefault(2, logObj, parFields)
+        val dbTuple=getOrDefault(0, logObj, dbNameFields)
+        val dbNameStr =  dbTuple._1
+        val dbMap =  dbTuple._2
+
+
+        val tableTuple = getOrDefault(1, logObj, tabNameFields)
+        val tabNameStr =tableTuple._1
+        val tableMap =tableTuple._2
+
+        val parTuple = getOrDefault(2, logObj, parFields)
+        val parStr = parTuple._1
+        val parMap = parTuple._2
 
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
-        (path, logObj)
+        (path, logObj,dbMap++tableMap++parMap+(LogKeys.LOG_APP_ID->appId))
 
     }
 
     //优先级: jsonObj字段值 -> conf字段值 , 如果两者都为空,则忽略该字段
-    def getOrDefault(fieldFlag: Int, jsonObj: JSONObject, conf: Option[List[(String, String, String, Int)]]): String = {
+    def getOrDefault(fieldFlag: Int, jsonObj: JSONObject, conf: Option[List[(String, String, String, Int)]]): (String,scala.collection.mutable.HashMap[String,String]) = {
         if (conf.isDefined) {
             val logBody = jsonObj.getJSONObject("logBody")
             val fields = conf.get.map(field => {
@@ -161,23 +177,33 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                     None
                 }
             }).filter(item => item.isDefined).map(item => item.get).sortBy(item => item._3)
+            val map = scala.collection.mutable.HashMap.empty[String,String]
             if (fieldFlag == 0 || fieldFlag == 1) {
-                fields.map(item => item._2).mkString("_")
+                val name=fields.map(item => {
+                  map.+=(item._1->item._2)
+                  item._2
+                }).mkString("_")
+              (name,map)
             } else {
-                fields.map(item => s"${item._1}=${item._2}").mkString("/")
+                val name=fields.map(item => {
+                  map.+=(item._1->item._2)
+                  s"${item._1}=${item._2}"
+                }).mkString("/")
+              (name,map)
             }
         } else {
-            ""
+          ("",scala.collection.mutable.HashMap.empty[String,String])
         }
     }
 
 
     /**
      * 解析字段特例规则库
-     * @param rdd
+      *
+      * @param rdd
      * @return Map[logPath,(字段黑名单,字段重命名清单,行过滤器)]
      */
-    def parseSpecialRules(rdd: RDD[(String, JSONObject)]): Array[AppLogFieldSpecialRules] = {
+    def parseSpecialRules(rdd: RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])]): Array[AppLogFieldSpecialRules] = {
 
         //特例字段配置数据
         val specialFieldDescConf = queryAppLogSpecialFieldDescConf
