@@ -187,7 +187,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
             } else {
                 val name=fields.map(item => {
                   map.+=(item._1->item._2)
-                  s"${item._1}=${item._2}}"
+                  s"${item._1}=${item._2}"
                 }).mkString("/")
               (name,map)
             }
