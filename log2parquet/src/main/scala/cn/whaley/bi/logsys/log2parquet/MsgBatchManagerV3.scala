@@ -92,7 +92,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     afterRuleRdd.take(10).foreach(println)
 
     //输出正常记录到HDFS文件
-    //Json2ParquetUtil.saveAsParquet(afterRuleRdd, sparkSession)
+    Json2ParquetUtil.saveAsParquet(afterRuleRdd, sparkSession)
 
     //输出异常记录到HDFS文件
     val errRowsRdd = processedRdd.filter(row => row._2.hasErr).map(row => {
@@ -103,7 +103,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     errRowsRdd.take(10).foreach(println)
 
     val time=new Date().getTime
-    //errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
+    errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
 
     //TODO 读parquet文件，生成元数据信息给元数据模块使用
     val path_file_value_map=pathRdd.map(e=>(e._1,e._3)).distinct().collect()
