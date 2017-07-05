@@ -87,6 +87,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val afterRuleRdd=ruleHandle(pathRdd,okRowsRdd)
     println("afterRuleRdd.count():" + afterRuleRdd.count())
     LOG.info("afterRuleRdd.count():" + afterRuleRdd.count())
+    //afterRuleRdd.filter(e=>e._2.toJSONString.contains("actionId")).take(10).foreach(println)
     afterRuleRdd.take(10).foreach(println)
 
     //输出正常记录到HDFS文件
@@ -104,10 +105,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
 
     //TODO 读parquet文件，生成元数据信息给元数据模块使用
-    val path_file_value_map=pathRdd.map(e=>(e._1,e._3)).distinct()
-    println("path_file_value_map.count():" + path_file_value_map.count())
-    LOG.info("path_file_value_map.count():" + path_file_value_map.count())
+    val path_file_value_map=pathRdd.map(e=>(e._1,e._3)).distinct().collect()
+    println("path_file_value_map.length():" + path_file_value_map.length)
+    LOG.info("path_file_value_map.length():" + path_file_value_map.length)
     path_file_value_map.take(10).foreach(println)
+    generateMetaDataToTable(path_file_value_map)
 
   }
 
@@ -147,13 +149,14 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     *
     *
     * */
-  def generateMetaData(path_file_value_map:Array[(String,scala.collection.mutable.Map[String,String])]): Unit ={
+  def generateMetaDataToTable(path_file_value_map:Array[(String,scala.collection.mutable.Map[String,String])]): Unit ={
     val generator = IdGenerator.defaultInstance
     val taskId=generator.nextId()
 
-
+    // select * from metadata.logfile_key_field_value where TASKID='AAABXRFgkB2sENVtAs4AAAAA';
     val fieldValueEntityArrayBuffer=generateFieldValueEntityArrayBuffer(taskId,path_file_value_map)
-
+    val response=metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fieldValueEntityArrayBuffer)
+    println(response.toJSONString)
 
     /*val path=
     ParquetHiveUtils.parseSQLFieldInfos("")*/
@@ -166,20 +169,58 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       * */
   }
 
+
+  /**
+    * 生成FieldValueEntity的ArrayBuffer
+    *
+    *
+    * 对应的表内容信息如下：
+    * 每条记录通用字段
+    *  logPath         ...key_hour=08
+    *  appId           boikgpokn78sb95ktmsc1bnkechpgj9l
+    *
+    * 每个fieldName对应一条记录
+    *
+    *  fieldName       fieldValue
+    *  -----------------------
+    *  db_name         ods_view
+    *  product_code    medusa
+    *  app_code        main3x
+    *  logType         event
+    *  eventId         medusa_player_sdk_inner_outer_auth_parse
+    *  key_day         20170614
+    *  key_hour        08
+    *  tab_prefix -> log
+    *
+    * path_file_value_map的结构体为(输出路径 -> Map[fieldName->fieldValue](appId是需要排除的))
+    *
+    *(ods_view.db/log_medusa_main3x_start_end_ad_vod_tencent_sdk_pre_play/key_day=20170614/key_hour=13,
+    * Map(product_code -> medusa, key_hour -> 13, key_day -> 20170614,
+    * appId -> boikgpokn78sb95ktmsc1bnkechpgj9l, tab_prefix -> log,
+    * actionId -> ad-vod-tencent-sdk-pre-play,
+    * db_name -> ods_view, logType -> start_end, app_code -> main3x))
+    */
   def generateFieldValueEntityArrayBuffer(taskId:String,path_file_value_map:Array[(String,scala.collection.mutable.Map[String,String])]): ArrayBuffer[LogFileKeyFieldValueEntity] ={
-
-    val data = new ArrayBuffer[LogFileKeyFieldValueEntity]()
-
+    val arrayBuffer = new ArrayBuffer[LogFileKeyFieldValueEntity]()
+    //每条记录的粒度为fieldName，fieldValue
     path_file_value_map.map(e=>{
-      val logFileKeyFieldValueEntity=new LogFileKeyFieldValueEntity()
       val outputPath=e._1
-      val map=e._2
-      val appId=map.get(LogKeys.LOG_APP_ID).getOrElse("noAppId")
-
-      logFileKeyFieldValueEntity.setAppId(appId)
+      val file_value_map=e._2
+      val appId=file_value_map.get(LogKeys.LOG_APP_ID).getOrElse("noAppId")
+      file_value_map.filter(e => !e._1.contains(LogKeys.LOG_APP_ID)).map(field=>{
+        val logFileKeyFieldValueEntity=new LogFileKeyFieldValueEntity()
+        logFileKeyFieldValueEntity.setAppId(appId)
+        logFileKeyFieldValueEntity.setLogPath(outputPath)
+        logFileKeyFieldValueEntity.setTaskId(taskId)
+        logFileKeyFieldValueEntity.setIsDeleted(false)
+        logFileKeyFieldValueEntity.setCreateTime(new Date())
+        logFileKeyFieldValueEntity.setUpdateTime(new Date())
+        logFileKeyFieldValueEntity.setFieldName(field._1)
+        logFileKeyFieldValueEntity.setFieldValue(field._2)
+        arrayBuffer.+=(logFileKeyFieldValueEntity)
+      })
     })
-
-    data
+    arrayBuffer
   }
 
 
