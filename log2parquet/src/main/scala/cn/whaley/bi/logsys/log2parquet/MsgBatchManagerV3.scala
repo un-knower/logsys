@@ -4,14 +4,16 @@ import java.io.File
 import java.util.Date
 
 import cn.whaley.bi.logsys.common.{IdGenerator, ConfManager}
-import cn.whaley.bi.logsys.log2parquet.constant.Constants
+import cn.whaley.bi.logsys.log2parquet.constant.{LogKeys, Constants}
 import cn.whaley.bi.logsys.log2parquet.traits._
 import cn.whaley.bi.logsys.log2parquet.utils.{Json2ParquetUtil, MetaDataUtils}
-import cn.whaley.bi.logsys.metadata.entity.LogFileFieldDescEntity
+import cn.whaley.bi.logsys.metadata.entity.{LogFileKeyFieldValueEntity, LogFileFieldDescEntity}
 import com.alibaba.fastjson.JSONObject
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by michael on 2017/6/22.
@@ -102,7 +104,10 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
 
     //TODO 读parquet文件，生成元数据信息给元数据模块使用
-
+    val path_file_value_map=pathRdd.map(e=>(e._1,e._3)).distinct()
+    println("path_file_value_map.count():" + path_file_value_map.count())
+    LOG.info("path_file_value_map.count():" + path_file_value_map.count())
+    path_file_value_map.take(10).foreach(println)
 
   }
 
@@ -124,9 +129,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     *
     * 2.metadata.logfile_key_field_value
     *   在拿原始数据遍历生成Seq[LogFileKeyFieldValueEntity],
-    *   类似 val pathRdd = MetaDataUtils.parseLogStrRddPath(rdd_original) 逻辑
     *
     * data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_player_sdk_inner_outer_auth_parse/key_day=19700101/key_hour=08
+    *    logPath         ...key_hour=08
+    *    appId           boikgpokn78sb95ktmsc1bnkechpgj9l
+    *
     *  fieldName       fieldValue
     *  -----------------------
     *  logPath         ...key_hour=08
@@ -140,12 +147,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     *
     *
     * */
-  def generateMetaData(): Unit ={
+  def generateMetaData(path_file_value_map:Array[(String,scala.collection.mutable.Map[String,String])]): Unit ={
     val generator = IdGenerator.defaultInstance
     val taskId=generator.nextId()
 
 
-    val q=new LogFileFieldDescEntity
+    val fieldValueEntityArrayBuffer=generateFieldValueEntityArrayBuffer(taskId,path_file_value_map)
+
 
     /*val path=
     ParquetHiveUtils.parseSQLFieldInfos("")*/
@@ -156,11 +164,28 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       *
       *
       * */
-
   }
 
+  def generateFieldValueEntityArrayBuffer(taskId:String,path_file_value_map:Array[(String,scala.collection.mutable.Map[String,String])]): ArrayBuffer[LogFileKeyFieldValueEntity] ={
+
+    val data = new ArrayBuffer[LogFileKeyFieldValueEntity]()
+
+    path_file_value_map.map(e=>{
+      val logFileKeyFieldValueEntity=new LogFileKeyFieldValueEntity()
+      val outputPath=e._1
+      val map=e._2
+      val appId=map.get(LogKeys.LOG_APP_ID).getOrElse("noAppId")
+
+      logFileKeyFieldValueEntity.setAppId(appId)
+    })
+
+    data
+  }
+
+
+
   /**记录使用规则库过滤【字段黑名单、重命名、行过滤】*/
-  def ruleHandle(pathRdd:RDD[(String, JSONObject)],resultRdd: RDD[(String, ProcessResult[JSONObject])]):RDD[(String, JSONObject)] ={
+  def ruleHandle(pathRdd:RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])],resultRdd: RDD[(String, ProcessResult[JSONObject])]):RDD[(String, JSONObject)] ={
     // 获得规则库的每条规则
     val rules = metaDataUtils.parseSpecialRules(pathRdd)
 
