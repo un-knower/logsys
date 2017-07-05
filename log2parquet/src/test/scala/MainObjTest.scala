@@ -18,10 +18,29 @@ class MainObjTest extends LogTrait{
   @Test
   def parseSQLFieldInfos(): Unit ={
     val path=new Path("/data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_player_sdk_startPlay/key_day=19700101/key_hour=08/part-00000-7a49cc93-5035-4aee-b440-efaadc510fa9.snappy.parquet")
+    //val path=new Path("/data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_player_sdk_startPlay/key_day=19700101/key_hour=08/[a-z0-9.-]*.parquet")
     //val path=new Path("/data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_player_sdk_startPlay/key_day=19700101/key_hour=08")
     val result=ParquetHiveUtils.parseSQLFieldInfos(path)
     result.map(e=>println(e))
+  }
+
+  @Test
+  def getParquetFilesFromHDFS(): Unit ={
+    //val path=new Path("/data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_player_sdk_startPlay/key_day=19700101/key_hour=08/part-00000-7a49cc93-5035-4aee-b440-efaadc510fa9.snappy.parquet")
+    val path="/data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_player_sdk_startPlay/key_day=19700101/key_hour=08"
+    //val path=new Path("/data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_player_sdk_startPlay/key_day=19700101/key_hour=08")
+    val result=ParquetHiveUtils.getParquetFilesFromHDFS(path)
+    result.map(e=>println(e.getPath))
+  }
 
 
+  @Test
+  def getMetaInfo(): Unit ={
+    val path="/data_warehouse/ods_view.db/log_medusa_main3x_matchdetail/key_day=19700101/key_hour=08"
+    val list=ParquetHiveUtils.getParquetFilesFromHDFS(path)
+    if(list.size>0) {
+      val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(list.head.getPath)
+      parquetMetaData.map(e=>println(e))
+    }
   }
 }

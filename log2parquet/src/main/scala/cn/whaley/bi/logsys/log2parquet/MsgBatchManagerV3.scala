@@ -6,9 +6,10 @@ import java.util.Date
 import cn.whaley.bi.logsys.common.{IdGenerator, ConfManager}
 import cn.whaley.bi.logsys.log2parquet.constant.{LogKeys, Constants}
 import cn.whaley.bi.logsys.log2parquet.traits._
-import cn.whaley.bi.logsys.log2parquet.utils.{Json2ParquetUtil, MetaDataUtils}
-import cn.whaley.bi.logsys.metadata.entity.{LogFileKeyFieldValueEntity, LogFileFieldDescEntity}
+import cn.whaley.bi.logsys.log2parquet.utils.{ParquetHiveUtils, Json2ParquetUtil, MetaDataUtils}
+import cn.whaley.bi.logsys.metadata.entity.{LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
 import com.alibaba.fastjson.JSONObject
+import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
@@ -110,67 +111,71 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     LOG.info("path_file_value_map.length():" + path_file_value_map.length)
     path_file_value_map.take(10).foreach(println)
     generateMetaDataToTable(path_file_value_map)
-
   }
 
 
   /**
-    *
-    * 1. metadata.logfile_field_desc
-    *
-    * Json2ParquetUtil.saveAsParquet 方法返回Seq[不同的output目录]
-    *   for output in (Seq[output目录])
-    *      val metadata= ParquetHiveUtils.parseSQLFieldInfos(output)
-    *      val logFileFieldDescEntity=generateLogFileFieldDescEntity(metadata)
-    *      logFileFieldDescEntity放入List
-    *   end
-    *
-    *   for e in logFileFieldDescEntityList
-    *      发送post请求
-    *   end
-    *
-    * 2.metadata.logfile_key_field_value
-    *   在拿原始数据遍历生成Seq[LogFileKeyFieldValueEntity],
-    *
-    * data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_player_sdk_inner_outer_auth_parse/key_day=19700101/key_hour=08
-    *    logPath         ...key_hour=08
-    *    appId           boikgpokn78sb95ktmsc1bnkechpgj9l
-    *
-    *  fieldName       fieldValue
-    *  -----------------------
-    *  logPath         ...key_hour=08
-    *  db_name         ods_view
-    *  product_code    medusa
-    *  app_code        main3x
-    *  logType         event
-    *  eventId         medusa_player_sdk_inner_outer_auth_parse
-    *  key_day         19700101
-    *  key_hour        08
-    *
-    *
+    * 向phoenix表插入数据[metadata.logfile_key_field_value,metadata.logfile_field_desc]
     * */
   def generateMetaDataToTable(path_file_value_map:Array[(String,scala.collection.mutable.Map[String,String])]): Unit ={
     val generator = IdGenerator.defaultInstance
     val taskId=generator.nextId()
 
-    // select * from metadata.logfile_key_field_value where TASKID='AAABXRFgkB2sENVtAs4AAAAA';
+    // metadata.logfile_key_field_value
     val fieldValueEntityArrayBuffer=generateFieldValueEntityArrayBuffer(taskId,path_file_value_map)
+    println("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
+    LOG.info("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
+    fieldValueEntityArrayBuffer.take(10).foreach(println)
     val response=metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fieldValueEntityArrayBuffer)
     println(response.toJSONString)
 
-    /*val path=
-    ParquetHiveUtils.parseSQLFieldInfos("")*/
+    //metadata.logfile_field_desc
+    val distinctOutput=path_file_value_map.map(e=>{
+      e._1
+    }).distinct
+    val fieldDescEntityArrayBuffer=generateFieldDescEntityArrayBuffer(taskId,distinctOutput)
+    println("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
+    LOG.info("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
+    fieldDescEntityArrayBuffer.take(10).foreach(println)
+    val responseFieldDesc=metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fieldDescEntityArrayBuffer)
+    println(responseFieldDesc.toJSONString)
+  }
 
-
-    /**1.distinct output path
-      *2.read
-      *
-      *
-      * */
+  /**
+    *   Seq[(fieldName:String,fieldType:String,fieldSql:String,rowType:String,rowInfo:String)]
+    * */
+  def generateFieldDescEntityArrayBuffer(taskId:String,distinctOutputArray:Array[String]): ArrayBuffer[LogFileFieldDescEntity] ={
+    val arrayBuffer = new ArrayBuffer[LogFileFieldDescEntity]()
+    distinctOutputArray.map(dir=>{
+      val list=ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE+File.separator+dir)
+      if(list.size>0){
+       val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(list.head.getPath)
+        parquetMetaData.map(meta=>{
+          val fieldName=meta._1
+          val fieldType=meta._2
+          val fieldSql=meta._3
+          val rowType=meta._4
+          val rowInfo=meta._5
+          val logFileFieldDescEntity=new LogFileFieldDescEntity
+          logFileFieldDescEntity.setTaskId(taskId)
+          logFileFieldDescEntity.setLogPath(Constants.DATA_WAREHOUSE+File.separator+dir)
+          logFileFieldDescEntity.setFieldName(fieldName)
+          logFileFieldDescEntity.setFieldType(fieldType)
+          logFileFieldDescEntity.setFieldSql(fieldSql)
+          logFileFieldDescEntity.setRawType(rowType)
+          logFileFieldDescEntity.setRawInfo(rowInfo)
+          logFileFieldDescEntity.setIsDeleted(false)
+          logFileFieldDescEntity.setCreateTime(new Date())
+          logFileFieldDescEntity.setUpdateTime(new Date())
+          arrayBuffer+=logFileFieldDescEntity
+        })
+      }
+    })
+    arrayBuffer
   }
 
 
-  /**
+    /**
     * 生成FieldValueEntity的ArrayBuffer
     *
     *
@@ -210,7 +215,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       file_value_map.filter(e => !e._1.contains(LogKeys.LOG_APP_ID)).map(field=>{
         val logFileKeyFieldValueEntity=new LogFileKeyFieldValueEntity()
         logFileKeyFieldValueEntity.setAppId(appId)
-        logFileKeyFieldValueEntity.setLogPath(outputPath)
+        logFileKeyFieldValueEntity.setLogPath(Constants.DATA_WAREHOUSE+File.separator+outputPath)
         logFileKeyFieldValueEntity.setTaskId(taskId)
         logFileKeyFieldValueEntity.setIsDeleted(false)
         logFileKeyFieldValueEntity.setCreateTime(new Date())
