@@ -59,3 +59,19 @@ params: taskId取url中的{taskId},taskFlag取url中的{taskFlag}
 result: ResponseEntity的json字符串
 
 
+===========监控相关API==============
+
+HTTP方法	 路径	          描述	                                                                           鉴权
+GET	    /autoconfig	    查看自动配置的使用情况，该报告展示所有auto-configuration候选者及它们被应用或未被应用的原因   TRUE
+GET	    /configprops	显示一个所有@ConfigurationProperties的整理列表	                                       TRUE
+GET	    /beans	        显示一个应用中所有Spring Beans的完整列表	                                           TRUE
+GET	    /dump	        打印线程栈                                                                          TRUE
+GET	    /env	        查看所有环境变量	                                                                   TRUE
+GET	    /env/{name}	    查看具体变量值	                                                                   TRUE
+GET	    /health	        查看应用健康指标	                                                                   FALSE
+GET	    /info	        查看应用信息                                                                         FALSE
+GET	    /mappings	    查看所有url映射	                                                                   TRUE
+GET	    /metrics	    查看应用基本指标	                                                                   TRUE
+GET	    /metrics/{name}	查看具体指标	                                                                       TRUE
+POST	/shutdown	    允许应用以优雅的方式关闭（默认情况下不启用）	                                           TRUE
+GET	    /trace	        查看基本追踪信息
