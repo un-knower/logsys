@@ -68,9 +68,9 @@ object IdGenerator {
      * 获取当前进程ID
      * @return
      */
-    lazy val currProcessId: Short = {
+    lazy val currProcessId: Int = {
         val name = ManagementFactory.getRuntimeMXBean.getName
-        val pid = name.substring(0, name.indexOf("@")).toShort
+        val pid = name.substring(0, name.indexOf("@")).toInt
         pid
     }
 
