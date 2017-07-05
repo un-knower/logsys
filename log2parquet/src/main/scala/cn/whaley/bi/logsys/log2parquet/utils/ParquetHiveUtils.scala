@@ -1,7 +1,7 @@
 package cn.whaley.bi.logsys.log2parquet.utils
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{PathFilter, FileSystem, FileStatus, Path}
 import org.apache.parquet.format.converter.ParquetMetadataConverter
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.parquet.hadoop.metadata.ParquetMetadata
@@ -149,4 +149,17 @@ object ParquetHiveUtils {
     val schema = readFooter.getFileMetaData().getSchema();
     parseSQLFiledInfos(schema)
   }
+
+
+  def getParquetFilesFromHDFS(dir: String): Array[FileStatus] = {
+    val conf = new Configuration(true)
+    val fs = FileSystem.get(conf)
+    val input_dir = new Path(dir)
+    val filter=new ParquetPathFilter
+    val hdfs_files = fs.listStatus(input_dir,filter)
+    hdfs_files
+  }
 }
+
+
+

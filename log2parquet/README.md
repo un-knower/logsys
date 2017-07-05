@@ -25,7 +25,7 @@ UPSERT INTO METADATA.APPLOG_SPECIAL_FIELD_DESC_TEST VALUES(NEXT VALUE FOR METADA
 
 * 查询表
 select * from METADATA.APPLOG_SPECIAL_FIELD_DESC_TEST;
-
+select * from metadata.logfile_key_field_value where TASKID='AAABXRFgkB2sENVtAs4AAAAA';
  
 
 ####phoenix命令行使用：
