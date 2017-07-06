@@ -31,8 +31,8 @@ object Json2ParquetUtil {
         val jsonDir = s"${outputPathTmp}_json"
         val tmpDir = s"${outputPathTmp}_tmp"
         //运行任务之前重建临时文件目录
-        fs.delete(new Path(jsonDir), true)
-        fs.delete(new Path(tmpDir), true)
+        //fs.delete(new Path(jsonDir), true)
+        //fs.delete(new Path(tmpDir), true)
         fs.mkdirs(new Path(jsonDir))
         fs.mkdirs(new Path(tmpDir))
 
@@ -89,7 +89,7 @@ object Json2ParquetUtil {
             val outputPathType = item.getPath.getName
             val outputPathTypeSize = fs.getContentSummary(item.getPath).getLength
             val inPath = s"$jsonDir/${outputPathType}"
-            val outPath = outputPathType.replace("#",File.separator)
+            val outPath = Constants.DATA_WAREHOUSE + File.separator + outputPathType.replace("#",File.separator)
             (outputPathTypeSize, inPath, outPath)
         })
 
@@ -120,22 +120,22 @@ object Json2ParquetUtil {
         val preserveJsonDir = false
         val preserveTmpDir = false
        if (!preserveTmpDir) {
-           fs.delete(new Path(tmpDir), true)
+           //fs.delete(new Path(tmpDir), true)
            println(s"delete dir:$tmpDir")
        }else{
            val files=fs.listStatus(new Path(tmpDir))
            if(files.length==0){
-               fs.delete(new Path(tmpDir), true)
+               //fs.delete(new Path(tmpDir), true)
                println(s"delete empty dir:$tmpDir")
            }
        }
        if (!preserveJsonDir) {
-           fs.delete(new Path(jsonDir), true)
+           //fs.delete(new Path(jsonDir), true)
            println(s"delete dir:$jsonDir")
        }else{
            val files=fs.listStatus(new Path(jsonDir))
            if(files.length==0){
-               fs.delete(new Path(jsonDir), true)
+               //fs.delete(new Path(jsonDir), true)
                println(s"delete empty dir:$jsonDir")
            }
        }
@@ -156,7 +156,7 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
             sparkSession.read.json(inputPath).coalesce(jsonSplitNum).write.mode(SaveMode.Overwrite).parquet(outputPath)
             println(s"write file: $outputPath")
             //删除输入目录
-            fs.delete(new Path(inputPath), true)
+            //fs.delete(new Path(inputPath), true)
             val outputSize = fs.getContentSummary(new Path(outputPath)).getLength
             s"convert file: $inputPath(${inputSize / 1024}k) -> $outputPath(${outputSize / 1024}k),ts:${System.currentTimeMillis() - tsFrom}"
 
