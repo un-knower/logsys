@@ -10,5 +10,5 @@ pwd=`pwd`
 source ../bin/envFn.sh
 load_args $*
 
-sh ../bin/ods_view_metadata.sh $@
+nohup sh ../bin/ods_view_metadata.sh $@ >> ../logs/metadata.log 2>&1 &
 
