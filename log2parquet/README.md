@@ -7,7 +7,12 @@
 1.使用phoenix客户端读取和写入元数据基础信息
 2.使用spark完成数据源读取和parquet文件转换
 
+#
+
+
 ####测试运行环境
+app-5 
+/app/log2parquet
 
 ####phoenix DDL and DML
 * 创建Table

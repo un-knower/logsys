@@ -43,18 +43,18 @@
             <version>2.3.0</version>
         </dependency>
 
-        <dependency>
+     <!--   <dependency>
             <groupId>org.apache.phoenix</groupId>
             <artifactId>phoenix-queryserver-client</artifactId>
             <version>4.10.0</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/../lib/phoenix-queryserver-client-4.10.0-HBase-1.2.jar</systemPath>
-        </dependency>
-        <dependency>
+        </dependency>-->
+        <!--<dependency>
             <groupId>org.apache.calcite.avatica</groupId>
             <artifactId>avatica</artifactId>
             <version>1.10.0</version>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>org.apache.spark</groupId>
