@@ -98,6 +98,7 @@ class MetadataService(metadataServer: String, readTimeOut: Int = 100000) {
         val response = Http(metadataServer + "/metadata/logfile_task_info")
             .option(HttpOptions.readTimeout(readTimeOut))
             .method("PUT")
+            .header("Content-Type","application/json")
             .put(body).asString
         if (!response.isSuccess) {
             throw new RuntimeException(response.body)
@@ -105,5 +106,33 @@ class MetadataService(metadataServer: String, readTimeOut: Int = 100000) {
         JSON.parseObject(response.body)
     }
 
+  /**
+    *
+    * taskFlag:111
+    * 第一段表示期望生成DDL
+    * 第二段表示期望生成DML
+    * 第三段表示执行成DML
+    *
+    * */
+  def postTaskId2MetaModel(taskId: String,taskFlag:String,isDebug:Boolean=false): JSONObject = {
+    assert(taskFlag!=null&&taskFlag.length==3)
+    var reallyTaskFlag=""
+    if(isDebug){
+        reallyTaskFlag=taskFlag.substring(0,2)+"0"
+    }else{
+        reallyTaskFlag=taskFlag
+    }
+    println(metadataServer + s"/metadata/processTask/${taskId}/${reallyTaskFlag}")
+    val response = Http(metadataServer + s"/metadata/processTask/${taskId}/${reallyTaskFlag}")
+      .option(HttpOptions.readTimeout(readTimeOut))
+      .method("POST")
+      .header("Content-Type","text/plain")
+      .postData("")
+      .asString
+    if (!response.isSuccess) {
+      throw new RuntimeException(response.body)
+    }
+    JSON.parseObject(response.body)
+  }
 
 }

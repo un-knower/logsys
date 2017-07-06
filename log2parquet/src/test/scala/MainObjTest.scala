@@ -81,8 +81,17 @@ class MainObjTest extends LogTrait{
     })
 
     println(arrayBuffer.length)
-
-    var res= getUtils.metadataService().putLogFileFieldDesc(taskId,arrayBuffer)
-    println(res)
+    val response= getUtils.metadataService().putLogFileFieldDesc(taskId,arrayBuffer)
+    println(response)
   }
+
+  @Test
+  def postTaskId2MetaModel(): Unit ={
+    val taskId="AAABXRaUkUwK4IFfkkAAAAA"
+    val taskFlag="110"
+    val response=getUtils.metadataService().postTaskId2MetaModel(taskId,taskFlag,false)
+   println(response)
+  }
+
+
 }

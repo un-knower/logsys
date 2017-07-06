@@ -121,6 +121,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   def generateMetaDataToTable(path_file_value_map:Array[(String,scala.collection.mutable.Map[String,String])]): Unit ={
     val generator = IdGenerator.defaultInstance
     val taskId=generator.nextId().replace("/","")
+    println("----------taskId:"+taskId)
 
     // metadata.logfile_key_field_value
     val fieldValueEntityArrayBuffer=generateFieldValueEntityArrayBuffer(taskId,path_file_value_map)
@@ -140,6 +141,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     fieldDescEntityArrayBuffer.take(10).foreach(println)
     val responseFieldDesc=metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fieldDescEntityArrayBuffer)
     println(responseFieldDesc.toJSONString)
+
+    //发送taskId给元数据模块
+    metaDataUtils.metadataService().postTaskId2MetaModel(taskId,"111")
   }
 
   /**
