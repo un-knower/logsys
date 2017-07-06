@@ -462,7 +462,7 @@ public class ODSViewService {
 
         //在同一个appId中,不允许不同的fieldName有相同的fieldOrder
         String invalidInfo = appEntities.stream().collect(Collectors.groupingBy(entity -> entity.getFieldOrder()))
-                .entrySet().stream().filter(entity -> entity.getValue().size() > 0)
+                .entrySet().stream().filter(entity -> entity.getValue().size() > 1)
                 .map(entity -> entity.getKey() + ":" + entity.getValue().stream().map(value -> value.getFieldName()).collect(Collectors.joining(",")))
                 .collect(Collectors.joining("\n"));
 
