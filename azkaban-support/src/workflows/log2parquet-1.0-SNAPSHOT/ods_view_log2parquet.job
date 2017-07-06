@@ -1,2 +1,2 @@
 type=command
-command=sh ${working.dir}/../sbin/log2parquet.sh /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=${key_day}/key_hour=${key_hour}
+command=sh ${working.dir}/../sbin/log2parquet.sh /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=${startDate}/key_hour=${startHour}
