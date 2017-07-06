@@ -82,6 +82,7 @@ class MetadataService(metadataServer: String, readTimeOut: Int = 100000) {
         val response = Http(metadataServer + "/metadata/logfile_field_desc")
             .option(HttpOptions.readTimeout(readTimeOut))
             .method("PUT")
+            .header("Content-Type","application/json")
             .put(body).asString
         if (!response.isSuccess) {
             throw new RuntimeException(response.body)
