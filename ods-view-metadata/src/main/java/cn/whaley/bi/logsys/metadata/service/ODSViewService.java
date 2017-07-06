@@ -163,7 +163,7 @@ public class ODSViewService {
         Integer ret = 0;
         List<LogTabDDLEntity> ddlEntities = logTabDDLRepo.queryByTaskId(taskId, false);
         if (ddlEntities.size() > 0) {
-            ret += hiveRepo.executeDDL(ddlEntities.stream().sorted(new SeqEntityComparator<>()).collect(Collectors.toList()));
+            ret += hiveRepo.executeDDL(ddlEntities.stream().sorted(Comparator.comparing(LogTabDDLEntity::getSeq)).collect(Collectors.toList()));
             ddlEntities.forEach(entity -> {
                 logTabDDLRepo.updateCommitInfo(entity);
             });
@@ -181,7 +181,7 @@ public class ODSViewService {
         Integer ret = 0;
         List<LogTabDMLEntity> dmlEntities = logTabDMLRepo.queryForTaskId(taskId, false);
         if (dmlEntities.size() > 0) {
-            ret += hiveRepo.executeDML(dmlEntities.stream().sorted(new SeqEntityComparator<>()).collect(Collectors.toList()));
+            ret += hiveRepo.executeDML(dmlEntities.stream().sorted(Comparator.comparing(LogTabDMLEntity::getSeq)).collect(Collectors.toList()));
             dmlEntities.forEach(entity -> {
                 logTabDMLRepo.updateCommitInfo(entity);
             });
@@ -246,7 +246,7 @@ public class ODSViewService {
     /**
      * 产生DML语句
      *
-     * @return 产生的DDL语句条数
+     * @return 产生的DML语句条数
      */
     List<LogTabDMLEntity> generateDML(LogFileTabKeyDesc desc) {
         String partInfo = desc.getParFieldNameAndValue().stream()
@@ -366,7 +366,7 @@ public class ODSViewService {
     }
 
 
-    //解析日志文件关键信息
+    //解析日志文件关键信息(数据库名,表名,分区字段及其值)
     LogFileTabKeyDesc resolveKeyDesc(String logPath, String appId, List<LogFileKeyFieldValueEntity> logFileKeyFieldDescEntities, List<AppLogKeyFieldDescEntity> appLogKeyFieldDescEntities) {
 
         LogFileTabKeyDesc desc = new LogFileTabKeyDesc();
@@ -378,13 +378,14 @@ public class ODSViewService {
         List<AppLogKeyFieldDescEntity> mergedParFieldDesc = mergeKeyFieldDesc(appId, AppLogKeyFieldDescEntity.FIELD_FLAG_PARTITION, appLogKeyFieldDescEntities);
 
 
-        //日志文件关键字段值Map
+        //日志文件关键字段值Map[fieldName,fieldValue]
         Map<String, String> fileKeyFieldDescMap = logFileKeyFieldDescEntities.stream()
                 .filter(entity -> entity.getAppId().equals(appId) && entity.getLogPath().equals(logPath))
                 .collect(Collectors.toMap(LogFileKeyFieldValueEntity::getFieldName, LogFileKeyFieldValueEntity::getFieldValue));
 
+        //数据库名
         String dbName = mergedDbNameFieldDesc.stream()
-                .sorted(new AppLogKeyFieldOrderComparator())
+                .sorted(Comparator.comparing(AppLogKeyFieldDescEntity::getFieldOrder))
                 .map(entity -> {
                     //日志文件字段值->日志元数据字段预定义值
                     String fieldName = entity.getFieldName();
@@ -396,8 +397,9 @@ public class ODSViewService {
                 }).filter(value -> StringUtils.isNotEmpty(value)).collect(Collectors.joining("_"));
         desc.setDbName(dbName);
 
+        //表名
         String tabName = mergedTabNameFieldDesc.stream()
-                .sorted(new AppLogKeyFieldOrderComparator())
+                .sorted(Comparator.comparing(AppLogKeyFieldDescEntity::getFieldOrder))
                 .map(entity -> {
                     //日志文件字段值->日志元数据字段预定义值
                     String fieldName = entity.getFieldName();
@@ -410,8 +412,9 @@ public class ODSViewService {
                 .collect(Collectors.joining("_"));
         desc.setTabName(tabName);
 
+        //分区字段名及其值[字段名,字段值]
         List<String[]> parFieldNameAndValue = mergedParFieldDesc.stream()
-                .sorted(new AppLogKeyFieldOrderComparator())
+                .sorted(Comparator.comparing(AppLogKeyFieldDescEntity::getFieldOrder))
                 .map(entity -> {
                     //日志文件字段值->日志元数据字段预定义值
                     String fieldName = entity.getFieldName();
@@ -428,7 +431,7 @@ public class ODSViewService {
 
 
     /**
-     * 合并App级别的关键字段定义
+     * 合并关键字段定义配置,将ALL级别和app级别进行合并,app级别有更高的优先级
      *
      * @param appId
      * @param fieldFlag
@@ -440,10 +443,10 @@ public class ODSViewService {
         //appId具体配置
         List<AppLogKeyFieldDescEntity> appEntities = appLogKeyFieldDescEntities.stream()
                 .filter(entity -> entity.getAppId().equals(appId) && entity.getFieldFlag() == fieldFlag)
-                .sorted(new AppLogKeyFieldOrderComparator())
+                .sorted(Comparator.comparing(AppLogKeyFieldDescEntity::getFieldOrder))
                 .collect(Collectors.toList());
 
-        //需要合并的默认配置,合并条件: 字段名或字段排序没有在具体配置中出现
+        //需要合并的默认配置,合并条件: 字段名或字段排序没有在具体appId相关配置中出现
         List<AppLogKeyFieldDescEntity> defaultEntities = appLogKeyFieldDescEntities.stream()
                 .filter(entity -> entity.getAppId().equals(AppLogKeyFieldDescEntity.APP_ID_ALL)
                                 && entity.getFieldFlag() == fieldFlag
@@ -451,13 +454,25 @@ public class ODSViewService {
                                 .filter(appEntity -> appEntity.getFieldName().equals(entity.getFieldName()) || appEntity.getFieldOrder().equals(entity.getFieldOrder()))
                                 .findAny().isPresent() == false
                 )
-                .sorted(new AppLogKeyFieldOrderComparator())
+                .sorted(Comparator.comparing(AppLogKeyFieldDescEntity::getFieldOrder))
                 .collect(Collectors.toList());
 
+        //将默认配置合并到appId相关配置中
         appEntities.addAll(defaultEntities);
 
+        //在同一个appId中,不允许不同的fieldName有相同的fieldOrder
+        String invalidInfo = appEntities.stream().collect(Collectors.groupingBy(entity -> entity.getFieldOrder()))
+                .entrySet().stream().filter(entity -> entity.getValue().size() > 0)
+                .map(entity -> entity.getKey() + ":" + entity.getValue().stream().map(value -> value.getFieldName()).collect(Collectors.joining(",")))
+                .collect(Collectors.joining("\n"));
+
+        if (StringUtils.isNotEmpty(invalidInfo)) {
+            throw new IllegalStateException(invalidInfo);
+        }
+
+        //按照fieldOrder进行排序
         List<AppLogKeyFieldDescEntity> mergedEntities = appEntities.stream()
-                .sorted(new AppLogKeyFieldOrderComparator())
+                .sorted(Comparator.comparing(AppLogKeyFieldDescEntity::getFieldOrder))
                 .collect(Collectors.toList());
 
         return mergedEntities;
@@ -483,44 +498,6 @@ public class ODSViewService {
                 .collect(Collectors.toList());
         return fieldDescEntities;
     }
-
-    <T> String joinAsString(CharSequence split, Collection<T> collection, Function<T, String> fn) {
-        StringBuilder builder = new StringBuilder();
-        for (T item : collection) {
-            if (builder.length() > 0) builder.append(split);
-            String r = fn.apply(item);
-            builder.append(r);
-        }
-        return builder.toString();
-    }
-
-
-    class AppLogKeyFieldOrderComparator implements Comparator<AppLogKeyFieldDescEntity> {
-
-        @Override
-        public int compare(AppLogKeyFieldDescEntity o1, AppLogKeyFieldDescEntity o2) {
-            if (o1 == null) return 0;
-            if (o2 == null) return 1;
-            int diff = o1.getFieldOrder() - o2.getFieldOrder();
-            if (diff == 0) return 0;
-            if (diff > 0) return 1;
-            return -1;
-        }
-    }
-
-    class SeqEntityComparator<T extends SeqEntity> implements Comparator<T> {
-
-        @Override
-        public int compare(T o1, T o2) {
-            if (o1 == null) return 0;
-            if (o2 == null) return 1;
-            int diff = o1.getSeq() - o2.getSeq();
-            if (diff == 0) return 0;
-            if (diff > 0) return 1;
-            return -1;
-        }
-    }
-
 
     //日志文件对应的表字段描述项目
     class TabFieldDescItem {
