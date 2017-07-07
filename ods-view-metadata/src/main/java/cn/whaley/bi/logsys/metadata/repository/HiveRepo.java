@@ -50,35 +50,55 @@ public class HiveRepo {
     public List<HiveFieldInfo> getTabFieldInfo(String dbName, String tabName) {
 
         try {
-            //jdbcTemplate的封装方法目前不支持describe语句,所以需要直接调用底层驱动
             List<HiveFieldInfo> fieldInfos = new ArrayList<>();
-            String sql = String.format("describe %s.%s", dbName, tabName);
+            String sql = String.format("show create table `%s.%s`", dbName, tabName);
             Statement statement = jdbcTemplate.getDataSource().getConnection().createStatement();
             ResultSet rs = statement.executeQuery(sql);
             boolean isPartition = false;
+            boolean isStart = false;
             while (rs.next()) {
-                String f1 = rs.getString(1);
-                String f2 = rs.getString(2);
+                String line = rs.getString(1).trim();
                 //忽略空行
-                if (StringUtils.isAnyEmpty(f1, f2)) {
+                if (StringUtils.isEmpty(line)) {
                     continue;
                 }
+                if (line.startsWith("CREATE ")) {
+                    isStart = true;
+                    continue;
+                }
+                if (isStart == false) {
+                    continue;
+                }
+
                 //分区行
-                if (f1.startsWith("# col_name")) {
+                if (line.startsWith("PARTITIONED BY")) {
                     isPartition = true;
                     continue;
                 }
 
-                if (isPartition) {
-                    fieldInfos.stream()
-                            .filter(fieldInfo -> fieldInfo.getColName().equals(f1))
-                            .forEach(item -> item.setPartitionField(true));
-                } else {
-                    HiveFieldInfo fieldInfo = new HiveFieldInfo();
-                    fieldInfo.setColName(f1);
-                    fieldInfo.setDataType(f2);
-                    fieldInfo.setPartitionField(false);
-                    fieldInfos.add(fieldInfo);
+                boolean isEnd = false;
+                if (line.trim().endsWith(")")) {
+                    isEnd = true;
+                    line = line.substring(0, line.length() - 1);
+                }
+
+                if (line.trim().endsWith(")")) {
+                    line = line.substring(0, line.length() - 1);
+                }
+                String[] cols = line.split(" ");
+                String fieldName = cols[0].trim().replace("`", "");
+                String fieldType = cols[1].trim();
+                if (fieldType.endsWith(",")) {
+                    fieldType = fieldType.substring(0, fieldType.length() - 1);
+                }
+                HiveFieldInfo fieldInfo = new HiveFieldInfo();
+                fieldInfo.setColName(fieldName);
+                fieldInfo.setDataType(fieldType);
+                fieldInfo.setPartitionField(isPartition);
+                fieldInfos.add(fieldInfo);
+
+                if (isEnd && isPartition) {
+                    break;
                 }
             }
             rs.close();
@@ -89,6 +109,7 @@ public class HiveRepo {
         }
     }
 
+
     /**
      * 执行DDL语句
      *
@@ -96,7 +117,7 @@ public class HiveRepo {
      * @return
      */
     public Integer executeDDL(List<LogTabDDLEntity> entities) {
-        Integer ret=0;
+        Integer ret = 0;
         Map<String, List<LogTabDDLEntity>> groups = entities.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
         for (Map.Entry<String, List<LogTabDDLEntity>> entry : groups.entrySet()) {
             String dbName = entry.getKey();
