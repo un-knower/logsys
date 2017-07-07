@@ -55,7 +55,7 @@ spark_dynamicAllocation_initialExecutors=$(getSparkProp $MainClass "spark.dynami
 spark_default_parallelism=$(getSparkProp $MainClass "spark.default.parallelism")
 spark_yarn_queue=$(getSparkProp $MainClass "spark.yarn.queue")
 
-export CLASSPATH=.:${CLASSPATH}:${pwd}/../conf
+
 
 for file in ../conf/*
 do

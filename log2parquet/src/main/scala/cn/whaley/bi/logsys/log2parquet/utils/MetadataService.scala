@@ -109,8 +109,8 @@ class MetadataService(metadataServer: String, readTimeOut: Int = 100000) {
   /**
     *
     * taskFlag:111
-    * 第一段表示期望生成DDL
-    * 第二段表示期望生成DML
+    * 第一段表示期望生成DDL和DML
+    * 第二段表示执行成DDL
     * 第三段表示执行成DML
     *
     * */

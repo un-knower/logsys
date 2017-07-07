@@ -61,14 +61,14 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //读取原始文件
     val inputPath = confManager.getConf("inputPath")
     val rdd_original = sparkSession.sparkContext.textFile(inputPath, 2)
-    println("rdd_original.count():" + rdd_original.count())
-    LOG.info("rdd_original.count():" + rdd_original.count())
+    //println("rdd_original.count():" + rdd_original.count())
+    //LOG.info("rdd_original.count():" + rdd_original.count())
 
     //解析出输出目录
     val pathRdd = metaDataUtils.parseLogStrRddPath(rdd_original)
-    println("pathRdd.count():" + pathRdd.count())
-    LOG.info("pathRdd.count():" + pathRdd.count())
-    pathRdd.take(10).foreach(println)
+    //println("pathRdd.count():" + pathRdd.count())
+    //LOG.info("pathRdd.count():" + pathRdd.count())
+    //pathRdd.take(10).foreach(println)
 
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
@@ -80,17 +80,17 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       //(Constants.DATA_WAREHOUSE + File.separator + e._1, jsonObjectProcessed)
       (e._1, jsonObjectProcessed)
     })
-    println("processedRdd.count():" + processedRdd.count())
-    LOG.info("processedRdd.count():" + processedRdd.count())
-    processedRdd.take(10).foreach(println)
+    //println("processedRdd.count():" + processedRdd.count())
+    //LOG.info("processedRdd.count():" + processedRdd.count())
+    //processedRdd.take(10).foreach(println)
 
     //将经过处理器处理后，正常状态的记录使用规则库过滤【字段黑名单、重命名、行过滤】
     val okRowsRdd = processedRdd.filter(e=>e._2.hasErr==false)
     val afterRuleRdd=ruleHandle(pathRdd,okRowsRdd)
-    println("afterRuleRdd.count():" + afterRuleRdd.count())
-    LOG.info("afterRuleRdd.count():" + afterRuleRdd.count())
+    //println("afterRuleRdd.count():" + afterRuleRdd.count())
+    //LOG.info("afterRuleRdd.count():" + afterRuleRdd.count())
     //afterRuleRdd.filter(e=>e._2.toJSONString.contains("actionId")).take(10).foreach(println)
-    afterRuleRdd.take(10).foreach(println)
+    //afterRuleRdd.take(10).foreach(println)
 
     //输出正常记录到HDFS文件
     Json2ParquetUtil.saveAsParquet(afterRuleRdd, sparkSession)
@@ -99,16 +99,16 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val errRowsRdd = processedRdd.filter(row => row._2.hasErr).map(row => {
       row._2
     })
-    println("errRowsRdd.count():" + errRowsRdd.count())
-    LOG.info("errRowsRdd.count():" + errRowsRdd.count())
-    errRowsRdd.take(10).foreach(println)
+    //println("errRowsRdd.count():" + errRowsRdd.count())
+    //LOG.info("errRowsRdd.count():" + errRowsRdd.count())
+    //errRowsRdd.take(10).foreach(println)
 
     val time=new Date().getTime
     errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
 
     //生成元数据信息给元数据模块使用
     val path_file_value_map=pathRdd.map(e=>(e._1,e._3)).distinct().collect()
-    println("path_file_value_map.length():" + path_file_value_map.length)
+    //println("path_file_value_map.length():" + path_file_value_map.length)
     LOG.info("path_file_value_map.length():" + path_file_value_map.length)
     path_file_value_map.take(10).foreach(println)
     generateMetaDataToTable(path_file_value_map)
