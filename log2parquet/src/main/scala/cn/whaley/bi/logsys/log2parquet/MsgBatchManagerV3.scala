@@ -77,7 +77,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val processedRdd = pathRdd.map(e => {
       val jsonObject = e._2
       val jsonObjectProcessed = processGroupInstance.process(jsonObject)
-      (Constants.DATA_WAREHOUSE + File.separator + e._1, jsonObjectProcessed)
+      //(Constants.DATA_WAREHOUSE + File.separator + e._1, jsonObjectProcessed)
+      (e._1, jsonObjectProcessed)
     })
     println("processedRdd.count():" + processedRdd.count())
     LOG.info("processedRdd.count():" + processedRdd.count())
@@ -105,7 +106,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val time=new Date().getTime
     errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
 
-    //TODO 读parquet文件，生成元数据信息给元数据模块使用
+    //生成元数据信息给元数据模块使用
     val path_file_value_map=pathRdd.map(e=>(e._1,e._3)).distinct().collect()
     println("path_file_value_map.length():" + path_file_value_map.length)
     LOG.info("path_file_value_map.length():" + path_file_value_map.length)
@@ -119,7 +120,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * */
   def generateMetaDataToTable(path_file_value_map:Array[(String,scala.collection.mutable.Map[String,String])]): Unit ={
     val generator = IdGenerator.defaultInstance
-    val taskId=generator.nextId()
+    val taskId=generator.nextId().replace("/","")
+    println("----------taskId:"+taskId)
 
     // metadata.logfile_key_field_value
     val fieldValueEntityArrayBuffer=generateFieldValueEntityArrayBuffer(taskId,path_file_value_map)
@@ -139,6 +141,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     fieldDescEntityArrayBuffer.take(10).foreach(println)
     val responseFieldDesc=metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fieldDescEntityArrayBuffer)
     println(responseFieldDesc.toJSONString)
+
+    //发送taskId给元数据模块
+    metaDataUtils.metadataService().postTaskId2MetaModel(taskId,"111")
   }
 
   /**
@@ -234,22 +239,27 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   def ruleHandle(pathRdd:RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])],resultRdd: RDD[(String, ProcessResult[JSONObject])]):RDD[(String, JSONObject)] ={
     // 获得规则库的每条规则
     val rules = metaDataUtils.parseSpecialRules(pathRdd)
+    println("---------------------rules"+rules)
+    rules.foreach(println)
+    println("---------------------rulesend"+rules)
 
     val afterRuleRdd = resultRdd.map(e => {
       val path = e._1
       val jsonObject = e._2.result.get
 
-      if(rules.filter(rule => rule.path.equalsIgnoreCase(path)).size>0){
+      //if(rules.filter(rule => (Constants.DATA_WAREHOUSE+File.separator+rule.path).equalsIgnoreCase(path)).size>0){
+        if(rules.filter(rule => rule.path.equalsIgnoreCase(path)).size>0){
         //一个绝对路径唯一对应一条规则
         val rule = rules.filter(rule => rule.path.equalsIgnoreCase(path)).head
+        //val rule = rules.filter(rule => (Constants.DATA_WAREHOUSE+File.separator+rule.path).equalsIgnoreCase(path)).head
 
         val fieldBlackFilter = rule.fieldBlackFilter
-        fieldBlackFilter.map(blackField => {
+        fieldBlackFilter.foreach(blackField => {
           jsonObject.remove(blackField)
         })
 
         val rename = rule.rename
-        rename.map(e => {
+        rename.foreach(e => {
           if (jsonObject.containsKey(e._1)) {
             jsonObject.put(e._2, jsonObject.get(e._1))
             jsonObject.remove(e._1)
