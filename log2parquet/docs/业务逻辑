@@ -1,0 +1,6 @@
+
+* ods origin路径生成规则
+/data_warehouse/ods_origin.db/log_origin/key_appId=${appId}/key_day=${yyyymmdd}/key_hour=${HH}
+例如：
+hadoop fs -du -h /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=12
+

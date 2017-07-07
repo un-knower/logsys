@@ -1,0 +1,27 @@
+
+####phoenix命令行使用：
+1.连接phoenix
+hadoop@bigdata-appsvr-130-5
+cd /opt/phoenix/bin
+./sqlline.py bigdata-cmpt-128-1:2181
+
+2.命令行例子
+!describe METADATA.APPLOG_SPECIAL_FIELD_DESC
+
+####phoenix DDL and DML
+* 创建Table
+CREATE TABLE IF NOT EXISTS METADATA.APPLOG_SPECIAL_FIELD_DESC_TEST(
+id BIGINT not null primary key,
+tabNameReg VARCHAR(100)
+)
+
+
+* 创建sequence
+CREATE SEQUENCE METADATA.APPLOG_SPECIAL_FIELD_DESC_SEQ;
+
+* 插入记录
+UPSERT INTO METADATA.APPLOG_SPECIAL_FIELD_DESC_TEST VALUES(NEXT VALUE FOR METADATA.APPLOG_SPECIAL_FIELD_DESC_SEQ, 'foo');
+
+* 查询表
+select * from METADATA.APPLOG_SPECIAL_FIELD_DESC_TEST;
+select * from metadata.logfile_key_field_value where TASKID='AAABXRFgkB2sENVtAs4AAAAA';
