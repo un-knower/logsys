@@ -160,3 +160,28 @@ boikgpokn78sb95ktmsc1bnkechpgj9l->log_medusa_main3x_${log_type}_${event_id}/key_
     val pathRdd = MetaDataUtils.parseLogStrRddPath(rdd_original)
 不能处理medusa 2.x
 
+
+
+
+####TODO:
+1. 发现每次都要mvn clean；才能保证settings.properties不会打入jar包，但是不打入jar包，confManager加载不到资源
+报错信息：
+can not load resource settings.properties
+can not load resource MsgBatchManagerV3.xml
+
+解决方式
+
+2. 性能改进
+a. 有些不需要返回RDD的操作
+.map 改成.foreach
+
+3. task表本身信息没有填充
+
+4. 只拿paruqet的一个文件生成metadata.logfile_field_desc表，需要测试，是否一个parquet文件的schema就可以代表所有parquet文件的schema
+
+5. taskFlag以程序传入方式
+
+
+
+
+
