@@ -253,7 +253,7 @@ public class ODSViewService {
                 .map(par -> String.format("%s='%s'", par[0], par[1]))
                 .collect(Collectors.joining(","));
 
-        String dmlText = String.format("ALTER TABLE %s.%s DROP IF EXISTS PARTITION (%s)", desc.getDbName(), desc.getTabName(), partInfo);
+        String dmlText = String.format("ALTER TABLE `%s.%s` DROP IF EXISTS PARTITION (%s)", desc.getDbName(), desc.getTabName(), partInfo);
         LogTabDMLEntity dropEntity = new LogTabDMLEntity();
         dropEntity.setDbName(desc.getDbName());
         dropEntity.setTabName(desc.getTabName());
@@ -261,7 +261,7 @@ public class ODSViewService {
         dropEntity.setDmlText(dmlText);
         dropEntity.setTaskId(desc.getTaskId());
 
-        dmlText = String.format("ALTER TABLE %s.%s ADD PARTITION(%s) location '%s' "
+        dmlText = String.format("ALTER TABLE `%s.%s` ADD PARTITION(%s) location '%s' "
                 , desc.getDbName(), desc.getTabName(), partInfo, desc.getLogPath());
         LogTabDMLEntity addEntity = new LogTabDMLEntity();
         addEntity.setDbName(desc.getDbName());
@@ -291,7 +291,7 @@ public class ODSViewService {
             //目前设计分区字段全部为string类型
             String partDesc = desc.parFieldNameAndValue.stream().map(value -> value[0] + " string").collect(Collectors.joining(","));
             String fieldDesc = StringUtils.join(tabGroup.stream().map(entity -> entity.getFieldSql()).collect(Collectors.toList()), ",");
-            String ddlText = String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s (%s) PARTITIONED BY (%s) STORED AS " + desc.getStored()
+            String ddlText = String.format("CREATE EXTERNAL TABLE IF NOT EXISTS `%s` (%s) PARTITIONED BY (%s) STORED AS " + desc.getStored()
                     , tabFullName, fieldDesc, partDesc
             );
             LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
@@ -315,7 +315,7 @@ public class ODSViewService {
             }).collect(Collectors.toList());
             if (added.size() > 0) {
                 String addColumns = added.stream().map(item -> item.getFieldSql()).collect(Collectors.joining(","));
-                String ddlText = String.format("ALTER TABLE %s ADD COLUMNS(%s)", tabFullName, addColumns);
+                String ddlText = String.format("ALTER TABLE `%s` ADD COLUMNS(%s)", tabFullName, addColumns);
                 LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
                 ddlEntity.setDbName(dbName);
                 ddlEntity.setTabName(tabName);
@@ -349,7 +349,7 @@ public class ODSViewService {
                     if (!isConvertible) {
                         LOG.info("{} -> {} implicitConvertible=false, targetFieldType={}", new Object[]{oldFieldType, newFieldType, targetFieldType});
                     }
-                    String ddlText = String.format("ALTER TABLE %s CHANGE COLUMN %s %s %s"
+                    String ddlText = String.format("ALTER TABLE `%s` CHANGE COLUMN `%s` `%s` %s"
                             , tabFullName, fieldName, fieldName, targetFieldType);
                     LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
                     ddlEntity.setDbName(dbName);
