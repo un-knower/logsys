@@ -240,6 +240,8 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             val message = item._1
             (message.topic(), message.partition())
         })
+        val currDate=new SimpleDateFormat("yyyyMMdd").format(new Date())
+        val currHour=new SimpleDateFormat("HH").format(new Date())
         val fs = FileSystem.get(hdfsConf)
         groups.foreach(group => {
             val topic = group._1._1
@@ -247,7 +249,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
             val items = group._2
             val writer = {
                 try {
-                    val filePath = s"${errRootDir}/${topic}_${parId}.json"
+                    val filePath = s"${errRootDir}/key_day=${currDate}/key_hour=${currHour}/${topic}_${parId}.json"
                     val path = new Path(filePath)
                     if (fs.createNewFile(path)) {
                         LOG.info(s"append file:${filePath}")
@@ -255,7 +257,7 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
                     fs.append(path)
                 } catch {
                     case ex: Throwable => {
-                        val filePath = s"${errRootDir}/${topic}_${parId}_${System.currentTimeMillis()}.json"
+                        val filePath = s"${errRootDir}/key_day=${currDate}/key_hour=${currHour}/${topic}_${parId}_${System.currentTimeMillis()}.json"
                         val path = new Path(filePath)
                         LOG.warn(s"append not supported. create file: ${filePath}")
                         LOG.error("append file failure:", ex);
