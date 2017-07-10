@@ -1,0 +1,13 @@
+
+select *
+from metadata.app_id_info
+
+
+select INPUT__FILE__NAME,*
+from ods_origin.log_origin a
+where appid='boikgpokn78sb95ktmsc1bnkechpgj9l' and
+key_day='20170707' and
+key_hour='17' and
+logbody['eventId']='medusa-notification-action'
+order by appid
+limit 10;

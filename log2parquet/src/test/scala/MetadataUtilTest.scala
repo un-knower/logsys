@@ -12,7 +12,8 @@ import org.junit.Test
  */
 class MetadataUtilTest {
 
-    val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendoj8ilnoi7/key_day=20170630/key_hour=04/boikgpokn78sb95kjhfrendoj8ilnoi7_2017063004_raw_7_337326252.json.gz"
+   // val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendoj8ilnoi7/key_day=20170630/key_hour=04/boikgpokn78sb95kjhfrendoj8ilnoi7_2017063004_raw_7_337326252.json.gz"
+    val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170707/key_hour=17/boikgpokn78sb95ktmsc1bnkechpgj9l_2017070717_raw_5_1046838202.json.gz"
 
     def getUtils()=new MetaDataUtils( "http://localhost:8084")
 
@@ -28,10 +29,19 @@ class MetadataUtilTest {
         val context = getSparkContext()
         val rdd = context.textFile(testPath)
 
-        getUtils.parseLogStrRddPath(rdd).take(10).foreach(row => {
+        getUtils.parseLogStrRddPath(rdd).take(100).foreach(row => {
             println(row._1 + "\t" + row._2.toJSONString)
         })
     }
+
+  @Test
+  def testParseLogStrRddPath2(): Unit = {
+    val context = getSparkContext()
+    val rdd = context.textFile(testPath)
+    getUtils.parseLogStrRddPath(rdd).map(e=>{
+     e._1
+    }).distinct().foreach(println)
+  }
 
     @Test
     def testParseLogObjRddPath(): Unit = {
