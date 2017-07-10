@@ -50,3 +50,9 @@ val pathRdd = metaDataUtils.parseLogStrRddPath(rdd_original)
 12. 输入路径正则匹配测试
  使用azkaban调度传入day和hour，会运行所有的appid的当前hour
  /data_warehouse/ods_origin.db/log_origin/key_appId=*/key_day=${yyyymmdd}/key_hour=${HH}
+ 
+13. 分批put，post数据 
+
+14. # 分隔符改为其他字符
+
+

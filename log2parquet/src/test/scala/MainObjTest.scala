@@ -93,5 +93,44 @@ class MainObjTest extends LogTrait{
    println(response)
   }
 
+  @Test
+  def testGrammar(): Unit ={
+    for(i <-1 to 5){
+      print(""+i)
+    }
+  }
+
+  @Test
+  def fieldDescEntityTest(): Unit ={
+    val arrayBuffer = new ArrayBuffer[LogFileFieldDescEntity]()
+    val taskId="test123456"
+    val path=new Path("/data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_player_sdk_startPlay/key_day=19700101/key_hour=08/part-00000-7a49cc93-5035-4aee-b440-efaadc510fa9.snappy.parquet")
+    val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(path)
+    parquetMetaData.map(meta=>{
+      val fieldName=meta._1
+      val fieldType=meta._2
+      val fieldSql=meta._3
+      val rowType=meta._4
+      val rowInfo=meta._5
+      val logFileFieldDescEntity=new LogFileFieldDescEntity
+      logFileFieldDescEntity.setTaskId(taskId)
+      logFileFieldDescEntity.setLogPath(Constants.DATA_WAREHOUSE+File.separator)
+      logFileFieldDescEntity.setFieldName(fieldName)
+      logFileFieldDescEntity.setFieldType(fieldType)
+      logFileFieldDescEntity.setFieldSql(fieldSql)
+      logFileFieldDescEntity.setRawType(rowType)
+      logFileFieldDescEntity.setRawInfo(rowInfo)
+      logFileFieldDescEntity.setIsDeleted(false)
+      logFileFieldDescEntity.setCreateTime(new Date())
+      logFileFieldDescEntity.setUpdateTime(new Date())
+      println(fieldName+","+fieldType+","+fieldSql+","+rowType+","+rowInfo)
+      arrayBuffer+=logFileFieldDescEntity
+    })
+
+    println(arrayBuffer.length)
+    val response= getUtils.metadataService().putLogFileFieldDesc(taskId,arrayBuffer)
+    println(response)
+  }
+
 
 }
