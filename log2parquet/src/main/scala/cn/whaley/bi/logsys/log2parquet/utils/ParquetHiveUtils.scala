@@ -155,9 +155,15 @@ object ParquetHiveUtils {
     val conf = new Configuration(true)
     val fs = FileSystem.get(conf)
     val input_dir = new Path(dir)
-    val filter=new ParquetPathFilter
-    val hdfs_files = fs.listStatus(input_dir,filter)
-    hdfs_files
+    if(fs.exists(input_dir)){
+      val filter=new ParquetPathFilter
+      val hdfs_files = fs.listStatus(input_dir,filter)
+      hdfs_files
+    }else{
+      println("-------dir_not_exist:"+dir)
+      val empty=new Array[FileStatus](0)
+      empty
+    }
   }
 }
 
