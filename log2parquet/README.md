@@ -58,3 +58,6 @@ val pathRdd = metaDataUtils.parseLogStrRddPath(rdd_original)
 未改动 
 hadoop fs -rm -r /log/default/parquet/aa/bb#cc 会删除的
 并且只在/log/default/parquet/临时目录操作
+
+15. 感觉执行了两次，并且期望不要等待返回结果
+http://bigdata-appsvr-130-5:8084/metadata/processTask/AAABXSxrUCwK4Aaq1wAAAAA/111

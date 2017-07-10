@@ -135,7 +135,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       e._1
     }).distinct
 
-    println("------distinctOutput.begin")
+    println("------distinctOutput.begin:"+distinctOutput.length)
     distinctOutput.foreach(println)
     println("------distinctOutput.end")
 
