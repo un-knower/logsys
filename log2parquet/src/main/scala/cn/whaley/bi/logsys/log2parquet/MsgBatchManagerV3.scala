@@ -62,7 +62,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     //读取原始文件
     val inputPath = confManager.getConf("inputPath")
-    val rdd_original = sparkSession.sparkContext.textFile(inputPath, 2)
+    val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200)
     //println("rdd_original.count():" + rdd_original.count())
     //LOG.info("rdd_original.count():" + rdd_original.count())
 
