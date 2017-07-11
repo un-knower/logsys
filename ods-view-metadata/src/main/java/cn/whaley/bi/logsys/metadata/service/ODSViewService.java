@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -113,6 +114,16 @@ public class ODSViewService {
 
         //扫描表字段元数据
         List<TabFieldDescItem> tabFieldDescItems = generateTabFieldDesc(appLogKeyFieldDescEntities, logFileKeyFieldDescEntities, logFileFieldDescEntities);
+
+        //表定义
+        Map<String, HiveTableInfo> hiveTableInfoMap = hiveRepo.getTabInfo(tabFieldDescItems.stream().map(item -> item.desc.dbName + "." + item.desc.tabName).collect(Collectors.toList()));
+        tabFieldDescItems.stream().forEach(new Consumer<TabFieldDescItem>() {
+            @Override
+            public void accept(TabFieldDescItem tabFieldDescItem) {
+                tabFieldDescItem.hiveTabInfo = hiveTableInfoMap.get(tabFieldDescItem.desc.dbName + "." + tabFieldDescItem.desc.tabName);
+            }
+        });
+
 
         //产生DDL
         List<LogTabDDLEntity> ddlEntities = tabFieldDescItems.stream()
@@ -237,7 +248,7 @@ public class ODSViewService {
 
         List<LogTabDDLEntity> entities = tabGroups.entrySet().stream().flatMap(entry -> {
             List<LogTabFieldDescEntity> currGroup = entry.getValue();
-            return generateDDLForTab(desc, currGroup).stream();
+            return generateDDLForTab(descItem, currGroup).stream();
         }).collect(Collectors.toList());
 
         return entities;
@@ -280,13 +291,13 @@ public class ODSViewService {
      * @param tabGroup 某个表的一组字段定义
      * @return 产生的DDL语句条数
      */
-    List<LogTabDDLEntity> generateDDLForTab(LogFileTabKeyDesc desc, List<LogTabFieldDescEntity> tabGroup) {
+    List<LogTabDDLEntity> generateDDLForTab(TabFieldDescItem itemDesc, List<LogTabFieldDescEntity> tabGroup) {
         List<LogTabDDLEntity> entities = new ArrayList<>();
-
+        LogFileTabKeyDesc desc = itemDesc.desc;
         String dbName = desc.dbName;
         String tabName = desc.tabName;
         String tabFullName = dbName + "." + tabName;
-        Boolean exists = hiveRepo.tabExists(dbName, tabName);
+        Boolean exists = itemDesc.hiveTabInfo.getTabExists();
         if (!exists) {
             //目前设计分区字段全部为string类型
             String partDesc = desc.parFieldNameAndValue.stream().map(value -> value[0] + " string").collect(Collectors.joining(","));
@@ -314,8 +325,7 @@ public class ODSViewService {
             entities.add(ddlEntity);
         } else {
 
-            List<HiveFieldInfo> fieldInfos = hiveRepo.getTabFieldInfo(dbName, tabName);
-
+            List<HiveFieldInfo> fieldInfos = itemDesc.hiveTabInfo.getFieldInfos();
             //add column
             List<LogTabFieldDescEntity> added = tabGroup.stream().filter(item -> {
                 String fieldName = item.getFieldName();
@@ -355,7 +365,7 @@ public class ODSViewService {
                             .map(fieldInfo -> fieldInfo.getDataType())
                             .findFirst().get();
                     String targetFieldType = newFieldType;
-                    if (!oldFieldType.replace("`", "").replace(" ","").equalsIgnoreCase(newFieldType.replace("`", "").replace(" ",""))) {
+                    if (!oldFieldType.replace("`", "").replace(" ", "").equalsIgnoreCase(newFieldType.replace("`", "").replace(" ", ""))) {
                         boolean isConvertible = HiveUtil.implicitConvertible(oldFieldType, newFieldType);
                         if (!isConvertible) {
                             targetFieldType = "string";
@@ -516,6 +526,7 @@ public class ODSViewService {
     class TabFieldDescItem {
         public LogFileTabKeyDesc desc;
         public List<LogTabFieldDescEntity> fieldDescEntities;
+        public HiveTableInfo hiveTabInfo;
     }
 
     //日志文件对应的表关键字段描述信息
