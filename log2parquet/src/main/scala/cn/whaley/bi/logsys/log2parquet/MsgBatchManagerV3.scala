@@ -40,8 +40,10 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //val appId2OutputPathTemplateMap = MetaDataUtils.getAppId2OutputPathTemplateMap
     //MsgBatchManagerV3.appId2OutputPathTemplateMapBroadCast = MsgBatchManagerV3.sparkSession.sparkContext.broadcast(appId2OutputPathTemplateMap)
     val metadataService = confManager.getConf("metadataService")
+    val timeout=confManager.getConfOrElseValue("metadata","readTimeout","300000").toInt
+    println("-----timeout:" + timeout)
     println("-----metadataService:" + metadataService)
-    metaDataUtils = new MetaDataUtils(metadataService)
+    metaDataUtils = new MetaDataUtils(metadataService,timeout)
   }
 
   /**
@@ -150,7 +152,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
    // println(responseFieldDesc.toJSONString)
 
     //发送taskId给元数据模块
-    metaDataUtils.metadataService().postTaskId2MetaModel(taskId, "111")
+    val responseTaskIdResponse=metaDataUtils.metadataService().postTaskId2MetaModel(taskId, "111")
+    LOG.info(s"responseFieldDesc : "+responseTaskIdResponse.toJSONString)
+    println(s"----responseFieldDesc : "+responseTaskIdResponse.toJSONString)
   }
 
 
