@@ -61,7 +61,19 @@ public class HiveRepo {
         try {
             List<HiveFieldInfo> fieldInfos = new ArrayList<>();
             String sql = String.format("show create table `%s.%s`", dbName, tabName);
-            Statement statement = jdbcTemplate.getDataSource().getConnection().createStatement();
+            Statement statement = null;
+            int currTry = 0;
+            while (currTry++ < 3) {
+                try {
+                    statement = jdbcTemplate.getDataSource().getConnection().createStatement();
+                    break;
+                } catch (Exception ex) {
+                    LOG.warn("hive error,try " + currTry);
+                    if (currTry == 3) {
+                        LOG.error("", ex);
+                    }
+                }
+            }
             ResultSet rs = statement.executeQuery(sql);
             boolean isPartition = false;
             boolean isStart = false;

@@ -180,7 +180,7 @@ public class MetadataController {
                 Integer dmlRet = odsViewService.executeDML(taskId);
                 result.put("executeDML", dmlRet);
             }
-            retEntity.setCode(1);
+            retEntity.setCode(0);
             retEntity.setMessage("OK");
         } catch (Throwable ex) {
             LOG.error("taskId=" + taskId, ex);
