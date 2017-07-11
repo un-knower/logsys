@@ -29,8 +29,9 @@ create table metadata.logfile_key_field_value(
     ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (logPath,fieldName)
 )
+SALT_BUCKETS=40
 ;
-CREATE INDEX idx_logfile_key_field_value_taskId ON metadata.logfile_key_field_value(taskId);
+CREATE INDEX idx_logfile_key_field_value_taskId ON metadata.logfile_key_field_value(taskId) SALT_BUCKETS=40;
 
 
 --日志文件字段信息表
@@ -46,8 +47,9 @@ create table metadata.logfile_field_desc(
     ,createTime timestamp --记录创建时间
     ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (logPath,fieldName)
-);
-CREATE INDEX idx_logfile_field_desc_taskId ON metadata.logfile_field_desc(taskId);
+)
+SALT_BUCKETS=40;
+CREATE INDEX idx_logfile_field_desc_taskId ON metadata.logfile_field_desc(taskId) SALT_BUCKETS=40;
 
 
 
@@ -99,8 +101,8 @@ create table metadata.logtab_field_desc(
     ,createTime timestamp --记录创建时间
     ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,fieldName,seq)
-);
-CREATE INDEX idx_logtab_field_desc_taskId ON metadata.logtab_field_desc(taskId);
+)  SALT_BUCKETS=40;
+CREATE INDEX idx_logtab_field_desc_taskId ON metadata.logtab_field_desc(taskId)  SALT_BUCKETS=40;
 
 CREATE SEQUENCE metadata.seq_logtab_field_desc;
 
@@ -120,8 +122,8 @@ create table metadata.logtab_ddl(
     ,createTime timestamp --记录创建时间
     ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,seq)
-);
-CREATE INDEX idx_logtab_ddl_taskId ON metadata.logtab_ddl(taskId);
+) SALT_BUCKETS=40;
+CREATE INDEX idx_logtab_ddl_taskId ON metadata.logtab_ddl(taskId) SALT_BUCKETS=40;
 CREATE SEQUENCE metadata.seq_logtab_ddl;
 
 --DML信息表
@@ -139,8 +141,8 @@ create table metadata.logtab_dml(
     ,createTime timestamp --记录创建时间
     ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,seq)
-);
-CREATE INDEX idx_logtab_dml_taskId ON metadata.logtab_dml(taskId);
+) SALT_BUCKETS=40;
+CREATE INDEX idx_logtab_dml_taskId ON metadata.logtab_dml(taskId) SALT_BUCKETS=40;
 CREATE SEQUENCE metadata.seq_logtab_dml;
 
 
