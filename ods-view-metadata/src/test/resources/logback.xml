@@ -14,8 +14,8 @@
 		</encoder>
 	</appender>
 	
-	<logger name="com.alibaba.otter.canal.example.AbstractCanalClientTest" additivity="false">  
-        <level value="INFO" />  
+	<logger name="org.apache.hive.jdbc.Utils" additivity="false">
+        <level value="WARN" />
         <appender-ref ref="ENTRY_LOG" />
     </logger>
 	

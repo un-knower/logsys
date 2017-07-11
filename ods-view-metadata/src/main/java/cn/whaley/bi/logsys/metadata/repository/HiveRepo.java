@@ -27,7 +27,7 @@ public class HiveRepo {
     public static Logger LOG = LoggerFactory.getLogger(HiveRepo.class);
 
     @Resource(name = "hiveJdbcTemplate")
-    protected JdbcTemplate jdbcTemplate;
+    public JdbcTemplate jdbcTemplate;
 
     @Value("${HiveRepo.maxThreadPoolSize}")
     public Integer maxThreadPoolSize = 50;
@@ -187,30 +187,6 @@ public class HiveRepo {
      * @param entities
      * @return
      */
-    public Integer executeDML0(List<LogTabDMLEntity> entities) {
-        Integer ret = 0;
-        Map<String, List<LogTabDMLEntity>> groups = entities.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
-        for (Map.Entry<String, List<LogTabDMLEntity>> entry : groups.entrySet()) {
-            String dbName = entry.getKey();
-            jdbcTemplate.execute("use " + dbName);
-            List<LogTabDMLEntity> group = entry.getValue();
-            for (LogTabDMLEntity dmlEntity : group) {
-                try {
-                    dmlEntity.setCommitTime(new Date());
-                    jdbcTemplate.execute(dmlEntity.getDmlText());
-                    dmlEntity.setCommitCode(1);
-                    dmlEntity.setCommitMsg("SUCCESS");
-                    ret++;
-                } catch (Exception ex) {
-                    LOG.error(dmlEntity.getDmlText(), ex);
-                    dmlEntity.setCommitCode(-1);
-                    dmlEntity.setCommitMsg(ex.getMessage());
-                }
-            }
-        }
-        return ret;
-    }
-
     public Integer executeDML(List<LogTabDMLEntity> entities) {
         Integer ret = 0;
         Long fromTs = System.currentTimeMillis();
