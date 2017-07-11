@@ -10,7 +10,7 @@ import scalaj.http.{HttpOptions, Http}
  *
  * @param metadataServer 元数据服务器地址
  */
-class MetadataService(metadataServer: String, readTimeOut: Int = 100000) {
+class MetadataService(metadataServer: String, readTimeOut: Int = 900000) {
 
     def getJSONString[T](entities: Seq[T]): String = {
         "[" + entities.map(entity => JSON.toJSONString(entity, false)).mkString(",") + "]"

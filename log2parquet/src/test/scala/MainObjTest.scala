@@ -51,7 +51,7 @@ class MainObjTest extends LogTrait{
   }
 
 
-  def getUtils()=new MetaDataUtils( "http://localhost:8084")
+  def getUtils()=new MetaDataUtils( "http://bigdata-appsvr-130-5:8084")
 
   @Test
   def parseSQLFieldInfosAndPutRequest(): Unit ={
@@ -87,9 +87,10 @@ class MainObjTest extends LogTrait{
 
   @Test
   def postTaskId2MetaModel(): Unit ={
-    val taskId="AAABXRaUkUwK4IFfkkAAAAA"
-    val taskFlag="110"
-    val response=getUtils.metadataService().postTaskId2MetaModel(taskId,taskFlag,false)
+    //http://bigdata-appsvr-130-5:8084/metadata/processTask/AAABXS9LtE8K4Ax2FoAAAAA/111
+    val taskId="AAABXS9LtE8K4Ax2FoAAAAA"
+    val taskFlag="111"
+    val response=getUtils.metadataService().postTaskId2MetaModel(taskId,taskFlag)
    println(response)
   }
 

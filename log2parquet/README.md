@@ -32,6 +32,12 @@ a. 有些不需要返回RDD的操作
 6. crash日志还需要校验md5吗？yes
 
 7. realIp处理器
+  private val REMOTE_IP = "remoteIp"
+  private val FORWARDED_IP = "forwardedIp"
+  
+  svr_forwarded_for
+  svr_remote_addr
+  
 
 8. 规则检查
 * 字段名不允许出现"."和"-"
@@ -63,3 +69,8 @@ hadoop fs -rm -r /log/default/parquet/aa/bb#cc 会删除的
 
 16. 期望不要等待返回结果
 http://bigdata-appsvr-130-5:8084/metadata/processTask/AAABXSxrUCwK4Aaq1wAAAAA/111
+
+17. pathRdd需要加的逻辑
+if(jsonObject.containsKey("logType")&&jsonObject.getString("logType").equalsIgnoreCase("helios-whaleyvip-activity")){
+        jsonObject.put("logType","event")
+      }
