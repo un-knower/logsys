@@ -163,21 +163,27 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       for(i <-1 to times){
         val end=batchSize*i
         val fragment=seq.slice(start,end)
-        println(s"batch $i,$start->$end start: "+new Date())
+        LOG.info(s"batch $i,$start->$end start: "+new Date())
+        println(s"----batch $i,$start->$end start: "+new Date())
         val responseFieldDesc = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fragment)
-        println(s"batch $i,$start->$end end: "+new Date())
-        println(s"batch $i,$start->$end : "+responseFieldDesc.toJSONString)
+        LOG.info(s"batch $i,$start->$end end: "+new Date())
+        println(s"----batch $i,$start->$end end: "+new Date())
+        LOG.info(s"batch $i,$start->$end : "+responseFieldDesc.toJSONString)
+        println(s"----batch $i,$start->$end : "+responseFieldDesc.toJSONString)
         start=batchSize*i
       }
       val remain=seq.length-times*batchSize
       if(remain>0){
         val fragment=seq.slice(times*batchSize,seq.length)
         val responseFieldDesc = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fragment)
-        println(s"FieldValue_remain $remain: "+responseFieldDesc.toJSONString)
+        LOG.info(s"FieldValue_remain $remain: "+responseFieldDesc.toJSONString)
+        println(s"----FieldValue_remain $remain: "+responseFieldDesc.toJSONString)
       }
     }else{
       val responseFieldDesc = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, seq)
-      println(s"FieldValue_responseFieldDesc : "+responseFieldDesc.toJSONString)
+      LOG.info(s"FieldValue_responseFieldDesc : "+responseFieldDesc.toJSONString)
+      println(s"----FieldValue_responseFieldDesc : "+responseFieldDesc.toJSONString)
+
     }
   }
 
@@ -191,28 +197,33 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       for(i <-1 to times){
         val end=batchSize*i
         val fragment=seq.slice(start,end)
-        println(s"batch $i,$start->$end start: "+new Date())
+        LOG.info(s"batch $i,$start->$end start: "+new Date())
+        println(s"----batch $i,$start->$end start: "+new Date())
         val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fragment)
-        println(s"batch $i,$start->$end end: "+new Date())
-        println(s"batch $i,$start->$end : "+responseFieldDesc.toJSONString)
+        LOG.info(s"batch $i,$start->$end end: "+new Date())
+        println(s"----batch $i,$start->$end end: "+new Date())
+        LOG.info(s"batch $i,$start->$end : "+responseFieldDesc.toJSONString)
+        println(s"----batch $i,$start->$end : "+responseFieldDesc.toJSONString)
         start=batchSize*i
       }
       val remain=seq.length-times*batchSize
       if(remain>0){
         val fragment=seq.slice(times*batchSize,seq.length)
         val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fragment)
-        println(s"remain $remain: "+responseFieldDesc.toJSONString)
+        LOG.info(s"remain $remain: "+responseFieldDesc.toJSONString)
+        println(s"----remain $remain: "+responseFieldDesc.toJSONString)
       }
     }else{
       val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, seq)
-      println(s"responseFieldDesc : "+responseFieldDesc.toJSONString)
+      LOG.info(s"responseFieldDesc : "+responseFieldDesc.toJSONString)
+      println(s"----responseFieldDesc : "+responseFieldDesc.toJSONString)
     }
   }
 
   /**
     * Seq[(fieldName:String,fieldType:String,fieldSql:String,rowType:String,rowInfo:String)]
     **/
-  def generateFieldDescEntityArrayBuffer(sparkSession:SparkSession,taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
+ /* def generateFieldDescEntityArrayBuffer(sparkSession:SparkSession,taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
     sparkSession.sparkContext.makeRDD(distinctOutputArray,Math.min(1000,distinctOutputArray.length)).flatMap(dir => {
       val list = ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE + File.separator + dir)
       val fieldInfos = if (list.size > 0) {
@@ -242,9 +253,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       LOG.info(s"FieldInfos: $dir -> ${fieldInfos.size} ")
       fieldInfos
     }).collect()
-  }
+  }*/
 
-  /*def generateFieldDescEntityArrayBuffer(taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
+  def generateFieldDescEntityArrayBuffer(sparkSession:SparkSession,taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
     distinctOutputArray.flatMap(dir => {
       val list = ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE + File.separator + dir)
       val fieldInfos = if (list.size > 0) {
@@ -272,9 +283,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         Nil
       }
       LOG.info(s"FieldInfos: $dir -> ${fieldInfos.size} ")
+      println(s"----FieldInfos: $dir -> ${fieldInfos.size} ")
       fieldInfos
     })
-  }*/
+  }
+
 
 
   /**
