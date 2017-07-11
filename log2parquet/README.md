@@ -51,8 +51,15 @@ val pathRdd = metaDataUtils.parseLogStrRddPath(rdd_original)
  使用azkaban调度传入day和hour，会运行所有的appid的当前hour
  /data_warehouse/ods_origin.db/log_origin/key_appId=*/key_day=${yyyymmdd}/key_hour=${HH}
  
-13. 分批put，post数据 
+13. 分批put，post数据,发送请求到冯进的phoenix http server
+ 
 
-14. # 分隔符改为其他字符
+14. #分隔符改为其他字符
+未改动 
+hadoop fs -rm -r /log/default/parquet/aa/bb#cc 会删除的
+并且只在/log/default/parquet/临时目录操作
 
+15. 看到yarn-cluster执行了两次
 
+16. 期望不要等待返回结果
+http://bigdata-appsvr-130-5:8084/metadata/processTask/AAABXSxrUCwK4Aaq1wAAAAA/111

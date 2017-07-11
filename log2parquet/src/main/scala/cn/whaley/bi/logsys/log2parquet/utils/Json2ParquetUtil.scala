@@ -96,7 +96,7 @@ object Json2ParquetUtil {
         println("all files:")
         fileGroups.foreach(println)
 
-        val executor = Executors.newFixedThreadPool(10)
+        val executor = Executors.newFixedThreadPool(Math.min(100,fileGroups.size))
         //每类outputPathType用一个任务处理
         val futures = fileGroups.filter(_._1 > 0).map(group => {
             println(s"submit task : $group")

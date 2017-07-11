@@ -99,58 +99,132 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val errRowsRdd = processedRdd.filter(row => row._2.hasErr).map(row => {
       row._2
     })
-    //println("errRowsRdd.count():" + errRowsRdd.count())
-    //LOG.info("errRowsRdd.count():" + errRowsRdd.count())
-    //errRowsRdd.take(10).foreach(println)
-
-    val time = new Date().getTime
-    errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
+    if(errRowsRdd.count()>0){
+      val time = new Date().getTime
+      errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
+    }
 
     //生成元数据信息给元数据模块使用
     val path_file_value_map = pathRdd.map(e => (e._1, e._3)).distinct().collect()
     //println("path_file_value_map.length():" + path_file_value_map.length)
     LOG.info("path_file_value_map.length():" + path_file_value_map.length)
     path_file_value_map.take(10).foreach(println)
-    generateMetaDataToTable(path_file_value_map)
+    generateMetaDataToTable(sparkSession,path_file_value_map)
   }
 
 
   /**
     * 向phoenix表插入数据[metadata.logfile_key_field_value,metadata.logfile_field_desc]
     **/
-  def generateMetaDataToTable(path_file_value_map: Array[(String, scala.collection.mutable.Map[String, String])]): Unit = {
+  def generateMetaDataToTable(sparkSession:SparkSession,path_file_value_map: Array[(String, scala.collection.mutable.Map[String, String])]): Unit = {
     val generator = IdGenerator.defaultInstance
     val taskId = generator.nextId().replace("/", "")
     println("----------taskId:" + taskId)
 
     // metadata.logfile_key_field_value
     val fieldValueEntityArrayBuffer = generateFieldValueEntityArrayBuffer(taskId, path_file_value_map)
-    //println("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
+    println("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
     LOG.info("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
-    fieldValueEntityArrayBuffer.take(10).foreach(println)
-    val response = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fieldValueEntityArrayBuffer)
-    println(response.toJSONString)
+    //fieldValueEntityArrayBuffer.take(10).foreach(println)
+    //val response = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fieldValueEntityArrayBuffer)
+   // println(response.toJSONString)
+    batchPostFieldValue(taskId,fieldValueEntityArrayBuffer)
 
     //metadata.logfile_field_desc
     val distinctOutput = path_file_value_map.map(e => {
       e._1
     }).distinct
-    val fieldDescEntityArrayBuffer = generateFieldDescEntityArrayBuffer(taskId, distinctOutput)
-    //println("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
+
+    println("------distinctOutput.begin:"+distinctOutput.length)
+    distinctOutput.foreach(println)
+    println("------distinctOutput.end")
+
+
+    val fieldDescEntityArrayBuffer = generateFieldDescEntityArrayBuffer(sparkSession,taskId, distinctOutput)
+    println("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
     LOG.info("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
-    fieldDescEntityArrayBuffer.take(10).foreach(println)
-    val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fieldDescEntityArrayBuffer)
-    println(responseFieldDesc.toJSONString)
+    //fieldDescEntityArrayBuffer.take(10).foreach(println)
+
+    batchPostFileFieldDesc(taskId,fieldDescEntityArrayBuffer)
+    //val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fieldDescEntityArrayBuffer)
+   // println(responseFieldDesc.toJSONString)
 
     //发送taskId给元数据模块
     metaDataUtils.metadataService().postTaskId2MetaModel(taskId, "111")
   }
 
+
+  def batchPostFieldValue(taskId:String,seq:Seq[LogFileKeyFieldValueEntity]) {
+    val batchSize=1000
+    val total=seq.length
+    if(total>batchSize){
+      val times=(total/batchSize)
+      var start=0
+      for(i <-1 to times){
+        val end=batchSize*i
+        val fragment=seq.slice(start,end)
+        LOG.info(s"batch $i,$start->$end start: "+new Date())
+        println(s"----batch $i,$start->$end start: "+new Date())
+        val responseFieldDesc = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fragment)
+        LOG.info(s"batch $i,$start->$end end: "+new Date())
+        println(s"----batch $i,$start->$end end: "+new Date())
+        LOG.info(s"batch $i,$start->$end : "+responseFieldDesc.toJSONString)
+        println(s"----batch $i,$start->$end : "+responseFieldDesc.toJSONString)
+        start=batchSize*i
+      }
+      val remain=seq.length-times*batchSize
+      if(remain>0){
+        val fragment=seq.slice(times*batchSize,seq.length)
+        val responseFieldDesc = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fragment)
+        LOG.info(s"FieldValue_remain $remain: "+responseFieldDesc.toJSONString)
+        println(s"----FieldValue_remain $remain: "+responseFieldDesc.toJSONString)
+      }
+    }else{
+      val responseFieldDesc = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, seq)
+      LOG.info(s"FieldValue_responseFieldDesc : "+responseFieldDesc.toJSONString)
+      println(s"----FieldValue_responseFieldDesc : "+responseFieldDesc.toJSONString)
+
+    }
+  }
+
+
+  def batchPostFileFieldDesc(taskId:String,seq:Seq[LogFileFieldDescEntity]) {
+    val batchSize=1000
+    val total=seq.length
+    if(total>batchSize){
+      val times=(total/batchSize)
+      var start=0
+      for(i <-1 to times){
+        val end=batchSize*i
+        val fragment=seq.slice(start,end)
+        LOG.info(s"batch $i,$start->$end start: "+new Date())
+        println(s"----batch $i,$start->$end start: "+new Date())
+        val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fragment)
+        LOG.info(s"batch $i,$start->$end end: "+new Date())
+        println(s"----batch $i,$start->$end end: "+new Date())
+        LOG.info(s"batch $i,$start->$end : "+responseFieldDesc.toJSONString)
+        println(s"----batch $i,$start->$end : "+responseFieldDesc.toJSONString)
+        start=batchSize*i
+      }
+      val remain=seq.length-times*batchSize
+      if(remain>0){
+        val fragment=seq.slice(times*batchSize,seq.length)
+        val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fragment)
+        LOG.info(s"remain $remain: "+responseFieldDesc.toJSONString)
+        println(s"----remain $remain: "+responseFieldDesc.toJSONString)
+      }
+    }else{
+      val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, seq)
+      LOG.info(s"responseFieldDesc : "+responseFieldDesc.toJSONString)
+      println(s"----responseFieldDesc : "+responseFieldDesc.toJSONString)
+    }
+  }
+
   /**
     * Seq[(fieldName:String,fieldType:String,fieldSql:String,rowType:String,rowInfo:String)]
     **/
-  def generateFieldDescEntityArrayBuffer(taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
-    distinctOutputArray.flatMap(dir => {
+ /* def generateFieldDescEntityArrayBuffer(sparkSession:SparkSession,taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
+    sparkSession.sparkContext.makeRDD(distinctOutputArray,Math.min(1000,distinctOutputArray.length)).flatMap(dir => {
       val list = ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE + File.separator + dir)
       val fieldInfos = if (list.size > 0) {
         val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(list.head.getPath)
@@ -178,8 +252,42 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }
       LOG.info(s"FieldInfos: $dir -> ${fieldInfos.size} ")
       fieldInfos
+    }).collect()
+  }*/
+
+  def generateFieldDescEntityArrayBuffer(sparkSession:SparkSession,taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
+    distinctOutputArray.flatMap(dir => {
+      val list = ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE + File.separator + dir)
+      val fieldInfos = if (list.size > 0) {
+        val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(list.head.getPath)
+        parquetMetaData.map(meta => {
+          val fieldName = meta._1
+          val fieldType = meta._2
+          val fieldSql = meta._3
+          val rowType = meta._4
+          val rowInfo = meta._5
+          val logFileFieldDescEntity = new LogFileFieldDescEntity
+          logFileFieldDescEntity.setTaskId(taskId)
+          logFileFieldDescEntity.setLogPath(Constants.DATA_WAREHOUSE + File.separator + dir)
+          logFileFieldDescEntity.setFieldName(fieldName)
+          logFileFieldDescEntity.setFieldType(fieldType)
+          logFileFieldDescEntity.setFieldSql(fieldSql)
+          logFileFieldDescEntity.setRawType(rowType)
+          logFileFieldDescEntity.setRawInfo(rowInfo)
+          logFileFieldDescEntity.setIsDeleted(false)
+          logFileFieldDescEntity.setCreateTime(new Date())
+          logFileFieldDescEntity.setUpdateTime(new Date())
+          logFileFieldDescEntity
+        })
+      } else {
+        Nil
+      }
+      LOG.info(s"FieldInfos: $dir -> ${fieldInfos.size} ")
+      println(s"----FieldInfos: $dir -> ${fieldInfos.size} ")
+      fieldInfos
     })
   }
+
 
 
   /**
@@ -326,20 +434,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
      }*/
   }
 
-  def batchPost(seq:Seq[LogFileFieldDescEntity]) {
-    val batchSize=1000
-    val total=seq.length
-    if(total>batchSize){
-      val times=(total/batchSize).toInt
-      for(i <-1 to times){
-        //seq.slice()batchSize*i
-      }
-    }else{
 
-    }
-
-
-  }
 
 }
 

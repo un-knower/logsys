@@ -6,7 +6,7 @@ import cn.whaley.bi.logsys.log2parquet.constant.Constants
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
 import cn.whaley.bi.logsys.log2parquet.utils.{MetaDataUtils, ParquetHiveUtils}
 import cn.whaley.bi.logsys.metadata.entity.LogFileFieldDescEntity
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileStatus, Path}
 import org.junit.Test
 
 import scala.collection.mutable.ArrayBuffer
@@ -95,9 +95,8 @@ class MainObjTest extends LogTrait{
 
   @Test
   def testGrammar(): Unit ={
-    for(i <-1 to 5){
-      print(""+i)
-    }
+    val a="111155031049"
+    a.toInt
   }
 
   @Test
@@ -132,5 +131,20 @@ class MainObjTest extends LogTrait{
     println(response)
   }
 
+@Test
+  def test2(): Unit ={
+  //val dir="/data_warehouse/ods_view.db/log_medusa_main3x_event_medusa_notification_action/key_day=20170710/key_hour=12"
+  val dir="ods_view.db/log_medusa_main3x_pageview_medusa_home_button/key_day=20170710/key_hour=12"
+  val list = ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE + File.separator + dir)
+  println(list.length)
+  println(list)
+}
+
+  @Test
+  def test3: Unit = {
+    val empty=new Array[FileStatus](0)
+    println(empty.length)
+    println(empty.apply(1))
+  }
 
 }
