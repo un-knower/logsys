@@ -67,7 +67,7 @@ public class MetadataController {
             retEntity.setResult(ret);
             return retEntity;
         } catch (Throwable ex) {
-            LOG.error("",ex);
+            LOG.error("", ex);
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
             return retEntity;
@@ -84,7 +84,7 @@ public class MetadataController {
             retEntity.setResult(ret);
             return retEntity;
         } catch (Throwable ex) {
-            LOG.error("",ex);
+            LOG.error("", ex);
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
             return retEntity;
@@ -101,7 +101,7 @@ public class MetadataController {
             retEntity.setResult(ret);
             return retEntity;
         } catch (Throwable ex) {
-            LOG.error("",ex);
+            LOG.error("", ex);
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
             return retEntity;
@@ -118,7 +118,7 @@ public class MetadataController {
             retEntity.setResult(ret);
             return retEntity;
         } catch (Throwable ex) {
-            LOG.error("",ex);
+            LOG.error("", ex);
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
             return retEntity;
@@ -135,7 +135,7 @@ public class MetadataController {
             retEntity.setResult(ret);
             return retEntity;
         } catch (Throwable ex) {
-            LOG.error("",ex);
+            LOG.error("", ex);
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
             return retEntity;
@@ -163,7 +163,8 @@ public class MetadataController {
             retEntity.setMessage("taskId required!");
             return retEntity;
         }
-
+        LOG.info("task started.taskId={},taskFlag={}", taskId, taskFlag);
+        Long fromTs = System.currentTimeMillis();
         try {
 
             if (!disableGenerateDDLAndDML) {
@@ -186,7 +187,7 @@ public class MetadataController {
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
         }
-
+        LOG.info("task end.taskId={},taskFlag={}.ts={}", taskId, taskFlag, System.currentTimeMillis() - fromTs);
         return retEntity;
 
     }

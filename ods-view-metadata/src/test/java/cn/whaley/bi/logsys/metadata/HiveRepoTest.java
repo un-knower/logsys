@@ -56,4 +56,10 @@ public class HiveRepoTest {
     }
 
 
+    @Test
+    public void Test4() {
+        repo.jdbcTemplate.batchUpdate("use ods","select 1");
+    }
+
+
 }
