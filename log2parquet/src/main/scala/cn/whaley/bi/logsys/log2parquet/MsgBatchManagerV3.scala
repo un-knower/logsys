@@ -26,20 +26,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   /**
     * 初始化方法
     * 如果初始化异常，则应该抛出异常
-    * michael,cause of use spark distribute compute model,change to init processorChain in foreachPartition
     */
   override def init(confManager: ConfManager): Unit = {
-    //MsgBatchManagerV3.inputPath = confManager.getConf("inputPath")
-
-
-    /**
-      * 批量加载metadata.applog_key_field_desc表,将数据结构作为广播变量,用来作为日志的输出路径模版使用
-      **/
-    //val appId2OutputPathTemplateMap = scala.collection.mutable.HashMap.empty[String, String]
-    //appId2OutputPathTemplateMap.put("boikgpokn78sb95ktmsc1bnkechpgj9l","log_medusa_main3x_${log_type}_${event_id}/key_day=${key_day}/key_hour=${key_hour}")
-    //val appId2OutputPathTemplateMap = MetaDataUtils.getAppId2OutputPathTemplateMap
-    //MsgBatchManagerV3.appId2OutputPathTemplateMapBroadCast = MsgBatchManagerV3.sparkSession.sparkContext.broadcast(appId2OutputPathTemplateMap)
-    val metadataService = confManager.getConf("metadataService")
+   val metadataService = confManager.getConf("metadataService")
     val timeout=confManager.getConfOrElseValue("metadata","readTimeout","300000").toInt
     println("-----timeout:" + timeout)
     println("-----metadataService:" + metadataService)
@@ -59,40 +48,26 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     }
     val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
 
-
     //读取原始文件
     val inputPath = confManager.getConf("inputPath")
     val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200)
-    //println("rdd_original.count():" + rdd_original.count())
-    //LOG.info("rdd_original.count():" + rdd_original.count())
 
     //解析出输出目录
     val pathRdd = metaDataUtils.parseLogStrRddPath(rdd_original)
-    //println("pathRdd.count():" + pathRdd.count())
-    //LOG.info("pathRdd.count():" + pathRdd.count())
-    //pathRdd.take(10).foreach(println)
 
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
-    println("------logProcessGroupName:" + logProcessGroupName)
     val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
     val processedRdd = pathRdd.map(e => {
       val jsonObject = e._2
       val jsonObjectProcessed = processGroupInstance.process(jsonObject)
-      //(Constants.DATA_WAREHOUSE + File.separator + e._1, jsonObjectProcessed)
       (e._1, jsonObjectProcessed)
     })
-    //println("processedRdd.count():" + processedRdd.count())
-    //LOG.info("processedRdd.count():" + processedRdd.count())
-    //processedRdd.take(10).foreach(println)
+
 
     //将经过处理器处理后，正常状态的记录使用规则库过滤【字段黑名单、重命名、行过滤】
     val okRowsRdd = processedRdd.filter(e => e._2.hasErr == false)
     val afterRuleRdd = ruleHandle(pathRdd, okRowsRdd)
-    //println("afterRuleRdd.count():" + afterRuleRdd.count())
-    //LOG.info("afterRuleRdd.count():" + afterRuleRdd.count())
-    //afterRuleRdd.filter(e=>e._2.toJSONString.contains("actionId")).take(10).foreach(println)
-    //afterRuleRdd.take(10).foreach(println)
 
     //输出正常记录到HDFS文件
     Json2ParquetUtil.saveAsParquet(afterRuleRdd, sparkSession)
@@ -123,35 +98,29 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val taskId = generator.nextId().replace("/", "")
     println("----------taskId:" + taskId)
 
-    // metadata.logfile_key_field_value
+    //生成metadata.logfile_key_field_value表数据
     val fieldValueEntityArrayBuffer = generateFieldValueEntityArrayBuffer(taskId, path_file_value_map)
     println("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
     LOG.info("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
-    fieldValueEntityArrayBuffer.take(10).foreach(e=>{println("----"+e.getLogPath)})
-    fieldValueEntityArrayBuffer.take(10).foreach(e=>{LOG.info(e.getLogPath)})
-    //val response = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fieldValueEntityArrayBuffer)
-   // println(response.toJSONString)
     batchPostFieldValue(taskId,fieldValueEntityArrayBuffer)
 
-    //metadata.logfile_field_desc
+    //获得不同的输出路径
     val distinctOutput = path_file_value_map.map(e => {
       e._1
     }).distinct
-
+    //打印输出路径
     println("------distinctOutput.begin:"+distinctOutput.length)
     distinctOutput.foreach(println)
     println("------distinctOutput.end")
+    LOG.info("------distinctOutput.begin:"+distinctOutput.length)
+    distinctOutput.foreach(e=>{LOG.info(e)})
+    LOG.info("------distinctOutput.end")
 
-
+    //生成metadata.logfile_field_desc表数据
     val fieldDescEntityArrayBuffer = generateFieldDescEntityArrayBuffer(sparkSession,taskId, distinctOutput)
     println("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
     LOG.info("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
-    fieldDescEntityArrayBuffer.take(10).foreach(e=>{println("----"+e.getLogPath)})
-    fieldDescEntityArrayBuffer.take(10).foreach(e=>{LOG.info(e.getLogPath)})
-
     batchPostFileFieldDesc(taskId,fieldDescEntityArrayBuffer)
-    //val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fieldDescEntityArrayBuffer)
-   // println(responseFieldDesc.toJSONString)
 
     //发送taskId给元数据模块
     val responseTaskIdResponse=metaDataUtils.metadataService().postTaskId2MetaModel(taskId, "111")
@@ -159,7 +128,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     println(s"----responseTaskIdResponse : "+responseTaskIdResponse.toJSONString)
   }
 
-
+  /**批量发送FileFieldValue的POST请求*/
   def batchPostFieldValue(taskId:String,seq:Seq[LogFileKeyFieldValueEntity]) {
     val batchSize=1000
     val total=seq.length
@@ -193,7 +162,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     }
   }
 
-
+  /**批量发送FileFieldDesc的POST请求*/
   def batchPostFileFieldDesc(taskId:String,seq:Seq[LogFileFieldDescEntity]) {
     val batchSize=1000
     val total=seq.length
@@ -227,6 +196,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   }
 
   /**
+    * 通过makeRDD方式,并发生成FieldDescEntity，但是发现原有方式这段耗时1分钟
     * Seq[(fieldName:String,fieldType:String,fieldSql:String,rowType:String,rowInfo:String)]
     **/
  /* def generateFieldDescEntityArrayBuffer(sparkSession:SparkSession,taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
@@ -299,7 +269,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   /**
     * 生成FieldValueEntity的ArrayBuffer
     *
-    *
     * 对应的表内容信息如下：
     * 每条记录通用字段
     * logPath         ...key_hour=08
@@ -329,7 +298,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   def generateFieldValueEntityArrayBuffer(taskId: String, path_file_value_map: Array[(String, scala.collection.mutable.Map[String, String])]): ArrayBuffer[LogFileKeyFieldValueEntity] = {
     val arrayBuffer = new ArrayBuffer[LogFileKeyFieldValueEntity]()
     //每条记录的粒度为fieldName，fieldValue
-    path_file_value_map.map(e => {
+    path_file_value_map.foreach(e => {
       val outputPath = e._1
       val file_value_map = e._2
       val appId = file_value_map.get(LogKeys.LOG_APP_ID).getOrElse("noAppId")
@@ -419,29 +388,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     appId2processGroupInstance
   }
 
-  /*def string2JsonObject(log: String): JSONObject = {
-    try {
-      val json = JSON.parseObject(log)
-      json
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-        null
-      }
-    }
-  }*/
-
   /**
     * 关停
     */
   def shutdown(): Unit = {
-    /* if (MsgBatchManagerV3.sparkSession != null) {
-       MsgBatchManagerV3.sparkSession.close()
-     }*/
   }
-
-
-
 }
 
 
