@@ -127,7 +127,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val fieldValueEntityArrayBuffer = generateFieldValueEntityArrayBuffer(taskId, path_file_value_map)
     println("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
     LOG.info("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
-    //fieldValueEntityArrayBuffer.take(10).foreach(println)
+    fieldValueEntityArrayBuffer.take(10).foreach(e=>{println("----"+e.getLogPath)})
+    fieldValueEntityArrayBuffer.take(10).foreach(e=>{LOG.info(e.getLogPath)})
     //val response = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fieldValueEntityArrayBuffer)
    // println(response.toJSONString)
     batchPostFieldValue(taskId,fieldValueEntityArrayBuffer)
@@ -145,7 +146,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val fieldDescEntityArrayBuffer = generateFieldDescEntityArrayBuffer(sparkSession,taskId, distinctOutput)
     println("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
     LOG.info("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
-    //fieldDescEntityArrayBuffer.take(10).foreach(println)
+    fieldDescEntityArrayBuffer.take(10).foreach(e=>{println("----"+e.getLogPath)})
+    fieldDescEntityArrayBuffer.take(10).foreach(e=>{LOG.info(e.getLogPath)})
 
     batchPostFileFieldDesc(taskId,fieldDescEntityArrayBuffer)
     //val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fieldDescEntityArrayBuffer)
@@ -153,8 +155,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     //发送taskId给元数据模块
     val responseTaskIdResponse=metaDataUtils.metadataService().postTaskId2MetaModel(taskId, "111")
-    LOG.info(s"responseFieldDesc : "+responseTaskIdResponse.toJSONString)
-    println(s"----responseFieldDesc : "+responseTaskIdResponse.toJSONString)
+    LOG.info(s"responseTaskIdResponse : "+responseTaskIdResponse.toJSONString)
+    println(s"----responseTaskIdResponse : "+responseTaskIdResponse.toJSONString)
   }
 
 

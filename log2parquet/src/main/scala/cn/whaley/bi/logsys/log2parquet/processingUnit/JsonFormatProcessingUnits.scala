@@ -16,6 +16,10 @@ import com.alibaba.fastjson.JSONObject
   */
 class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
 
+  private val REMOTE_IP = "svr_remote_addr"
+  private val FORWARDED_IP = "svr_forwarded_for"
+  private val REAL_IP = "realIP"
+  private val regexIp = "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}".r
 
   /**
     * 初始化
@@ -29,25 +33,7 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
     */
   def process(jsonObject: JSONObject): ProcessResult[JSONObject] = {
     try {
-      //保留
-     /* val appId = jsonObject.getString(LogKeys.LOG_APP_ID)
-      val logId = jsonObject.getString(LogKeys.LOG_LOG_ID)
-      val logVersion = jsonObject.getString(LogKeys.LOG_LOG_VERSION)
-      val logTime = jsonObject.getLongValue(LogKeys.LOG_LOG_TIME)
-      val sync = jsonObject.getJSONObject(LogKeys.LOG_LOG_SYNC)*/
-
-
-
-
-
-
-    /*  jsonObject.put(LogKeys.LOG_APP_ID, appId)
-      jsonObject.put(LogKeys.LOG_LOG_ID, logId)
-      jsonObject.put(LogKeys.LOG_LOG_VERSION, logVersion)
-      jsonObject.put(LogKeys.LOG_LOG_TIME, logTime)
-      jsonObject.put(LogKeys.LOG_LOG_SYNC, sync)*/
-
-      //将被展开
+      //展开logBody
       val logBody = jsonObject.getJSONObject(LogKeys.LOG_BODY)
       val logBodyKeySetIterator = logBody.keySet().iterator()
       while (logBodyKeySetIterator.hasNext) {
@@ -61,6 +47,9 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
       if(jsonObject.containsKey("logType")&&jsonObject.getString("logType").equalsIgnoreCase("helios-whaleyvip-activity")){
         jsonObject.put("logType","event")
       }
+
+      //realIp处理
+      setUserRealIP(jsonObject)
 
       //新建key为_msg的的json结构体，将如下字段放入json结构体中
       val logSignFlag = jsonObject.getIntValue(LogKeys.LOG_SIGN_FLAG)
@@ -96,64 +85,16 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
     }
   }
 
- /* def process(jsonObject: JSONObject): ProcessResult[JSONObject] = {
-    try {
-      //保留
-      val appId = jsonObject.getString(LogKeys.LOG_APP_ID)
-      val logId = jsonObject.getString(LogKeys.LOG_LOG_ID)
-      val logVersion = jsonObject.getString(LogKeys.LOG_LOG_VERSION)
-      val logTime = jsonObject.getLongValue(LogKeys.LOG_LOG_TIME)
-      val sync = jsonObject.getJSONObject(LogKeys.LOG_LOG_SYNC)
-
-
-      //将被展开
-      val logBody = jsonObject.getJSONObject(LogKeys.LOG_BODY)
-
-      //新建key为_msg的的json结构体，将如下字段放入json结构体中
-      val logSignFlag = jsonObject.getIntValue(LogKeys.LOG_SIGN_FLAG)
-      val msgSource = jsonObject.getString(LogKeys.LOG_MSG_SOURCE)
-      val msgVersion = jsonObject.getString(LogKeys.LOG_MSG_VERSION)
-      val msgSite = jsonObject.getString(LogKeys.LOG_MSG_SITE)
-      val msgSignFlag = jsonObject.getIntValue(LogKeys.LOG_MSG_SIGN_FLAG)
-      val msgId = jsonObject.getString(LogKeys.LOG_MSG_ID)
-      val msgFormat = jsonObject.getString(LogKeys.LOG_MSG_FORMAT)
-
-
-      //create new jsonObject
-      val newJsonObject = new JSONObject()
-
-      newJsonObject.put(LogKeys.LOG_APP_ID, appId)
-      newJsonObject.put(LogKeys.LOG_LOG_ID, logId)
-      newJsonObject.put(LogKeys.LOG_LOG_VERSION, logVersion)
-      newJsonObject.put(LogKeys.LOG_LOG_TIME, logTime)
-      newJsonObject.put(LogKeys.LOG_LOG_SYNC, sync)
-
-      val logBodyKeySetIterator = logBody.keySet().iterator()
-      while (logBodyKeySetIterator.hasNext) {
-        val key = logBodyKeySetIterator.next()
-        val value = logBody.get(key)
-        newJsonObject.put(key, value)
+  def setUserRealIP(json:JSONObject):Unit = {
+    val remoteIp = json.getString(REMOTE_IP)
+    val forwardedIp = json.getString(FORWARDED_IP)
+    if(forwardedIp != null){
+      regexIp findFirstIn forwardedIp match {
+        case Some(ip) => json.put(REAL_IP,ip)
+        case None => json.put(REAL_IP,remoteIp)
       }
-
-      val newJsonObjectMsg = new JSONObject()
-      newJsonObjectMsg.put(LogKeys.LOG_SIGN_FLAG, logSignFlag)
-      newJsonObjectMsg.put(LogKeys.LOG_MSG_SOURCE, msgSource)
-      newJsonObjectMsg.put(LogKeys.LOG_MSG_VERSION, msgVersion)
-      newJsonObjectMsg.put(LogKeys.LOG_MSG_SITE, msgSite)
-      newJsonObjectMsg.put(LogKeys.LOG_MSG_SIGN_FLAG, msgSignFlag)
-      newJsonObjectMsg.put(LogKeys.LOG_MSG_ID, msgId)
-      newJsonObjectMsg.put(LogKeys.LOG_MSG_FORMAT, msgFormat)
-
-      newJsonObject.put(LogKeys.LOG_MSG_MSG, newJsonObjectMsg)
-
-      //logTime字段转化为day,hour字段 TODO
-      new ProcessResult(this.name, ProcessResultCode.processed, "", Some(jsonObject))
-    } catch {
-      case e: Throwable => {
-        ProcessResult(this.name, ProcessResultCode.exception, e.getMessage, None, Some(e))
-      }
-    }
-  }*/
+    }else json.put(REAL_IP,remoteIp)
+  }
 }
 
 
