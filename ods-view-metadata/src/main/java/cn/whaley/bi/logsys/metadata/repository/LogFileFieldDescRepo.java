@@ -20,6 +20,15 @@ public class LogFileFieldDescRepo extends MetadataBaseRepo<LogFileFieldDescEntit
         super(LogFileFieldDescEntity.class);
     }
 
+    public List<LogFileFieldDescEntity> findByTaskIdAndLogPath(String taskId,String logPath) {
+        Map<String, Object> where = new HashMap<>();
+        where.put("taskId", taskId);
+        where.put("logPath", logPath);
+        where.put("isDeleted", false);
+        List<LogFileFieldDescEntity> entities = select(where);
+        return entities;
+    }
+
     public List<LogFileFieldDescEntity> findByTaskId(String taskId) {
         Map<String, Object> where = new HashMap<>();
         where.put("taskId", taskId);

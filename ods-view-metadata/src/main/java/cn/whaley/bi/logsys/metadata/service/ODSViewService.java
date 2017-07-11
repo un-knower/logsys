@@ -283,14 +283,25 @@ public class ODSViewService {
     List<LogTabDDLEntity> generateDDLForTab(LogFileTabKeyDesc desc, List<LogTabFieldDescEntity> tabGroup) {
         List<LogTabDDLEntity> entities = new ArrayList<>();
 
-        String dbName = tabGroup.get(0).getDbName();
-        String tabName = tabGroup.get(0).getTabName();
+        String dbName = desc.dbName;
+        String tabName = desc.tabName;
         String tabFullName = dbName + "." + tabName;
         Boolean exists = hiveRepo.tabExists(dbName, tabName);
         if (!exists) {
             //目前设计分区字段全部为string类型
             String partDesc = desc.parFieldNameAndValue.stream().map(value -> value[0] + " string").collect(Collectors.joining(","));
-            String fieldDesc = StringUtils.join(tabGroup.stream().map(entity -> entity.getFieldSql()).collect(Collectors.toList()), ",");
+            String fieldDesc = StringUtils.join(tabGroup.stream()
+                    .filter(entity -> {
+                        //剔除分区字段
+                        Boolean isPar = desc.parFieldNameAndValue.stream()
+                                .filter(parItem -> parItem[0].equalsIgnoreCase(entity.getFieldName()))
+                                .findAny()
+                                .isPresent();
+                        return isPar == false;
+
+                    })
+                    .map(entity -> entity.getFieldSql())
+                    .collect(Collectors.toList()), ",");
             String ddlText = String.format("CREATE EXTERNAL TABLE IF NOT EXISTS `%s` (%s) PARTITIONED BY (%s) STORED AS " + desc.getStored()
                     , tabFullName, fieldDesc, partDesc
             );
@@ -338,16 +349,18 @@ public class ODSViewService {
             if (changed.size() > 0) {
                 List<LogTabDDLEntity> changedDDLs = changed.stream().map(change -> {
                     String fieldName = change.getFieldName();
-                    String newFieldType = change.getFieldType();
+                    String newFieldType = change.getFieldSql().split(" ")[1].trim();
                     String oldFieldType = fieldInfos.stream()
                             .filter(fieldInfo -> fieldInfo.getColName().equalsIgnoreCase(fieldName))
                             .map(fieldInfo -> fieldInfo.getDataType())
                             .findFirst().get();
-
-                    boolean isConvertible = HiveUtil.implicitConvertible(oldFieldType, newFieldType);
-                    String targetFieldType = isConvertible ? newFieldType : "string";
-                    if (!isConvertible) {
-                        LOG.info("{} -> {} implicitConvertible=false, targetFieldType={}", new Object[]{oldFieldType, newFieldType, targetFieldType});
+                    String targetFieldType = newFieldType;
+                    if (!oldFieldType.replace("`", "").replace(" ","").equalsIgnoreCase(newFieldType.replace("`", "").replace(" ",""))) {
+                        boolean isConvertible = HiveUtil.implicitConvertible(oldFieldType, newFieldType);
+                        if (!isConvertible) {
+                            targetFieldType = "string";
+                            LOG.info("{} : {} -> {} implicitConvertible=false, targetFieldType={}", new Object[]{fieldName, oldFieldType, newFieldType, targetFieldType});
+                        }
                     }
                     String ddlText = String.format("ALTER TABLE `%s` CHANGE COLUMN `%s` `%s` %s"
                             , tabFullName, fieldName, fieldName, targetFieldType);

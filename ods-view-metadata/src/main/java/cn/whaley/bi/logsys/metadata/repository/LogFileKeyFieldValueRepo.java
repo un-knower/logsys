@@ -19,6 +19,14 @@ public class LogFileKeyFieldValueRepo extends MetadataBaseRepo<LogFileKeyFieldVa
         super(LogFileKeyFieldValueEntity.class);
     }
 
+    public List<LogFileKeyFieldValueEntity> findByTaskIdAndLogPath(String taskId,String logPath) {
+        Map<String, Object> where = new HashMap<>();
+        where.put("taskId", taskId);
+        where.put("logPath", logPath);
+        where.put("isDeleted", false);
+        List<LogFileKeyFieldValueEntity> entities = select(where);
+        return entities;
+    }
 
     public List<LogFileKeyFieldValueEntity> findByTaskId(String taskId) {
         Map<String, Object> where = new HashMap<>();
