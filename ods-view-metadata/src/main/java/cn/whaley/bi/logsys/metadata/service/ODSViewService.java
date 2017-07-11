@@ -163,7 +163,7 @@ public class ODSViewService {
         Integer ret = 0;
         List<LogTabDDLEntity> ddlEntities = logTabDDLRepo.queryByTaskId(taskId, false);
         if (ddlEntities.size() > 0) {
-            ret += hiveRepo.executeDDL(ddlEntities.stream().sorted(Comparator.comparing(LogTabDDLEntity::getSeq)).collect(Collectors.toList()));
+            ret += hiveRepo.executeDDL(ddlEntities);
             ddlEntities.forEach(entity -> {
                 logTabDDLRepo.updateCommitInfo(entity);
             });
@@ -181,7 +181,7 @@ public class ODSViewService {
         Integer ret = 0;
         List<LogTabDMLEntity> dmlEntities = logTabDMLRepo.queryForTaskId(taskId, false);
         if (dmlEntities.size() > 0) {
-            ret += hiveRepo.executeDML(dmlEntities.stream().sorted(Comparator.comparing(LogTabDMLEntity::getSeq)).collect(Collectors.toList()));
+            ret += hiveRepo.executeDML(dmlEntities);
             dmlEntities.forEach(entity -> {
                 logTabDMLRepo.updateCommitInfo(entity);
             });
