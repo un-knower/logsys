@@ -2,6 +2,9 @@
 
 ####TODO----------------------------
 
+1. 对于设置cronjob，对于输入的源数据，最终生成时间无法准确把握，需要假设一个最大的时间
+ 2017-07-12 10:21 /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendo8dc5mlsr/key_day=20170712/key_hour=09/boikgpokn78sb95kjhfrendo8dc5mlsr_2017071209_raw_8_421773485.json.gz
+
 2. 性能改进
 a. 有些不需要返回RDD的操作
 .map 改成.foreach
@@ -35,6 +38,8 @@ if(jsonObject.containsKey("logType")&&jsonObject.getString("logType").equalsIgno
  使用azkaban调度传入day和hour，会运行所有的appid的当前hour
  /data_warehouse/ods_origin.db/log_origin/key_appId=*/key_day=${yyyymmdd}/key_hour=${HH}
  还是分appId运行，保证不同appId能够尽可能快的被查询
+ 
+ 
 
 ####DONE----------------------------
 1. 发现每次都要mvn clean；才能保证settings.properties不会打入jar包

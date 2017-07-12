@@ -17,4 +17,7 @@ object Constants {
   val ODS_VIEW_HDFS_OUTPUT_PATH_TMP="/log/default/parquet/ods_view"
   val ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR="/log/default/parquet/ods_view/error"
 
+
+
+  val MEDUSA2X_APP_ID="boikgpokn78sb95ktmsc1bnken8tuboa"
 }

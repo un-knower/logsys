@@ -1,38 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
-
-    <!-- 所有处理器组配置,用来配置分叉逻辑，例如medusa2.x-->
-    <property>
-        <name>MsgBatchManagerV3.allProcessGroup</name>
-        <value>Medusa2xProcessGroupV3</value>
-    </property>
-
-    <!-- 电视猫2x处理器组配置 -->
-    <property>
-        <name>MsgBatchManagerV3.Medusa2xProcessGroupV3</name>
-        <value>Medusa2xProcessGroupV3</value>
-    </property>
-    <property>
-        <name>Medusa2xProcessGroupV3.class</name>
-        <value>cn.whaley.bi.logsys.log2parquet.Medusa2xProcessGroupV3</value>
-    </property>
-    <property>
-        <name>Medusa2xProcessGroupV3.include</name>
-        <value>Medusa2xProcessGroup.xml,ProcessingUnits.xml</value>
-    </property>
-
-
-    <!-- appId对应处理器组的配置 -->
-    <property>
-        <name>appIdForProcessGroup.boikgpokn78sb95ktmsc1bnken8tuboa</name>
-        <value>Medusa2xProcessGroupV3</value>
-    </property>
-
-
-
-
-
-
     <!-- 只有一个处理器组，每条日志都要经过每个处理器的处理-->
     <property>
         <name>MsgBatchManagerV3.LogProcessGroup</name>
@@ -46,6 +13,4 @@
         <name>LogProcessGroup.include</name>
         <value>LogProcessGroup.xml,ProcessingUnits.xml</value>
     </property>
-
-
 </configuration>
