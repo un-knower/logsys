@@ -44,6 +44,25 @@ class KafkaUtil(brokerList: Seq[(String, Int)], clientId: String = "KafkaUtil") 
         new KafkaConsumer[Array[Byte], Array[Byte]](props)
     }
 
+    /**
+     * 获取特定topic分区中的,从offset开始的第一条消息
+     * @param topic
+     * @param partition
+     * @param offset
+     * @return
+     */
+    def getFirstMsg(topic: String, partition: Int, offset: Long): Option[ConsumerRecord[Array[Byte],Array[Byte]]] = {
+        val consumer = getDefaultConsumer()
+        consumer.assign(new TopicPartition(topic, partition)::Nil)
+        consumer.seek(new TopicPartition(topic, partition), offset)
+        val records = consumer.poll(10000)
+        while(records.iterator().hasNext){
+            val record= records.iterator().next()
+            return Some(record);
+        }
+        return None
+    }
+
 
     /**
      * 获取topic名称列表
@@ -161,7 +180,7 @@ class KafkaUtil(brokerList: Seq[(String, Int)], clientId: String = "KafkaUtil") 
             if (!consumer.assignment().contains(topicPartition)) {
                 consumer.assign(topicPartition :: Nil)
             }
-            consumer.seek(topicPartition,cur)
+            consumer.seek(topicPartition, cur)
         })
 
         val result = this.getPartitionInfo(topic).map(item => {

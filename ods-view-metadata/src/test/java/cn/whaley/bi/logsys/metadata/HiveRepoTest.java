@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 
 /**
@@ -58,7 +59,16 @@ public class HiveRepoTest {
 
     @Test
     public void Test4() {
-        repo.jdbcTemplate.batchUpdate("use ods","select 1");
+        String dbName = "ods_view";
+        String tabName = "log_medusa_main3x_start_end";
+        List<HiveFieldInfo> fieldInfos = repo.getTabFieldInfo(dbName, tabName);
+        fieldInfos.stream().map(item -> item.getColName() + " : " + item.getDataType())
+                .forEach(new Consumer<String>() {
+                    @Override
+                    public void accept(String s) {
+                        LOG.info(s);
+                    }
+                });
     }
 
 

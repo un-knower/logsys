@@ -66,11 +66,12 @@ class MetadataUtilTest {
             val jsonObj= JSON.parseObject(row)
             jsonObj.getJSONObject("logBody").put("playStat5s","test")
             jsonObj.getJSONObject("logBody").put("pro","test")
+            jsonObj.getJSONObject("logBody").put("accessLoc","test")
             jsonObj
         })
 
         val pathRdd = utils.parseLogObjRddPath(rdd)
-        pathRdd.take(10).foreach(println)
+        //pathRdd.take(10).foreach(println)
         utils.parseSpecialRules(pathRdd).take(10).foreach(row => {
             println(row)
         })
