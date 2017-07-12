@@ -1,4 +1,4 @@
 type=command
 command=sh ${working.dir}/../sbin/log2parquet.sh --path /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l  --startDate ${startDate} --startHour ${startHour}
 
-#电视猫主程序
+#电视猫3x主程序
