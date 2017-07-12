@@ -8,7 +8,7 @@ import cn.whaley.bi.logsys.log2parquet.constant.{LogKeys, Constants}
 import cn.whaley.bi.logsys.log2parquet.traits._
 import cn.whaley.bi.logsys.log2parquet.utils.{ParquetHiveUtils, Json2ParquetUtil, MetaDataUtils}
 import cn.whaley.bi.logsys.metadata.entity.{LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
-import com.alibaba.fastjson.JSONObject
+import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
@@ -50,7 +50,36 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     //读取原始文件
     val inputPath = confManager.getConf("inputPath")
-    val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200)
+   /* val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line=>{
+      val json=try {
+        Some(JSON.parseObject(line))
+      }
+      catch {
+        case _: Throwable => {
+          None
+        }
+      }
+      if(json.isDefined){
+        val appId=json.get.getString("appId")
+        if(appId.equalsIgnoreCase(Constants.MEDUSA2X_APP_ID)){
+            Some("medusa 2x split function")
+        }else{
+          Some(line)
+        }
+      }else{
+        None
+      }
+    }
+    ).filter(row => row.isDefined).map(row => row.get)*/
+
+   val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line=>{
+     if(line.indexOf("\"appId\":\""+Constants.MEDUSA2X_APP_ID+"\"")>0){
+       Some("medusa 2x split function")
+     }else{
+       Some(line)
+     }
+   }).filter(row => row.isDefined).map(row => row.get)
+
 
     //解析出输出目录
     val pathRdd = metaDataUtils.parseLogStrRddPath(rdd_original)
