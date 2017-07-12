@@ -10,7 +10,6 @@ import cn.whaley.bi.logsys.log2parquet.traits._
 import cn.whaley.bi.logsys.log2parquet.utils.{Json2ParquetUtil, MetaDataUtils, ParquetHiveUtils}
 import cn.whaley.bi.logsys.metadata.entity.{LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
 import com.alibaba.fastjson.{JSON, JSONObject}
-import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
@@ -81,7 +80,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
        val svrReceiveTime = logBody.getLong("svr_receive_time")
        val logType = LogUtils.getLogType(msgStr)
        val logData = LogPreProcess.matchLog(logType,s"$svrReceiveTime-$msgStr").toJSONObject
-       Some(logData)
+       logBody.asInstanceOf[java.util.Map[String,Object]].putAll(logData.asInstanceOf[java.util.Map[String,Object]])
+       Some(jsObj)
      }else{
        Some(JSON.parseObject(line))
      }
