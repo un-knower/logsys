@@ -18,6 +18,7 @@ create table metadata.applog_key_field_desc(
 ;
 
 --日志文件关键字段字段值表
+drop table if exists metadata.logfile_key_field_value;
 create table metadata.logfile_key_field_value(
     logPath varchar(500) not null --日志文件路径 [key]
     ,fieldName varchar(100) not null --字段名 [key]
@@ -33,8 +34,12 @@ SALT_BUCKETS=40
 ;
 CREATE INDEX idx_logfile_key_field_value_taskId ON metadata.logfile_key_field_value(taskId) SALT_BUCKETS=40;
 
+ALTER INDEX IF EXISTS idx_logfile_key_field_value_taskId ON metadata.logfile_key_field_value REBUILD;
+
+
 
 --日志文件字段信息表
+drop table if exists metadata.logfile_field_desc;
 create table metadata.logfile_field_desc(
     logPath varchar(500) not null --日志文件路径 [key]
     ,fieldName varchar(100) not null --字段名 [key]
@@ -51,6 +56,7 @@ create table metadata.logfile_field_desc(
 SALT_BUCKETS=40;
 CREATE INDEX idx_logfile_field_desc_taskId ON metadata.logfile_field_desc(taskId) SALT_BUCKETS=40;
 
+ALTER INDEX IF EXISTS idx_logfile_field_desc_taskId ON metadata.logfile_field_desc REBUILD;
 
 
 --日志文件转换任务信息表
@@ -89,6 +95,7 @@ create table metadata.applog_special_field_desc(
 
 
 --表字段信息表
+drop table if exists metadata.logtab_field_desc;
 create table metadata.logtab_field_desc(
     dbName varchar(100) not null --[key]
     ,tabName varchar(100) not null --表名 [key]
@@ -108,6 +115,7 @@ CREATE SEQUENCE metadata.seq_logtab_field_desc;
 
 
 --DDL信息表
+drop table if exists metadata.logtab_ddl;
 create table metadata.logtab_ddl(
     dbName varchar(100) not null --[key]
     ,tabName varchar(500) not null --[key]
@@ -127,6 +135,7 @@ CREATE INDEX idx_logtab_ddl_taskId ON metadata.logtab_ddl(taskId) SALT_BUCKETS=4
 CREATE SEQUENCE metadata.seq_logtab_ddl;
 
 --DML信息表
+drop table if exists metadata.logtab_dml;
 create table metadata.logtab_dml(
     dbName varchar(100) not null --[key]
     ,tabName varchar(500) not null --[key]
@@ -160,13 +169,13 @@ upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,
 upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','product_code',1,1,'all',false,now(),now());
 upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','app_code',1,2,'',false,now(),now());
 upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','logType',1,3,'',false,now(),now());
-upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','eventId',1,4,'',false,now(),now());
-upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','actionId',1,5,'',false,now(),now());
 
 
 --默认分区字段( #{fieldName1}=#{fieldValue1}/#{fieldName2}=#{fieldValue2}/...... )
-upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','key_day',2,0,'',false,now(),now());
-upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','key_hour',2,1,'',false,now(),now());
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','eventId',2,0,'ALL',false,now(),now());
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','actionId',2,1,'ALL',false,now(),now());
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','key_day',2,2,'',false,now(),now());
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','key_hour',2,3,'',false,now(),now());
 
 
 --appid初始化数据hive查询
@@ -179,3 +188,14 @@ from `metadata`.app_metadata_idinfo
 where app_id not like '%00000'
 ;
 
+
+
+---delete------
+!autocommit off
+delete from metadata.logfile_key_field_value;
+delete from metadata.logfile_field_desc;
+delete from metadata.logfile_task_info;
+delete from metadata.logtab_field_desc;
+delete from metadata.logtab_ddl;
+delete from metadata.logtab_dml;
+!commit
