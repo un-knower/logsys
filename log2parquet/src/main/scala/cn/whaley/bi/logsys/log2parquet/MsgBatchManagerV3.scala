@@ -363,8 +363,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   }
 
 
-  //medusa 2.x
-  def initAllProcessGroup(): scala.collection.mutable.HashMap[String, ProcessGroupTraitV2] = {
+  //medusa 2.x,not used
+ /* def initAllProcessGroup(): scala.collection.mutable.HashMap[String, ProcessGroupTraitV2] = {
     val processGroupName2processGroupInstance = scala.collection.mutable.HashMap.empty[String, ProcessGroupTraitV2]
     val confManager = new ConfManager(Array("MsgBatchManagerV3.xml", "settings.properties"))
     val allProcessGroup = confManager.getConf(this.name, "allProcessGroup")
@@ -386,7 +386,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       appId2processGroupInstance.put(appId, processGroupInstance)
     })
     appId2processGroupInstance
-  }
+  }*/
 
   /**
     * 关停

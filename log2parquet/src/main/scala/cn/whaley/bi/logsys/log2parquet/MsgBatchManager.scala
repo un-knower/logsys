@@ -10,9 +10,10 @@ import com.alibaba.fastjson.{JSON, JSONObject}
 
 /**
   * Created by michael on 2017/6/22.
+  * NOT USED
   */
-class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
-
+class MsgBatchManager /*extends InitialTrait with NameTrait with LogTrait */{
+/*
   private val config = new SparkConf()
   private val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
   private var inputPath = ""
@@ -112,5 +113,5 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     if (sparkSession != null) {
       sparkSession.close()
     }
-  }
+  }*/
 }
