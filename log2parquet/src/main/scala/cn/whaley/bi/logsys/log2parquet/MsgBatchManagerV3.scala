@@ -74,17 +74,22 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     ).filter(row => row.isDefined).map(row => row.get)*/
 
    val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line=>{
-     if(line.indexOf("\"appId\":\""+Constants.MEDUSA2X_APP_ID+"\"")>0){
-       val jsObj = JSON.parseObject(line)
-       val msgStr = jsObj.getString("log")
-       val logType = LogUtils.getLogType(msgStr)
-       val logData = LogPreProcess.matchLog(logType,msgStr).toJSONObject
-       Some(logData)
-     }else{
-       Some(JSON.parseObject(line))
+     try {
+       if (line.indexOf("\"appId\":\"" + Constants.MEDUSA2X_APP_ID + "\"") > 0) {
+         val jsObj = JSON.parseObject(line)
+         val msgStr = jsObj.getString("log")
+         val logType = LogUtils.getLogType(msgStr)
+         val logData = LogPreProcess.matchLog(logType, msgStr).toJSONObject
+         Some(logData)
+       } else {
+         Some(JSON.parseObject(line))
+       }
+     } catch {
+       case _: Throwable => {
+         None
+       }
      }
    }).filter(row => row.isDefined).map(row => row.get)
-
 
     //解析出输出目录
     val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)

@@ -19,7 +19,8 @@ a. 有些不需要返回RDD的操作
 
 8. 规则检查
 * 字段名不允许出现"."和"-"
-* eventId的value作为输出路径的值的时候，将.或-变为_;eventId的value在jsonObject不用变
+* eventId的value作为输出路径的值的时候，将.变为""，-变为_;
+* eventId的value在jsonObject不用变
 
 9. medusa 2.x 日志[连凯TODO]
 需要在下面代码前判断是否为medusa 2.x日志
