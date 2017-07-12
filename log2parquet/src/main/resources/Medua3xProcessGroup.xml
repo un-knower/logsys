@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
-    <property>
+  <!-- not used
+   <property>
         <name>Medusa3xProcessGroup.Medusa3xLogProcessingUnits</name>
         <value>Medusa3xLogProcessingUnits</value>
     </property>
@@ -14,4 +15,5 @@
         <name>Medusa3xLogProcessingUnits.processors</name>
         <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor,GenericActionLogCommProcessor</value>
     </property>
+    -->
 </configuration>

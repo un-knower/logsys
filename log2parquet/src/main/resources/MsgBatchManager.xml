@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
 
-    <!-- 所有处理器组配置 -->
+ <!--not used
+
+    &lt;!&ndash; 所有处理器组配置 &ndash;&gt;
     <property>
         <name>MsgBatchManager.allProcessGroup</name>
         <value>Medusa3xProcessGroup,Medusa2xProcessGroup</value>
     </property>
 
-    <!-- 电视猫3x处理器组配置 -->
+    &lt;!&ndash; 电视猫3x处理器组配置 &ndash;&gt;
     <property>
         <name>MsgBatchManager.Medusa3xProcessGroup</name>
         <value>Medusa3xProcessGroup</value>
@@ -21,7 +23,7 @@
         <value>Medusa3xProcessGroup.xml,ProcessingUnits.xml</value>
     </property>
 
-    <!-- 电视猫2x处理器组配置 -->
+    &lt;!&ndash; 电视猫2x处理器组配置 &ndash;&gt;
     <property>
         <name>MsgBatchManager.Medusa2xProcessGroup</name>
         <value>Medusa2xProcessGroup</value>
@@ -36,7 +38,7 @@
     </property>
 
 
-    <!-- appId对应处理器组的配置 -->
+    &lt;!&ndash; appId对应处理器组的配置 &ndash;&gt;
     <property>
         <name>appIdForProcessGroup.boikgpokn78sb95ktmsc1bnkechpgj9l</name>
         <value>Medusa3xProcessGroup</value>
@@ -45,5 +47,5 @@
         <name>appIdForProcessGroup.boikgpokn78sb95ktmsc1bnken8tuboa</name>
         <value>Medusa2xProcessGroup</value>
     </property>
-
+-->
 </configuration>

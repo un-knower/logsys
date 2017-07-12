@@ -4,7 +4,7 @@ import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
 import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTraitV2
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
-import cn.whaley.bi.logsys.log2parquet.{ProcessResult, ProcessResultCode, URLParser}
+import cn.whaley.bi.logsys.log2parquet.{ProcessResult, ProcessResultCode}
 import com.alibaba.fastjson.JSONObject
 
 

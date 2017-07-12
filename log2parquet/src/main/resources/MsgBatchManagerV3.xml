@@ -2,13 +2,13 @@
 <configuration>
 
     <!-- 所有处理器组配置,用来配置分叉逻辑，例如medusa2.x-->
-    <property>
+    <!--<property>
         <name>MsgBatchManagerV3.allProcessGroup</name>
         <value>Medusa2xProcessGroupV3</value>
-    </property>
+    </property>-->
 
     <!-- 电视猫2x处理器组配置 -->
-    <property>
+ <!--   <property>
         <name>MsgBatchManagerV3.Medusa2xProcessGroupV3</name>
         <value>Medusa2xProcessGroupV3</value>
     </property>
@@ -19,15 +19,13 @@
     <property>
         <name>Medusa2xProcessGroupV3.include</name>
         <value>Medusa2xProcessGroup.xml,ProcessingUnits.xml</value>
-    </property>
-
-
-    <!-- appId对应处理器组的配置 -->
-    <property>
+    </property>-->
+    <!-- medusa 2.x appId对应处理器组的配置 -->
+  <!--  <property>
         <name>appIdForProcessGroup.boikgpokn78sb95ktmsc1bnken8tuboa</name>
         <value>Medusa2xProcessGroupV3</value>
     </property>
-
+-->
 
 
 

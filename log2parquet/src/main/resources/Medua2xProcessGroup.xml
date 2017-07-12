@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
-    <property>
+  <!--  not used
+   <property>
         <name>Medusa2xProcessGroupV3.Medusa2xLogProcessingUnits</name>
         <value>Medusa2xLogProcessingUnits</value>
     </property>
@@ -13,5 +14,5 @@
     <property>
         <name>Medusa2xLogProcessingUnits.processors</name>
         <value>LogTimeProcessingUnits</value>
-    </property>
+    </property>-->
 </configuration>
