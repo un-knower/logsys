@@ -19,5 +19,10 @@ object Constants {
 
 
 
+  val STRING_PERIOD="."
+  val STRIKE_THROUGH="-"
+  val UNDER_LINE="_"
+  val EMPTY_STRING=""
+
   val MEDUSA2X_APP_ID="boikgpokn78sb95ktmsc1bnken8tuboa"
 }

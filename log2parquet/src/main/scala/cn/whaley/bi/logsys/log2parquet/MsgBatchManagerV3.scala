@@ -75,9 +75,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
    val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line=>{
      if(line.indexOf("\"appId\":\""+Constants.MEDUSA2X_APP_ID+"\"")>0){
        val jsObj = JSON.parseObject(line)
-       val logBody = jsObj.getJSONObject("logBody")
-       val msgStr = logBody.getString("log")
-       val svrReceiveTime = logBody.getLong("svr_receive_time")
+       val logBody = jsObj.getJSONObject(LogKeys.LOG_BODY)
+       val msgStr = logBody.getString(LogKeys.LOG)
+       val svrReceiveTime = logBody.getLong(LogKeys.SVR_RECEIVE_TIME)
        val logType = LogUtils.getLogType(msgStr)
        val logData = LogPreProcess.matchLog(logType,s"$svrReceiveTime-$msgStr").toJSONObject
        logBody.asInstanceOf[java.util.Map[String,Object]].putAll(logData.asInstanceOf[java.util.Map[String,Object]])

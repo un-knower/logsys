@@ -1,7 +1,7 @@
 package cn.whaley.bi.logsys.log2parquet.processingUnit
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
+import cn.whaley.bi.logsys.log2parquet.constant.{Constants, LogKeys}
 import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTraitV2
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
 import cn.whaley.bi.logsys.log2parquet.{ProcessResult, ProcessResultCode}
@@ -39,7 +39,15 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
       while (logBodyKeySetIterator.hasNext) {
         val key = logBodyKeySetIterator.next()
         val value = logBody.get(key)
-        jsonObject.put(key, value)
+
+        //字段名不允许出现"."和"-"
+        if(key!=null&&(key.contains(Constants.STRING_PERIOD)||key.contains(Constants.STRIKE_THROUGH))){
+          val newKey=key.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
+          jsonObject.put(newKey, value)
+          jsonObject.remove(key)
+        }else{
+          jsonObject.put(key, value)
+        }
       }
       jsonObject.remove(LogKeys.LOG_BODY)
 

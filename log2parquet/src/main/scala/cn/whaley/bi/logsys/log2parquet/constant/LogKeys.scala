@@ -38,6 +38,8 @@ object LogKeys {
     val LOG_LOG_VERSION = "logVersion"
     val LOG_LOG_TIME = "logTime"
     val LOG_LOG_SYNC = "_sync"
+    val SVR_RECEIVE_TIME = "svr_receive_time"
+    val LOG = "log"
 
     //平展化logBody字段
     val LOG_BODY = "logBody"
