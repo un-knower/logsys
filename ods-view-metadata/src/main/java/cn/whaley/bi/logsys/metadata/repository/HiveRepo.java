@@ -1,6 +1,7 @@
 package cn.whaley.bi.logsys.metadata.repository;
 
 import cn.whaley.bi.logsys.metadata.entity.HiveFieldInfo;
+import cn.whaley.bi.logsys.metadata.entity.HiveTableInfo;
 import cn.whaley.bi.logsys.metadata.entity.LogTabDDLEntity;
 import cn.whaley.bi.logsys.metadata.entity.LogTabDMLEntity;
 import org.apache.commons.lang3.StringUtils;
@@ -11,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.Resource;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -49,6 +51,76 @@ public class HiveRepo {
         return tables.contains(tabName);
     }
 
+    private Boolean tabExists(String dbName, String tabName, Connection conn) {
+        try {
+            Statement statement = conn.createStatement();
+            statement.execute("use " + dbName);
+            ResultSet rs = statement.executeQuery(String.format("show tables like '%s'", tabName));
+            while (rs.next()) {
+                if (rs.getString(1).equalsIgnoreCase(tabName)) {
+                    return true;
+                }
+            }
+            rs.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return false;
+    }
+
+    /**
+     * 批量获取表字段定义
+     *
+     * @param dbNameAndTabNameArray dbName.tabName形式的数组
+     * @return
+     */
+    public Map<String, HiveTableInfo> getTabInfo(List<String> dbNameAndTabNameArray) {
+        Map<String, HiveTableInfo> resultMap = new HashMap<>();
+        try {
+            Connection conn = null;
+            int currTry = 0;
+            while (currTry++ < 3) {
+                try {
+                    conn = jdbcTemplate.getDataSource().getConnection();
+                    break;
+                } catch (Exception ex) {
+                    LOG.warn("hive error,try " + currTry);
+                    if (currTry == 3) {
+                        LOG.error("", ex);
+                    }
+                    throw ex;
+                }
+            }
+
+            for (String dbNameAndTabName : dbNameAndTabNameArray) {
+                HiveTableInfo tableInfo = new HiveTableInfo();
+                String[] dbNameDotTabName = dbNameAndTabName.split(".");
+                if (dbNameDotTabName.length < 2) {
+                    tableInfo.setDbName("");
+                    tableInfo.setTabName("");
+                    tableInfo.setTabExists(false);
+                } else {
+                    String dbName = dbNameDotTabName[0];
+                    String tabName = dbNameDotTabName[1];
+                    Boolean tabExists = this.tabExists(dbName, tabName, conn);
+                    tableInfo.setDbName(dbName);
+                    tableInfo.setTabName(tabName);
+
+                    tableInfo.setTabExists(tabExists);
+                    if (tabExists) {
+                        List<HiveFieldInfo> fieldInfos = this.getTabFieldInfo(dbNameDotTabName[0], dbNameDotTabName[1], conn);
+                        tableInfo.setFieldInfos(fieldInfos);
+                    }
+                }
+                resultMap.put(dbNameAndTabName, tableInfo);
+            }
+            conn.close();
+            return resultMap;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * 获取特定表的字段类型信息
      *
@@ -57,23 +129,43 @@ public class HiveRepo {
      * @return
      */
     public List<HiveFieldInfo> getTabFieldInfo(String dbName, String tabName) {
-
         try {
-            List<HiveFieldInfo> fieldInfos = new ArrayList<>();
-            String sql = String.format("show create table `%s.%s`", dbName, tabName);
-            Statement statement = null;
+            Connection conn = null;
             int currTry = 0;
             while (currTry++ < 3) {
                 try {
-                    statement = jdbcTemplate.getDataSource().getConnection().createStatement();
+                    conn = jdbcTemplate.getDataSource().getConnection();
                     break;
                 } catch (Exception ex) {
                     LOG.warn("hive error,try " + currTry);
                     if (currTry == 3) {
                         LOG.error("", ex);
                     }
+                    throw ex;
                 }
             }
+            List<HiveFieldInfo> fieldInfos = getTabFieldInfo(dbName, tabName, conn);
+            conn.close();
+            return fieldInfos;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    /**
+     * 获取特定表的字段类型信息
+     *
+     * @param dbName
+     * @param tabName
+     * @return
+     */
+    private List<HiveFieldInfo> getTabFieldInfo(String dbName, String tabName, Connection conn) {
+
+        try {
+            List<HiveFieldInfo> fieldInfos = new ArrayList<>();
+            String sql = String.format("show create table `%s.%s`", dbName, tabName);
+            Statement statement = conn.createStatement();
             ResultSet rs = statement.executeQuery(sql);
             boolean isPartition = false;
             boolean isStart = false;
