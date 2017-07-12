@@ -3,10 +3,11 @@ package cn.whaley.bi.logsys.log2parquet
 import java.io.File
 import java.util.Date
 
-import cn.whaley.bi.logsys.common.{IdGenerator, ConfManager}
-import cn.whaley.bi.logsys.log2parquet.constant.{LogKeys, Constants}
+import cn.whaley.bi.logsys.common.{ConfManager, IdGenerator}
+import cn.whaley.bi.logsys.log2parquet.constant.{Constants, LogKeys}
+import cn.whaley.bi.logsys.log2parquet.moretv2x.{LogPreProcess, LogUtils}
 import cn.whaley.bi.logsys.log2parquet.traits._
-import cn.whaley.bi.logsys.log2parquet.utils.{ParquetHiveUtils, Json2ParquetUtil, MetaDataUtils}
+import cn.whaley.bi.logsys.log2parquet.utils.{Json2ParquetUtil, MetaDataUtils, ParquetHiveUtils}
 import cn.whaley.bi.logsys.metadata.entity.{LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
 import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.hadoop.fs.Path
@@ -74,15 +75,19 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
    val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line=>{
      if(line.indexOf("\"appId\":\""+Constants.MEDUSA2X_APP_ID+"\"")>0){
-       Some("medusa 2x split function")
+       val jsObj = JSON.parseObject(line)
+       val msgStr = jsObj.getString("log")
+       val logType = LogUtils.getLogType(msgStr)
+       val logData = LogPreProcess.matchLog(logType,msgStr).toJSONObject
+       Some(logData)
      }else{
-       Some(line)
+       Some(JSON.parseObject(line))
      }
    }).filter(row => row.isDefined).map(row => row.get)
 
 
     //解析出输出目录
-    val pathRdd = metaDataUtils.parseLogStrRddPath(rdd_original)
+    val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)
 
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
