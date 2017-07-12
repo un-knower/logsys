@@ -35,5 +35,34 @@ class KafkaMsgSourceTest extends LogTrait {
         })
     }
 
+    @Test
+    def readKafkaMsg: Unit = {
+        val confManager = new ConfManager(Array("settings.properties", "kafkaMsgSource.xml", "kafka-consumer.xml"))
+        val servers = confManager.getConf("kafka-consumer.bootstrap.servers")
+        LOG.info(s"servers:${servers}")
+        val util = KafkaUtil(servers, "testx")
+
+        val offset = 1145369352L
+        val topic = "log-raw-boikgpokn78sb95ktmsc1bnk"
+        val partition = 9
+
+        /*
+        val topics = util.getTopics()
+        topics.foreach(topic => {
+            val offsets = util.getLatestOffset(topic)
+            LOG.info(s"${topic}: ${offsets}")
+        })
+        */
+
+        val msg = util.getFirstMsg(topic, partition, offset)
+        if (msg.isDefined) {
+            val key = if (msg.get.key() != null) new String(msg.get.key()) else ""
+            val value = new String(msg.get.value())
+            LOG.info(s"key:${key},value:$value,offset:${msg.get.offset()}")
+        } else {
+            LOG.info("no message")
+        }
+    }
+
 
 }

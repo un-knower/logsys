@@ -33,8 +33,24 @@ public class ODSViewServiceTest {
     }
 
     @Test
+    public void testTabFieldDesc(){
+        String taskId="AAABXTAEkRsK4AXxhMAAAAA";
+        String appId="boikgpokn78sb95ktmsc1bnkechpgj9l";
+        String logPath="data_warehouse/ods_view.db/log_medusa_main3x_enter_medusa_accountcenter_home_login_process/key_day=20170711/key_hour=08";
+        List<AppLogKeyFieldDescEntity> appLogKeyFieldDescEntities = service.getAppLogKeyFieldDescRepo().findAll();
+
+        List<LogFileKeyFieldValueEntity> logFileKeyFieldDescEntities = service.getLogFileKeyFieldValueRepo().findByTaskIdAndLogPath(taskId, logPath);
+        List<LogFileFieldDescEntity> logFileFieldDescEntities = service.getLogFileFieldDescRepo().findByTaskIdAndLogPath(taskId,logPath);
+
+        List<ODSViewService.TabFieldDescItem> tabFieldDescItems = service.generateTabFieldDesc(appLogKeyFieldDescEntities, logFileKeyFieldDescEntities, logFileFieldDescEntities);
+
+        LOG.info("appId:{},ret={}",appId,tabFieldDescItems.size());
+    }
+
+
+    @Test
     public void testGenerateDDLAndDML() {
-        String taskId = "task1";
+        String taskId = "AAABXTAEkRsK4AXxhMAAAAA";
         Integer[] ret = service.generateDDLAndDML(taskId);
         LOG.info("fieldRet:{}, ddlRet:{}, dmlRet:{}", new Object[]{ret[0], ret[1], ret[2]});
         Assert.assertTrue(ret[0] >= 0 && ret[1] >= 0);
