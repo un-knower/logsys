@@ -1,3 +1,3 @@
 type=command
-dependencies=ods_view_log2parquet
+dependencies=ods_view_log2parquet_medusa
 command=echo "ods_view_log2parquet task is end ..."

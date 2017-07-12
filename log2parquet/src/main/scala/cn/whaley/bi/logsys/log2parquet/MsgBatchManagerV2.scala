@@ -10,10 +10,11 @@ import org.apache.spark.sql.SparkSession
 
 /**
   * Created by michael on 2017/6/22.
+  * Not used
   */
-class MsgBatchManagerV2 extends InitialTrait with NameTrait with LogTrait {
+class MsgBatchManagerV2/* extends InitialTrait with NameTrait with LogTrait*/ {
 
-  private val config = new SparkConf()
+  /*private val config = new SparkConf()
   private val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
   private var inputPath = ""
 
@@ -77,5 +78,5 @@ class MsgBatchManagerV2 extends InitialTrait with NameTrait with LogTrait {
     if (sparkSession != null) {
       sparkSession.close()
     }
-  }
+  }*/
 }
