@@ -8,45 +8,4 @@
         <name>FormatLogValueProcessingUnits.class</name>
         <value>cn.whaley.bi.logsys.log2parquet.processingUnit.FormatLogValueProcessingUnits</value>
     </property>
-
-
-<!--
-    <property>
-        <name>GenericActionLogGetProcessor.class</name>
-        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.GenericActionLogGetProcessor</value>
-    </property>
-    <property>
-        <name>GenericActionLogPostProcessor.class</name>
-        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.GenericActionLogPostProcessor</value>
-    </property>
-    <property>
-        <name>GenericActionLogPostProcessor.include</name>
-        <value>GenericActionLogPostProcessor.properties</value>
-    </property>
-    <property>
-        <name>GenericActionLogCommProcessor.class</name>
-        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.GenericActionLogCommProcessor</value>
-    </property>
-
-    <property>
-        <name>RealLogTypeProcessingUnits.class</name>
-        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.RealLogTypeProcessingUnits</value>
-    </property>
-
-    <property>
-        <name>LogTimeProcessingUnits.class</name>
-        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.LogTimeProcessingUnits</value>
-    </property>
-
-    <property>
-        <name>OutputPathProcessingUnits.class</name>
-        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.OutputPathProcessingUnits</value>
-    </property>-->
-
- <!--   <property>
-        <name>RemoveInvalidKeysProcessingUnits.class</name>
-        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.RemoveInvalidKeysProcessingUnits</value>
-    </property>-->
-
-
 </configuration>
