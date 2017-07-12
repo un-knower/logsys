@@ -28,11 +28,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * 如果初始化异常，则应该抛出异常
     */
   override def init(confManager: ConfManager): Unit = {
-   val metadataService = confManager.getConf("metadataService")
-    val timeout=confManager.getConfOrElseValue("metadata","readTimeout","300000").toInt
+    val metadataService = confManager.getConf("metadataService")
+    val timeout = confManager.getConfOrElseValue("metadata", "readTimeout", "300000").toInt
     println("-----timeout:" + timeout)
     println("-----metadataService:" + metadataService)
-    metaDataUtils = new MetaDataUtils(metadataService,timeout)
+    metaDataUtils = new MetaDataUtils(metadataService, timeout)
   }
 
   /**
@@ -50,42 +50,48 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     //读取原始文件
     val inputPath = confManager.getConf("inputPath")
-   /* val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line=>{
-      val json=try {
-        Some(JSON.parseObject(line))
-      }
-      catch {
+    /* val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line=>{
+       val json=try {
+         Some(JSON.parseObject(line))
+       }
+       catch {
+         case _: Throwable => {
+           None
+         }
+       }
+       if(json.isDefined){
+         val appId=json.get.getString("appId")
+         if(appId.equalsIgnoreCase(Constants.MEDUSA2X_APP_ID)){
+             Some("medusa 2x split function")
+         }else{
+           Some(line)
+         }
+       }else{
+         None
+       }
+     }
+     ).filter(row => row.isDefined).map(row => row.get)*/
+
+    val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line => {
+      try {
+        if (line.indexOf("\"appId\":\"" + Constants.MEDUSA2X_APP_ID + "\"") > 0) {
+          val jsObj = JSON.parseObject(line)
+          val logBody = jsObj.getJSONObject(LogKeys.LOG_BODY)
+          val msgStr = logBody.getString(LogKeys.LOG)
+          val svrReceiveTime = logBody.getLong(LogKeys.SVR_RECEIVE_TIME)
+          val logType = LogUtils.getLogType(msgStr)
+          val logData = LogPreProcess.matchLog(logType, s"$svrReceiveTime-$msgStr").toJSONObject
+          logBody.asInstanceOf[java.util.Map[String, Object]].putAll(logData.asInstanceOf[java.util.Map[String, Object]])
+          Some(jsObj)
+        } else {
+          Some(JSON.parseObject(line))
+        }
+      } catch {
         case _: Throwable => {
           None
         }
       }
-      if(json.isDefined){
-        val appId=json.get.getString("appId")
-        if(appId.equalsIgnoreCase(Constants.MEDUSA2X_APP_ID)){
-            Some("medusa 2x split function")
-        }else{
-          Some(line)
-        }
-      }else{
-        None
-      }
-    }
-    ).filter(row => row.isDefined).map(row => row.get)*/
-
-   val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line=>{
-     if(line.indexOf("\"appId\":\""+Constants.MEDUSA2X_APP_ID+"\"")>0){
-       val jsObj = JSON.parseObject(line)
-       val logBody = jsObj.getJSONObject(LogKeys.LOG_BODY)
-       val msgStr = logBody.getString(LogKeys.LOG)
-       val svrReceiveTime = logBody.getLong(LogKeys.SVR_RECEIVE_TIME)
-       val logType = LogUtils.getLogType(msgStr)
-       val logData = LogPreProcess.matchLog(logType,s"$svrReceiveTime-$msgStr").toJSONObject
-       logBody.asInstanceOf[java.util.Map[String,Object]].putAll(logData.asInstanceOf[java.util.Map[String,Object]])
-       Some(jsObj)
-     }else{
-       Some(JSON.parseObject(line))
-     }
-   }).filter(row => row.isDefined).map(row => row.get)
+    }).filter(row => row.isDefined).map(row => row.get)
 
 
     //解析出输出目录
@@ -112,7 +118,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val errRowsRdd = processedRdd.filter(row => row._2.hasErr).map(row => {
       row._2
     })
-    if(errRowsRdd.count()>0){
+    if (errRowsRdd.count() > 0) {
       val time = new Date().getTime
       errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
     }
@@ -122,14 +128,14 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //println("path_file_value_map.length():" + path_file_value_map.length)
     LOG.info("path_file_value_map.length():" + path_file_value_map.length)
     path_file_value_map.take(10).foreach(println)
-    generateMetaDataToTable(sparkSession,path_file_value_map)
+    generateMetaDataToTable(sparkSession, path_file_value_map)
   }
 
 
   /**
     * 向phoenix表插入数据[metadata.logfile_key_field_value,metadata.logfile_field_desc]
     **/
-  def generateMetaDataToTable(sparkSession:SparkSession,path_file_value_map: Array[(String, scala.collection.mutable.Map[String, String])]): Unit = {
+  def generateMetaDataToTable(sparkSession: SparkSession, path_file_value_map: Array[(String, scala.collection.mutable.Map[String, String])]): Unit = {
     val generator = IdGenerator.defaultInstance
     val taskId = generator.nextId().replace("/", "")
     println("----------taskId:" + taskId)
@@ -138,96 +144,98 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val fieldValueEntityArrayBuffer = generateFieldValueEntityArrayBuffer(taskId, path_file_value_map)
     println("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
     LOG.info("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
-    batchPostFieldValue(taskId,fieldValueEntityArrayBuffer)
+    batchPostFieldValue(taskId, fieldValueEntityArrayBuffer)
 
     //获得不同的输出路径
     val distinctOutput = path_file_value_map.map(e => {
       e._1
     }).distinct
     //打印输出路径
-    println("------distinctOutput.begin:"+distinctOutput.length)
+    println("------distinctOutput.begin:" + distinctOutput.length)
     distinctOutput.foreach(println)
     println("------distinctOutput.end")
-    LOG.info("------distinctOutput.begin:"+distinctOutput.length)
-    distinctOutput.foreach(e=>{LOG.info(e)})
+    LOG.info("------distinctOutput.begin:" + distinctOutput.length)
+    distinctOutput.foreach(e => {
+      LOG.info(e)
+    })
     LOG.info("------distinctOutput.end")
 
     //生成metadata.logfile_field_desc表数据
-    val fieldDescEntityArrayBuffer = generateFieldDescEntityArrayBuffer(sparkSession,taskId, distinctOutput)
+    val fieldDescEntityArrayBuffer = generateFieldDescEntityArrayBuffer(sparkSession, taskId, distinctOutput)
     println("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
     LOG.info("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
-    batchPostFileFieldDesc(taskId,fieldDescEntityArrayBuffer)
+    batchPostFileFieldDesc(taskId, fieldDescEntityArrayBuffer)
 
     //发送taskId给元数据模块
-    val responseTaskIdResponse=metaDataUtils.metadataService().postTaskId2MetaModel(taskId, "111")
-    LOG.info(s"responseTaskIdResponse : "+responseTaskIdResponse.toJSONString)
-    println(s"----responseTaskIdResponse : "+responseTaskIdResponse.toJSONString)
+    val responseTaskIdResponse = metaDataUtils.metadataService().postTaskId2MetaModel(taskId, "111")
+    LOG.info(s"responseTaskIdResponse : " + responseTaskIdResponse.toJSONString)
+    println(s"----responseTaskIdResponse : " + responseTaskIdResponse.toJSONString)
   }
 
-  /**批量发送FileFieldValue的POST请求*/
-  def batchPostFieldValue(taskId:String,seq:Seq[LogFileKeyFieldValueEntity]) {
-    val batchSize=1000
-    val total=seq.length
-    if(total>batchSize){
-      val times=(total/batchSize)
-      var start=0
-      for(i <-1 to times){
-        val end=batchSize*i
-        val fragment=seq.slice(start,end)
-        LOG.info(s"batch $i,$start->$end start: "+new Date())
-        println(s"----batch $i,$start->$end start: "+new Date())
+  /** 批量发送FileFieldValue的POST请求 */
+  def batchPostFieldValue(taskId: String, seq: Seq[LogFileKeyFieldValueEntity]) {
+    val batchSize = 1000
+    val total = seq.length
+    if (total > batchSize) {
+      val times = (total / batchSize)
+      var start = 0
+      for (i <- 1 to times) {
+        val end = batchSize * i
+        val fragment = seq.slice(start, end)
+        LOG.info(s"batch $i,$start->$end start: " + new Date())
+        println(s"----batch $i,$start->$end start: " + new Date())
         val responseFieldDesc = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fragment)
-        LOG.info(s"batch $i,$start->$end end: "+new Date())
-        println(s"----batch $i,$start->$end end: "+new Date())
-        LOG.info(s"batch $i,$start->$end : "+responseFieldDesc.toJSONString)
-        println(s"----batch $i,$start->$end : "+responseFieldDesc.toJSONString)
-        start=batchSize*i
+        LOG.info(s"batch $i,$start->$end end: " + new Date())
+        println(s"----batch $i,$start->$end end: " + new Date())
+        LOG.info(s"batch $i,$start->$end : " + responseFieldDesc.toJSONString)
+        println(s"----batch $i,$start->$end : " + responseFieldDesc.toJSONString)
+        start = batchSize * i
       }
-      val remain=seq.length-times*batchSize
-      if(remain>0){
-        val fragment=seq.slice(times*batchSize,seq.length)
+      val remain = seq.length - times * batchSize
+      if (remain > 0) {
+        val fragment = seq.slice(times * batchSize, seq.length)
         val responseFieldDesc = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fragment)
-        LOG.info(s"FieldValue_remain $remain: "+responseFieldDesc.toJSONString)
-        println(s"----FieldValue_remain $remain: "+responseFieldDesc.toJSONString)
+        LOG.info(s"FieldValue_remain $remain: " + responseFieldDesc.toJSONString)
+        println(s"----FieldValue_remain $remain: " + responseFieldDesc.toJSONString)
       }
-    }else{
+    } else {
       val responseFieldDesc = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, seq)
-      LOG.info(s"FieldValue_responseFieldDesc : "+responseFieldDesc.toJSONString)
-      println(s"----FieldValue_responseFieldDesc : "+responseFieldDesc.toJSONString)
+      LOG.info(s"FieldValue_responseFieldDesc : " + responseFieldDesc.toJSONString)
+      println(s"----FieldValue_responseFieldDesc : " + responseFieldDesc.toJSONString)
 
     }
   }
 
-  /**批量发送FileFieldDesc的POST请求*/
-  def batchPostFileFieldDesc(taskId:String,seq:Seq[LogFileFieldDescEntity]) {
-    val batchSize=1000
-    val total=seq.length
-    if(total>batchSize){
-      val times=(total/batchSize)
-      var start=0
-      for(i <-1 to times){
-        val end=batchSize*i
-        val fragment=seq.slice(start,end)
-        LOG.info(s"batch $i,$start->$end start: "+new Date())
-        println(s"----batch $i,$start->$end start: "+new Date())
+  /** 批量发送FileFieldDesc的POST请求 */
+  def batchPostFileFieldDesc(taskId: String, seq: Seq[LogFileFieldDescEntity]) {
+    val batchSize = 1000
+    val total = seq.length
+    if (total > batchSize) {
+      val times = (total / batchSize)
+      var start = 0
+      for (i <- 1 to times) {
+        val end = batchSize * i
+        val fragment = seq.slice(start, end)
+        LOG.info(s"batch $i,$start->$end start: " + new Date())
+        println(s"----batch $i,$start->$end start: " + new Date())
         val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fragment)
-        LOG.info(s"batch $i,$start->$end end: "+new Date())
-        println(s"----batch $i,$start->$end end: "+new Date())
-        LOG.info(s"batch $i,$start->$end : "+responseFieldDesc.toJSONString)
-        println(s"----batch $i,$start->$end : "+responseFieldDesc.toJSONString)
-        start=batchSize*i
+        LOG.info(s"batch $i,$start->$end end: " + new Date())
+        println(s"----batch $i,$start->$end end: " + new Date())
+        LOG.info(s"batch $i,$start->$end : " + responseFieldDesc.toJSONString)
+        println(s"----batch $i,$start->$end : " + responseFieldDesc.toJSONString)
+        start = batchSize * i
       }
-      val remain=seq.length-times*batchSize
-      if(remain>0){
-        val fragment=seq.slice(times*batchSize,seq.length)
+      val remain = seq.length - times * batchSize
+      if (remain > 0) {
+        val fragment = seq.slice(times * batchSize, seq.length)
         val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fragment)
-        LOG.info(s"remain $remain: "+responseFieldDesc.toJSONString)
-        println(s"----remain $remain: "+responseFieldDesc.toJSONString)
+        LOG.info(s"remain $remain: " + responseFieldDesc.toJSONString)
+        println(s"----remain $remain: " + responseFieldDesc.toJSONString)
       }
-    }else{
+    } else {
       val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, seq)
-      LOG.info(s"responseFieldDesc : "+responseFieldDesc.toJSONString)
-      println(s"----responseFieldDesc : "+responseFieldDesc.toJSONString)
+      LOG.info(s"responseFieldDesc : " + responseFieldDesc.toJSONString)
+      println(s"----responseFieldDesc : " + responseFieldDesc.toJSONString)
     }
   }
 
@@ -235,39 +243,39 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * 通过makeRDD方式,并发生成FieldDescEntity，但是发现原有方式这段耗时1分钟
     * Seq[(fieldName:String,fieldType:String,fieldSql:String,rowType:String,rowInfo:String)]
     **/
- /* def generateFieldDescEntityArrayBuffer(sparkSession:SparkSession,taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
-    sparkSession.sparkContext.makeRDD(distinctOutputArray,Math.min(1000,distinctOutputArray.length)).flatMap(dir => {
-      val list = ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE + File.separator + dir)
-      val fieldInfos = if (list.size > 0) {
-        val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(list.head.getPath)
-        parquetMetaData.map(meta => {
-          val fieldName = meta._1
-          val fieldType = meta._2
-          val fieldSql = meta._3
-          val rowType = meta._4
-          val rowInfo = meta._5
-          val logFileFieldDescEntity = new LogFileFieldDescEntity
-          logFileFieldDescEntity.setTaskId(taskId)
-          logFileFieldDescEntity.setLogPath(Constants.DATA_WAREHOUSE + File.separator + dir)
-          logFileFieldDescEntity.setFieldName(fieldName)
-          logFileFieldDescEntity.setFieldType(fieldType)
-          logFileFieldDescEntity.setFieldSql(fieldSql)
-          logFileFieldDescEntity.setRawType(rowType)
-          logFileFieldDescEntity.setRawInfo(rowInfo)
-          logFileFieldDescEntity.setIsDeleted(false)
-          logFileFieldDescEntity.setCreateTime(new Date())
-          logFileFieldDescEntity.setUpdateTime(new Date())
-          logFileFieldDescEntity
-        })
-      } else {
-        Nil
-      }
-      LOG.info(s"FieldInfos: $dir -> ${fieldInfos.size} ")
-      fieldInfos
-    }).collect()
-  }*/
+  /* def generateFieldDescEntityArrayBuffer(sparkSession:SparkSession,taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
+     sparkSession.sparkContext.makeRDD(distinctOutputArray,Math.min(1000,distinctOutputArray.length)).flatMap(dir => {
+       val list = ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE + File.separator + dir)
+       val fieldInfos = if (list.size > 0) {
+         val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(list.head.getPath)
+         parquetMetaData.map(meta => {
+           val fieldName = meta._1
+           val fieldType = meta._2
+           val fieldSql = meta._3
+           val rowType = meta._4
+           val rowInfo = meta._5
+           val logFileFieldDescEntity = new LogFileFieldDescEntity
+           logFileFieldDescEntity.setTaskId(taskId)
+           logFileFieldDescEntity.setLogPath(Constants.DATA_WAREHOUSE + File.separator + dir)
+           logFileFieldDescEntity.setFieldName(fieldName)
+           logFileFieldDescEntity.setFieldType(fieldType)
+           logFileFieldDescEntity.setFieldSql(fieldSql)
+           logFileFieldDescEntity.setRawType(rowType)
+           logFileFieldDescEntity.setRawInfo(rowInfo)
+           logFileFieldDescEntity.setIsDeleted(false)
+           logFileFieldDescEntity.setCreateTime(new Date())
+           logFileFieldDescEntity.setUpdateTime(new Date())
+           logFileFieldDescEntity
+         })
+       } else {
+         Nil
+       }
+       LOG.info(s"FieldInfos: $dir -> ${fieldInfos.size} ")
+       fieldInfos
+     }).collect()
+   }*/
 
-  def generateFieldDescEntityArrayBuffer(sparkSession:SparkSession,taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
+  def generateFieldDescEntityArrayBuffer(sparkSession: SparkSession, taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
     distinctOutputArray.flatMap(dir => {
       val list = ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE + File.separator + dir)
       val fieldInfos = if (list.size > 0) {
@@ -299,7 +307,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       fieldInfos
     })
   }
-
 
 
   /**
@@ -400,29 +407,29 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
 
   //medusa 2.x,not used
- /* def initAllProcessGroup(): scala.collection.mutable.HashMap[String, ProcessGroupTraitV2] = {
-    val processGroupName2processGroupInstance = scala.collection.mutable.HashMap.empty[String, ProcessGroupTraitV2]
-    val confManager = new ConfManager(Array("MsgBatchManagerV3.xml", "settings.properties"))
-    val allProcessGroup = confManager.getConf(this.name, "allProcessGroup")
-    require(null != allProcessGroup)
-    allProcessGroup.split(",").foreach(groupName => {
-      val groupNameFromConfig = confManager.getConf(this.name, groupName)
-      val processGroup = instanceFrom(confManager, groupNameFromConfig).asInstanceOf[ProcessGroupTraitV2]
-      processGroup.init(confManager)
-      processGroupName2processGroupInstance += (groupNameFromConfig -> processGroup)
-    })
-    val keyword = "appIdForProcessGroup."
-    val appId2ProcessGroupName = confManager.getKeyValueByRegex(keyword)
-    val appId2processGroupInstance = scala.collection.mutable.HashMap.empty[String, ProcessGroupTraitV2]
+  /* def initAllProcessGroup(): scala.collection.mutable.HashMap[String, ProcessGroupTraitV2] = {
+     val processGroupName2processGroupInstance = scala.collection.mutable.HashMap.empty[String, ProcessGroupTraitV2]
+     val confManager = new ConfManager(Array("MsgBatchManagerV3.xml", "settings.properties"))
+     val allProcessGroup = confManager.getConf(this.name, "allProcessGroup")
+     require(null != allProcessGroup)
+     allProcessGroup.split(",").foreach(groupName => {
+       val groupNameFromConfig = confManager.getConf(this.name, groupName)
+       val processGroup = instanceFrom(confManager, groupNameFromConfig).asInstanceOf[ProcessGroupTraitV2]
+       processGroup.init(confManager)
+       processGroupName2processGroupInstance += (groupNameFromConfig -> processGroup)
+     })
+     val keyword = "appIdForProcessGroup."
+     val appId2ProcessGroupName = confManager.getKeyValueByRegex(keyword)
+     val appId2processGroupInstance = scala.collection.mutable.HashMap.empty[String, ProcessGroupTraitV2]
 
-    appId2ProcessGroupName.foreach(e => {
-      val appId = e._1
-      val processGroupName = e._2
-      val processGroupInstance = processGroupName2processGroupInstance.get(processGroupName).get
-      appId2processGroupInstance.put(appId, processGroupInstance)
-    })
-    appId2processGroupInstance
-  }*/
+     appId2ProcessGroupName.foreach(e => {
+       val appId = e._1
+       val processGroupName = e._2
+       val processGroupInstance = processGroupName2processGroupInstance.get(processGroupName).get
+       appId2processGroupInstance.put(appId, processGroupInstance)
+     })
+     appId2processGroupInstance
+   }*/
 
   /**
     * 关停
