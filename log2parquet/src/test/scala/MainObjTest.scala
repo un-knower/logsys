@@ -143,9 +143,10 @@ class MainObjTest extends LogTrait{
 
   @Test
   def test3: Unit = {
-    val empty=new Array[FileStatus](0)
-    println(empty.length)
-    println(empty.apply(1))
+    val start=System.currentTimeMillis()
+    Thread.sleep(2000)
+    val end=System.currentTimeMillis()
+    println(end-start)
   }
 
 }

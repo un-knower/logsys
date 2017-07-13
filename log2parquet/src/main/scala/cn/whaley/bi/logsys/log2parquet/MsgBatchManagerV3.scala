@@ -72,6 +72,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
      }
      ).filter(row => row.isDefined).map(row => row.get)*/
 
+    println("-------read original data start at "+new Date())
     val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line => {
       try {
         if (line.indexOf("\"appId\":\"" + Constants.MEDUSA2X_APP_ID + "\"") > 0) {
@@ -92,10 +93,12 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         }
       }
     }).filter(row => row.isDefined).map(row => row.get)
-
+    println("-------read original data end at "+new Date())
 
     //解析出输出目录
+    println("-------metaDataUtils.parseLogObjRddPath start at "+new Date())
     val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)
+    println("-------metaDataUtils.parseLogObjRddPath end at "+new Date())
 
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
@@ -112,9 +115,12 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val afterRuleRdd = ruleHandle(pathRdd, okRowsRdd)
 
     //输出正常记录到HDFS文件
+    println("-------Json2ParquetUtil.saveAsParquet start at "+new Date())
     Json2ParquetUtil.saveAsParquet(afterRuleRdd, sparkSession)
+    println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
 
     //输出异常记录到HDFS文件
+    println("-------errRowsRdd start at "+new Date())
     val errRowsRdd = processedRdd.filter(row => row._2.hasErr).map(row => {
       row._2
     })
@@ -122,20 +128,22 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       val time = new Date().getTime
       errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
     }
+    println("-------errRowsRdd end at "+new Date())
 
     //生成元数据信息给元数据模块使用
-    val path_file_value_map = pathRdd.map(e => (e._1, e._3)).distinct().collect()
-    //println("path_file_value_map.length():" + path_file_value_map.length)
-    LOG.info("path_file_value_map.length():" + path_file_value_map.length)
-    path_file_value_map.take(10).foreach(println)
-    generateMetaDataToTable(sparkSession, path_file_value_map)
+    generateMetaDataToTable(sparkSession, pathRdd)
   }
 
 
   /**
     * 向phoenix表插入数据[metadata.logfile_key_field_value,metadata.logfile_field_desc]
     **/
-  def generateMetaDataToTable(sparkSession: SparkSession, path_file_value_map: Array[(String, scala.collection.mutable.Map[String, String])]): Unit = {
+  def generateMetaDataToTable(sparkSession: SparkSession, pathRdd:RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])]): Unit = {
+    //生成元组的RDD，元组内容为:(输出路径,用来拼接表名称或分区的字段的Map[logType->detail,key_day->20170712,....])
+    val path_file_value_map = pathRdd.map(e => (e._1, e._3)).distinct().collect()
+    println("path_file_value_map.length():" + path_file_value_map.length)
+
+    //生成taskId
     val generator = IdGenerator.defaultInstance
     val taskId = generator.nextId().replace("/", "")
     println("----------taskId:" + taskId)
@@ -345,7 +353,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       val outputPath = e._1
       val file_value_map = e._2
       val appId = file_value_map.get(LogKeys.LOG_APP_ID).getOrElse("noAppId")
-      file_value_map.filter(e => !e._1.contains(LogKeys.LOG_APP_ID)).map(field => {
+      file_value_map.filter(e => !e._1.contains(LogKeys.LOG_APP_ID)).foreach(field => {
         val logFileKeyFieldValueEntity = new LogFileKeyFieldValueEntity()
         logFileKeyFieldValueEntity.setAppId(appId)
         logFileKeyFieldValueEntity.setLogPath(Constants.DATA_WAREHOUSE + File.separator + outputPath)

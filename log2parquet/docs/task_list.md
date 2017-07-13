@@ -31,7 +31,7 @@ if(jsonObject.containsKey("logType")&&jsonObject.getString("logType").equalsIgno
  /data_warehouse/ods_origin.db/log_origin/key_appId=*/key_day=${yyyymmdd}/key_hour=${HH}
  还是分appId运行，保证不同appId能够尽可能快的被查询
  
- 
+13. 配置所有appID
 
 ####DONE----------------------------
 8. 规则检查
