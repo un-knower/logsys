@@ -22,8 +22,7 @@ import scala.collection.mutable.ArrayBuffer
 class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with java.io.Serializable {
 
   var metaDataUtils: MetaDataUtils = null
-  val config = new SparkConf()
-  val sparkSession: SparkSession = SparkSession.builder().config(new SparkConf()).getOrCreate()
+
   /**
     * 初始化方法
     * 如果初始化异常，则应该抛出异常
@@ -40,6 +39,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * 启动
     */
   def start(confManager: ConfManager): Unit = {
+    val config = new SparkConf()
+    val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
     //本地化测试使用,MainObjTests
     if (confManager.getConf("masterURL") != null) {
       config.setMaster(confManager.getConf("masterURL"))
@@ -391,7 +392,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
   //释放资源
   def shutdown(): Unit = {
-    sparkSession.close()
+    //sparkSession.close()
   }
 }
 
