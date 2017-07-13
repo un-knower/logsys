@@ -224,12 +224,12 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
             //匹配当前路径的配置,且排序值最小的一组配置
             var pathSpecialConf = specialFieldDescConf.filter(conf => conf._1.r.findFirstMatchIn(path).isDefined)
-            println(s"${path}: all specialConf.length=${pathSpecialConf.length},pathFields.length=${fields.length}")
+            //println(s"${path}: all specialConf.length=${pathSpecialConf.length},pathFields.length=${fields.length}")
             if (!pathSpecialConf.isEmpty) {
                 //排序值最小的一组配置
                 val order = pathSpecialConf.minBy(conf => conf._5)
                 pathSpecialConf = pathSpecialConf.filter(conf => conf._5 == order._5)
-                println(s"${path}: actual specialConf.length=${pathSpecialConf.length}")
+                //println(s"${path}: actual specialConf.length=${pathSpecialConf.length}")
 
                 //字段过滤器: Seq[源字段名]
                 val fieldFilterList = pathSpecialConf.filter(conf => conf._3 == "fieldFilter").flatMap(conf => {
