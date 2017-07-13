@@ -22,7 +22,8 @@ import scala.collection.mutable.ArrayBuffer
 class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with java.io.Serializable {
 
   var metaDataUtils: MetaDataUtils = null
-
+  val config = new SparkConf()
+  val sparkSession: SparkSession = SparkSession.builder().config(new SparkConf()).getOrCreate()
   /**
     * 初始化方法
     * 如果初始化异常，则应该抛出异常
@@ -39,41 +40,17 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * 启动
     */
   def start(confManager: ConfManager): Unit = {
-    val config = new SparkConf()
-
-    //check if run on mac use MainObjTests
+    //本地化测试使用,MainObjTests
     if (confManager.getConf("masterURL") != null) {
       config.setMaster(confManager.getConf("masterURL"))
       println("---local master url:" + confManager.getConf("masterURL"))
     }
-    val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
 
     //读取原始文件
     val inputPath = confManager.getConf("inputPath")
-    /* val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line=>{
-       val json=try {
-         Some(JSON.parseObject(line))
-       }
-       catch {
-         case _: Throwable => {
-           None
-         }
-       }
-       if(json.isDefined){
-         val appId=json.get.getString("appId")
-         if(appId.equalsIgnoreCase(Constants.MEDUSA2X_APP_ID)){
-             Some("medusa 2x split function")
-         }else{
-           Some(line)
-         }
-       }else{
-         None
-       }
-     }
-     ).filter(row => row.isDefined).map(row => row.get)*/
-
     val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line => {
       try {
+        //如果是medusa2x日志，首先做规范化处理
         if (line.indexOf("\"appId\":\"" + Constants.MEDUSA2X_APP_ID + "\"") > 0) {
           val jsObj = JSON.parseObject(line)
           val logBody = jsObj.getJSONObject(LogKeys.LOG_BODY)
@@ -84,6 +61,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
           logBody.asInstanceOf[java.util.Map[String, Object]].putAll(logData.asInstanceOf[java.util.Map[String, Object]])
           Some(jsObj)
         } else {
+          //非medusa2x日志
           Some(JSON.parseObject(line))
         }
       } catch {
@@ -287,7 +265,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   def generateFieldDescEntityArrayBuffer(sparkSession: SparkSession, taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
     distinctOutputArray.flatMap(dir => {
       val list = ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE + File.separator + dir)
-      val fieldInfos = if (list.size > 0) {
+      val fieldInfo = if (list.size > 0) {
         val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(list.head.getPath)
         parquetMetaData.map(meta => {
           val fieldName = meta._1
@@ -311,9 +289,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       } else {
         Nil
       }
-      LOG.info(s"FieldInfos: $dir -> ${fieldInfos.size} ")
-      println(s"----FieldInfos: $dir -> ${fieldInfos.size} ")
-      fieldInfos
+      if(fieldInfo.size>80){
+       LOG.info(s"parquet文件schema字段个数: $dir -> ${fieldInfo.size} ")
+       println(s"----parquet文件schema字段个数: $dir -> ${fieldInfo.size} ")
+      }
+      fieldInfo
     })
   }
 
@@ -375,25 +355,20 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   def ruleHandle(pathRdd: RDD[(String, JSONObject, scala.collection.mutable.Map[String, String])], resultRdd: RDD[(String, ProcessResult[JSONObject])]): RDD[(String, JSONObject)] = {
     // 获得规则库的每条规则
     val rules = metaDataUtils.parseSpecialRules(pathRdd)
-    println("---------------------rules" + rules)
-    rules.foreach(println)
-    println("---------------------rulesend" + rules)
 
     val afterRuleRdd = resultRdd.map(e => {
       val path = e._1
       val jsonObject = e._2.result.get
 
-      //if(rules.filter(rule => (Constants.DATA_WAREHOUSE+File.separator+rule.path).equalsIgnoreCase(path)).size>0){
       if (rules.filter(rule => rule.path.equalsIgnoreCase(path)).size > 0) {
         //一个绝对路径唯一对应一条规则
         val rule = rules.filter(rule => rule.path.equalsIgnoreCase(path)).head
-        //val rule = rules.filter(rule => (Constants.DATA_WAREHOUSE+File.separator+rule.path).equalsIgnoreCase(path)).head
-
+        //字段黑名单过滤
         val fieldBlackFilter = rule.fieldBlackFilter
         fieldBlackFilter.foreach(blackField => {
           jsonObject.remove(blackField)
         })
-
+        //字段重命名
         val rename = rule.rename
         rename.foreach(e => {
           if (jsonObject.containsKey(e._1)) {
@@ -401,7 +376,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
             jsonObject.remove(e._1)
           }
         })
-
+        //行过滤
         val rowBlackFilter = rule.rowBlackFilter
         val resultJsonObject = if (rowBlackFilter.filter(item => jsonObject.get(item._1) != null && item._2 == jsonObject.getString(item._1)).size > 0) None
         else Some(jsonObject)
@@ -414,36 +389,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     afterRuleRdd
   }
 
-
-  //medusa 2.x,not used
-  /* def initAllProcessGroup(): scala.collection.mutable.HashMap[String, ProcessGroupTraitV2] = {
-     val processGroupName2processGroupInstance = scala.collection.mutable.HashMap.empty[String, ProcessGroupTraitV2]
-     val confManager = new ConfManager(Array("MsgBatchManagerV3.xml", "settings.properties"))
-     val allProcessGroup = confManager.getConf(this.name, "allProcessGroup")
-     require(null != allProcessGroup)
-     allProcessGroup.split(",").foreach(groupName => {
-       val groupNameFromConfig = confManager.getConf(this.name, groupName)
-       val processGroup = instanceFrom(confManager, groupNameFromConfig).asInstanceOf[ProcessGroupTraitV2]
-       processGroup.init(confManager)
-       processGroupName2processGroupInstance += (groupNameFromConfig -> processGroup)
-     })
-     val keyword = "appIdForProcessGroup."
-     val appId2ProcessGroupName = confManager.getKeyValueByRegex(keyword)
-     val appId2processGroupInstance = scala.collection.mutable.HashMap.empty[String, ProcessGroupTraitV2]
-
-     appId2ProcessGroupName.foreach(e => {
-       val appId = e._1
-       val processGroupName = e._2
-       val processGroupInstance = processGroupName2processGroupInstance.get(processGroupName).get
-       appId2processGroupInstance.put(appId, processGroupInstance)
-     })
-     appId2processGroupInstance
-   }*/
-
-  /**
-    * 关停
-    */
+  //释放资源
   def shutdown(): Unit = {
+    sparkSession.close()
   }
 }
 
