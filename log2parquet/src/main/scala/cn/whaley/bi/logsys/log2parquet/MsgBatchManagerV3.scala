@@ -385,7 +385,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         //当路径没有找到规则的情况
         (path, Some(jsonObject))
       }
-    }).filter(e => !(e._2.isEmpty)).map(item => (item._1, item._2.get))
+    }).filter(e => e._2.isDefined).map(item => (item._1, item._2.get))
     afterRuleRdd
   }
 

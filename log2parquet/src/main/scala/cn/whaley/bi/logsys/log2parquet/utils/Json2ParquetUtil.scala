@@ -48,6 +48,7 @@ object Json2ParquetUtil {
             iter.foreach(item => {
                 val outputPath = item._1.replace(File.separator,"#")
                 val logData = item._2
+                if(null!=logData && !logData.isEmpty){
                 val info = fsMap.getOrElseUpdate(outputPath, {
                     val tmpFilePath = new Path(s"${tmpDir}/${outputPath}/${partId}.tmp")
                     val jsonFilePath = new Path(s"${jsonDir}/${outputPath}/${partId}.json")
@@ -61,6 +62,7 @@ object Json2ParquetUtil {
                 val bytes = logData.toJSONString.getBytes("utf-8")
                 stream.write(bytes)
                 stream.write('\n')
+                }
             })
             //关闭临时文件，并移动到json目录
             fsMap.foreach(item => {
