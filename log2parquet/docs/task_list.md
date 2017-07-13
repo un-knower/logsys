@@ -17,15 +17,6 @@ a. 有些不需要返回RDD的操作
 
 6. crash日志还需要校验md5吗？yes
 
-8. 规则检查
-* 字段名不允许出现"."和"-"
-* eventId的value作为输出路径的值的时候，将.变为""，-变为_;
-* eventId的value在jsonObject不用变
-
-9. medusa 2.x 日志[连凯TODO]
-需要在下面代码前判断是否为medusa 2.x日志
- val pathRdd = MetaDataUtils.parseLogStrRddPath(rdd_original)
-
 11. Json2ParquetUtil.saveAsParquet 后期稳定后，删除临时文件代码修改
 
 17. pathRdd需要加的逻辑
@@ -43,6 +34,14 @@ if(jsonObject.containsKey("logType")&&jsonObject.getString("logType").equalsIgno
  
 
 ####DONE----------------------------
+8. 规则检查
+* 字段名不允许出现"."和"-"
+* eventId的value作为输出路径的值的时候，将.变为""，-变为_;
+* eventId的value在jsonObject不用变
+
+9. medusa 2.x 日志[连凯TODO]
+需要在下面代码前判断是否为medusa 2.x日志
+ 
 1. 发现每次都要mvn clean；才能保证settings.properties不会打入jar包
   但是不打入jar包，以yarn-client模式运行，confManager加载不到资源
 报错信息：

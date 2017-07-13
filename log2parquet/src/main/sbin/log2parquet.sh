@@ -30,7 +30,10 @@ do
     esac
 done
 
-echo "path:${path},startDate:${startDate},startHour:${startHour}"
-inputPath=${path}/key_day=${startDate}/key_hour=${startHour}
+newDate=`date -d "${startDate} ${startHour} -1 hour" +"%Y%m%d"`
+newHour=`date -d "${startDate} ${startHour} -1 hour" +"%H"`
+
+echo "path:${path},newDate:${newDate},newHour:${newHour}"
+inputPath=${path}/key_day=${newDate}/key_hour=${newHour}
 echo "${inputPath}"
 sh ${service_bin_home}/submit.sh cn.whaley.bi.logsys.log2parquet.MainObj MsgProcExecutor --f MsgBatchManagerV3.xml,settings.properties --c inputPath=${inputPath}
