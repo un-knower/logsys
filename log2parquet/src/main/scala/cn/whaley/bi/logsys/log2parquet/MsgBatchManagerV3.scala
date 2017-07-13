@@ -72,7 +72,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
      }
      ).filter(row => row.isDefined).map(row => row.get)*/
 
-    println("-------read original data start at "+new Date())
     val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line => {
       try {
         if (line.indexOf("\"appId\":\"" + Constants.MEDUSA2X_APP_ID + "\"") > 0) {
@@ -93,12 +92,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         }
       }
     }).filter(row => row.isDefined).map(row => row.get)
-    println("-------read original data end at "+new Date())
 
     //解析出输出目录
-    println("-------metaDataUtils.parseLogObjRddPath start at "+new Date())
     val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)
-    println("-------metaDataUtils.parseLogObjRddPath end at "+new Date())
 
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
@@ -120,7 +116,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
 
     //输出异常记录到HDFS文件
-    println("-------errRowsRdd start at "+new Date())
     val errRowsRdd = processedRdd.filter(row => row._2.hasErr).map(row => {
       row._2
     })
@@ -128,7 +123,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       val time = new Date().getTime
       errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
     }
-    println("-------errRowsRdd end at "+new Date())
 
     //生成元数据信息给元数据模块使用
     generateMetaDataToTable(sparkSession, pathRdd)
@@ -152,7 +146,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val fieldValueEntityArrayBuffer = generateFieldValueEntityArrayBuffer(taskId, path_file_value_map)
     println("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
     LOG.info("fieldValueEntityArrayBuffer.length:" + fieldValueEntityArrayBuffer.length)
+    println("-------batchPostFieldValue start at "+new Date())
     batchPostFieldValue(taskId, fieldValueEntityArrayBuffer)
+    println("-------batchPostFieldValue end at "+new Date())
 
     //获得不同的输出路径
     val distinctOutput = path_file_value_map.map(e => {
@@ -172,12 +168,17 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val fieldDescEntityArrayBuffer = generateFieldDescEntityArrayBuffer(sparkSession, taskId, distinctOutput)
     println("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
     LOG.info("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
+    println("-------batchPostFileFieldDesc start at "+new Date())
     batchPostFileFieldDesc(taskId, fieldDescEntityArrayBuffer)
+    println("-------batchPostFileFieldDesc end at "+new Date())
 
     //发送taskId给元数据模块
+    println("-------发送taskId给元数据模块 start at "+new Date())
     val responseTaskIdResponse = metaDataUtils.metadataService().postTaskId2MetaModel(taskId, "111")
     LOG.info(s"responseTaskIdResponse : " + responseTaskIdResponse.toJSONString)
     println(s"----responseTaskIdResponse : " + responseTaskIdResponse.toJSONString)
+    println("-------发送taskId给元数据模块 end at "+new Date())
+
   }
 
   /** 批量发送FileFieldValue的POST请求 */
