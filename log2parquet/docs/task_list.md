@@ -33,6 +33,11 @@ if(jsonObject.containsKey("logType")&&jsonObject.getString("logType").equalsIgno
  
 13. 配置所有appID
 
+14. 数据比较增加原子累加、统计删除了哪些黑名单字段
+
+15.crash日志逻辑
+http://git.moretv.cn/turbo/logcenter/blob/develop/app/controllers/LogController.scala
+
 ####DONE----------------------------
 8. 规则检查
 * 字段名不允许出现"."和"-"

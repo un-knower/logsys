@@ -143,10 +143,8 @@ class MainObjTest extends LogTrait{
 
   @Test
   def test3: Unit = {
-    val start=System.currentTimeMillis()
-    Thread.sleep(2000)
-    val end=System.currentTimeMillis()
-    println(end-start)
+    val start="true"
+    println(start.toBoolean)
   }
 
 }

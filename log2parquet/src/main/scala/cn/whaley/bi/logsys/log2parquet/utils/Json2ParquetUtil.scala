@@ -20,7 +20,7 @@ import scala.collection.mutable
  */
 object Json2ParquetUtil {
 
-    def saveAsParquet(logRdd: RDD[(String, JSONObject)], sparkSession: SparkSession /*,params: Params, outputDate: String*/) = {
+    def saveAsParquet(logRdd: RDD[(String, JSONObject)], sparkSession: SparkSession,isJsonDirDelete:Boolean,isTmpDirDelete:Boolean) = {
         val conf = new Configuration()
         val fs = FileSystem.get(conf)
         val date=new Date
@@ -119,25 +119,25 @@ object Json2ParquetUtil {
         println("shutdown.")
 
         //删除json文件
-        val preserveJsonDir = false
-        val preserveTmpDir = false
+        val preserveJsonDir = isJsonDirDelete
+        val preserveTmpDir = isTmpDirDelete
        if (!preserveTmpDir) {
-           //fs.delete(new Path(tmpDir), true)
+           fs.delete(new Path(tmpDir), true)
            println(s"delete dir:$tmpDir")
        }else{
            val files=fs.listStatus(new Path(tmpDir))
            if(files.length==0){
-               //fs.delete(new Path(tmpDir), true)
+               fs.delete(new Path(tmpDir), true)
                println(s"delete empty dir:$tmpDir")
            }
        }
        if (!preserveJsonDir) {
-           //fs.delete(new Path(jsonDir), true)
+           fs.delete(new Path(jsonDir), true)
            println(s"delete dir:$jsonDir")
        }else{
            val files=fs.listStatus(new Path(jsonDir))
            if(files.length==0){
-               //fs.delete(new Path(jsonDir), true)
+               fs.delete(new Path(jsonDir), true)
                println(s"delete empty dir:$jsonDir")
            }
        }
@@ -167,6 +167,7 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
             case e: Throwable => {
                 //SendMail.post(e, s"[Log2Parquet][Json2ParquetUtil][${inputPath}]任务执行失败", Array("app-bigdata@whaley.cn"))
                 e.printStackTrace()
+                println( s"convert file error[$inputPath(${inputSize / 1024}k) -> $outputPath)] : paramMap -> null, exception -> ${e.getMessage}")
                 s"convert file error[$inputPath(${inputSize / 1024}k) -> $outputPath)] : paramMap -> null, exception -> ${e.getMessage}"
             }
         }
