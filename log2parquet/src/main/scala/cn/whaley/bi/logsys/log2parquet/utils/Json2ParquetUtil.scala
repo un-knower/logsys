@@ -119,8 +119,8 @@ object Json2ParquetUtil {
         println("shutdown.")
 
         //删除json文件
-        val preserveJsonDir = isJsonDirDelete
-        val preserveTmpDir = isTmpDirDelete
+        val preserveJsonDir = !isJsonDirDelete
+        val preserveTmpDir = !isTmpDirDelete
        if (!preserveTmpDir) {
            fs.delete(new Path(tmpDir), true)
            println(s"delete dir:$tmpDir")
