@@ -90,8 +90,10 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val afterRuleRdd = ruleHandle(pathRdd, okRowsRdd)
 
     //输出正常记录到HDFS文件
+    val isJsonDirDelete = confManager.getConf("isJsonDirDelete").toBoolean
+    val isTmpDirDelete = confManager.getConf("isTmpDirDelete").toBoolean
     println("-------Json2ParquetUtil.saveAsParquet start at "+new Date())
-    Json2ParquetUtil.saveAsParquet(afterRuleRdd, sparkSession)
+    Json2ParquetUtil.saveAsParquet(afterRuleRdd, sparkSession,isJsonDirDelete,isTmpDirDelete)
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
 
     //输出异常记录到HDFS文件
@@ -104,14 +106,16 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     }
 
     //生成元数据信息给元数据模块使用
-    generateMetaDataToTable(sparkSession, pathRdd)
+    val taskFlag = confManager.getConf("taskFlag")
+    assert(taskFlag.length==3)
+    generateMetaDataToTable(sparkSession, pathRdd,taskFlag)
   }
 
 
   /**
     * 向phoenix表插入数据[metadata.logfile_key_field_value,metadata.logfile_field_desc]
     **/
-  def generateMetaDataToTable(sparkSession: SparkSession, pathRdd:RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])]): Unit = {
+  def generateMetaDataToTable(sparkSession: SparkSession, pathRdd:RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])],taskFlag:String): Unit = {
     //生成元组的RDD，元组内容为:(输出路径,用来拼接表名称或分区的字段的Map[logType->detail,key_day->20170712,....])
     val path_file_value_map = pathRdd.map(e => (e._1, e._3)).distinct().collect()
     println("path_file_value_map.length():" + path_file_value_map.length)
@@ -153,7 +157,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     //发送taskId给元数据模块
     println("-------发送taskId给元数据模块 start at "+new Date())
-    val responseTaskIdResponse = metaDataUtils.metadataService().postTaskId2MetaModel(taskId, "111")
+    val responseTaskIdResponse = metaDataUtils.metadataService().postTaskId2MetaModel(taskId, taskFlag)
     LOG.info(s"responseTaskIdResponse : " + responseTaskIdResponse.toJSONString)
     println(s"----responseTaskIdResponse : " + responseTaskIdResponse.toJSONString)
     println("-------发送taskId给元数据模块 end at "+new Date())

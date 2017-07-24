@@ -1,4 +1,4 @@
 type=command
-command=sh ${working.dir}/../sbin/log2parquet.sh --path /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendo8dc5mlsr  --startDate ${startDate} --startHour ${startHour}
+command=sh ${working.dir}/../sbin/log2parquet.sh --path /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendo8dc5mlsr  --startDate ${startDate} --startHour ${startHour} --isJsonDirDelete ${isJsonDirDelete} --isTmpDirDelete ${isTmpDirDelete} --taskFlag ${taskFlag}
 
 #微鲸电视主程序

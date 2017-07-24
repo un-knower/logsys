@@ -1,0 +1,36 @@
+
+最新线上建表信息
+--DDL信息表
+drop table if exists metadata.logtab_ddl;
+create table metadata.logtab_ddl(
+    dbName varchar(100) not null --[key]
+    ,tabName varchar(500) not null --[key]
+    ,seq integer not null --序号 [key]
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,ddlType varchar(100) --DDL类型, CHANGE_COLUMN/ADD_COLUMN/DROP_COLUMN/CREATE_TABLE/ALTER_TABLE/DROP_TABLE
+    ,ddlText varchar --DDL语句
+    ,commitTime timestamp --DDL提交时间
+    ,commitCode Integer --DDL提交结果
+    ,commitMsg varchar --DDL提交结果说明
+    ,isDeleted boolean --记录是否删除
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,seq)
+)TTL=864000,SALT_BUCKETS=20;
+CREATE INDEX idx_logtab_ddl_taskId ON metadata.logtab_ddl(taskId) SALT_BUCKETS=20;
+CREATE SEQUENCE metadata.seq_logtab_ddl;
+
+
+drop table if exists metadata.logfile_key_field_value;
+create table metadata.logfile_key_field_value(
+    logPath varchar(500) not null --日志文件路径 [key]
+    ,fieldName varchar(100) not null --字段名 [key]
+    ,fieldValue varchar(100) --字段值
+    ,appId varchar(100) --appId
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (logPath,fieldName)
+)SALT_BUCKETS = 20;
+CREATE INDEX idx_logfile_key_field_value_taskId ON metadata.logfile_key_field_value(taskId);
