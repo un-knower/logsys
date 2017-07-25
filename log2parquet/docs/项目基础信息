@@ -1,0 +1,60 @@
+
+数据源
+hadoop fs -get /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=13/boikgpokn78sb95kbqei6cc98dc5mlsr_2017061413_raw_5_14348.json.gz
+hadoop fs -cat /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=13/boikgpokn78sb95ktmsc1bnkechpgj9l_2017061413_raw_9_575885506.json.gz|zcat|grep player-sdk-startPlay|head
+
+
+程序入口
+MainObj-->MsgProcExecutor-->MsgBatchManagerV3
+cn.whaley.bi.logsys.log2parquet.MsgBatchManagerV3
+init
+start
+
+读取phoenix表
+ 日志特殊字段描述表  【ruleHandle函数用到】
+    用来操作json,rename,remove,delete
+        字段黑名单过滤
+        字段重命名
+        行过滤
+
+
+
+自己初始化的表[只读]
+a.APPLOG_KEY_FIELD_DESC【手动初始化】(表名称或partition信息)
+select * from METADATA.APPLOG_KEY_FIELD_DESC where APPID='boikgpokn78sb95ktmsc1bnkechpgj9l' limit 10;
+b.applog_special_field_desc【手动初始化】
+select * from METADATA.applog_special_field_desc where FIELDNAMEREG like '%logtype%' limit 10;
+
+表[写]
+a.METADATA.LOGFILE_KEY_FIELD_VALUE 【parquet目录，partition信息，表名称信息】
+key_day,key_hour,product_code,app_code,eventId,db_name
+select * from METADATA.LOGFILE_KEY_FIELD_VALUE limit 10;
+
+b.metadata.logtab_field_desc[具体的parquet字段]
+!table
+select * from METADATA.LOGFILE_FIELD_DESC limit 10;
+
+c.记录taskId
+metadata.logfile_task_info
+
+parseLogObjRddPath函数生成pathRdd，
+ pathRdd的RDD(每条记录的输出路径,json对象,每条日志对应的[metadata.logfile_key_field_value]表的数据)
+
+
+!set maxwidth 20000 用来调整phoenix的列宽
+
+TODO：
+
+forest改写【新建项目】
+部分json文件转parquet失败原因
+
+小任务：
+ 1.task表本身信息填充
+ 2.crash日志单独处理，md5校验
+ 3.除mdusa2.x、3x、微鲸主程序的其他appID配置与测试
+ 4.pathRdd处理helios-whaleyvip-activity异常逻辑
+
+
+
+
+/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_event#eventId=medusa_notification_ex035#actionId=ALL#key_day=20170723#key_hour=01

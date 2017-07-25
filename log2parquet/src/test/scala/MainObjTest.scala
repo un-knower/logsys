@@ -3,9 +3,11 @@ import java.util.Date
 
 import cn.whaley.bi.logsys.log2parquet.MainObj
 import cn.whaley.bi.logsys.log2parquet.constant.Constants
+import cn.whaley.bi.logsys.log2parquet.processingUnit.JsonFormatProcessingUnits
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
 import cn.whaley.bi.logsys.log2parquet.utils.{MetaDataUtils, ParquetHiveUtils}
 import cn.whaley.bi.logsys.metadata.entity.LogFileFieldDescEntity
+import com.alibaba.fastjson.JSON
 import org.apache.hadoop.fs.{FileStatus, Path}
 import org.junit.Test
 
@@ -143,8 +145,12 @@ class MainObjTest extends LogTrait{
 
   @Test
   def test3: Unit = {
-    val start="true"
-    println(start.toBoolean)
+    val line="{\"msgSignFlag\":0,\"msgId\":\"AAABXWtHeOUKEwn4bHbqvQAB\",\"msgFormat\":\"json\",\"_sync\":{\"rawTopic\":\"log-raw-boikgpokn78sb95ktmsc1bnk\",\"rawTs\":1500743432505,\"odsTs\":1500743439432,\"rawOffset\":1392288712,\"rawParId\":2},\"logTime\":1500743234559,\"logBody\":{\"logType\":\"start_end\",\"productModel\":\"MiBOX_mini\",\"svr_host\":\"log.moretv.com.cn\",\"weatherCode\":\"101011000\",\"svr_remote_addr\":\"61.49.106.162\",\"groupId\":\"178\",\"buildDate\":\"20160816\",\"uuid\":\"0ba9fbe0-7e6c-49d6-acc8-ed26c841ef10\",\"apkVersion\":\"3.0.9\",\"promotionChannel\":\"shafa\",\"pageType\":\"运营图\",\"videoName\":\"Heartbreak Hotel & I Just Wanna Dance - 柳熙烈的写生簿 现场版 16/06/25\",\"svr_req_url\":\"/medusalog/\",\"contentType\":\"mv\",\"happenTime\":1500743234559,\"episodeSid\":\"fh233fxy3ftv\",\"apkSeries\":\"MoreTV_TVApp3.0_Medusa\",\"eventId\":\"medusa-startPageView-startpage\",\"uploadTime\":\"20170723011032\",\"version\":\"01\",\"userId\":\"721d70292dade8726323a01a95f820b0\",\"versionCode\":\"309\",\"accountId\":\"\",\"svr_content_type\":\"application/json\",\"svr_forwarded_for\":\"-\",\"videoSid\":\"fh233fxy3ftv\",\"appEnterWay\":\"native\",\"svr_receive_time\":1500743432421,\"svr_fb_Time\":\"2017-07-22T17:10:32.505Z\",\"actionId\":\"medusa-play-play-pause\",\"svr_req_method\":\"POST\",\"operation\":\"play\",\"md5\":\"35bd7971d8684c69c1e757a2a601faab\",\"ts\":1500743432307,\"status\":\"end\"},\"logSignFlag\":1,\"appId\":\"boikgpokn78sb95ktmsc1bnkechpgj9l\",\"logId\":\"AAABXWtHeOUKEwn4bHbqvQAB0004\",\"logVersion\":\"02\",\"msgSource\":\"ngx_log\",\"msgVersion\":\"1.0\",\"msgSite\":\"10.19.9.248\"}"
+    val jsonObject=JSON.parseObject(line)
+    println(jsonObject)
+    val util=new JsonFormatProcessingUnits()
+    val after = util.process(jsonObject)
+    println(after.result.get.getString("videoName"))
   }
 
 }

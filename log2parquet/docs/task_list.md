@@ -75,3 +75,10 @@ http://bigdata-appsvr-130-5:8084/metadata/processTask/AAABXSxrUCwK4Aaq1wAAAAA/11
 解决方式：调整timeout方式
 
 
+TODO:
+forest改写【新建项目】
+部分json文件转parquet失败原因
+         1.task表本身信息填充
+         2.crash日志单独处理，md5校验
+         3.除mdusa2.x、3x、微鲸主程序的其他appID配置与测试
+         4.pathRdd处理helios-whaleyvip-activity异常逻辑

@@ -1,0 +1,45 @@
+
+运行参数
+inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170723/key_hour=01
+
+appID:
+spark.app.name -> cn.whaley.bi.logsys.log2parquet.MainObj_20170724_134717
+
+
+生成json文件错误：
+(15006,/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_event#eventId=medusa_notification_ex
+035#actionId=ALL#key_day=20170723#key_hour=01,/data_warehouse/ods_view.db/log_medusa_main3x_event/eventId=medusa_notification_ex
+035/actionId=ALL/key_day=20170723/key_hour=01)
+
+(8638,/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_homeview#eventId=medusa_notification_ex
+035#actionId=ALL#key_day=20170723#key_hour=01,/data_warehouse/ods_view.db/log_medusa_main3x_homeview/eventId=medusa_notification_ex
+035/actionId=ALL/key_day=20170723/key_hour=01)
+
+(4375,/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_interview#eventId=medusa_notification_ex
+035#actionId=ALL#key_day=20170723#key_hour=01,/data_warehouse/ods_view.db/log_medusa_main3x_interview/eventId=medusa_notification_ex
+035/actionId=ALL/key_day=20170723/key_hour=01)
+
+
+生成parquet文件错误：
+convert file error[/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_homeview#eventId=ALL#actionId=ALL#key_day=20170723#key_hour=01(254123k) -> /data_warehouse/ods_view.db/log_medusa_main3x_homeview/eventId=ALL/actionId=ALL/key_day=20170723/key_hour=01)] : paramMap -> null, exception -> Reference 'logTypE' is ambiguous, could be: logTypE#146050, logTypE#146051.;
+convert file error[/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_homeview#eventId=ALL#actionId=ALL#key_day=20170723#key_hour=01(254123k) -> /data_warehouse/ods_view.db/log_medusa_main3x_homeview/eventId=ALL/actionId=ALL/key_day=20170723/key_hour=01)] : paramMap -> null, exception -> Reference 'logTypE' is ambiguous, could be: logTypE#146050, logTypE#146051.;
+通过配置解决
+
+convert file error[/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_liveqos#eventId=ALL#actionId=ALL#key_day=20170723#key_hour=01(297001k) -> /data_warehouse/ods_view.db/log_medusa_main3x_liveqos/eventId=ALL/actionId=ALL/key_day=20170723/key_hour=01)] : paramMap -> null, exception -> Attribute name "高分", "playType":"webcast", "initDuration":_1, "getVideoInfoDuration":170, "playStatus":0, "avgDownloadSpeed":197, "uploadTime":"20170723010856","liveqos":[{"videoSource":"douyu", "sourceIndex":0, "sourceSwitch":"", "containAd":"0", "sourcecases":[{"parseDuration":2136, "initBufferDuration":_1, "totalBufferTimes":_1, "totalBufferDuration":_1, "bufferDurations":[], "playDuration":_1, "preAdPlayDuration":_1, "mediumAdPlayDuration":_1, "postAdPlayDuration":_1, "playCode":_2}]}]}" contains invalid character(s) among " ,;{}()\n\t=". Please use alias to rename it.;
+convert file error[/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_liveqos#eventId=ALL#actionId=ALL#key_day=20170723#key_hour=01(297001k) -> /data_warehouse/ods_view.db/log_medusa_main3x_liveqos/eventId=ALL/actionId=ALL/key_day=20170723/key_hour=01)] : paramMap -> null, exception -> Attribute name "高分", "playType":"webcast", "initDuration":_1, "getVideoInfoDuration":170, "playStatus":0, "avgDownloadSpeed":197, "uploadTime":"20170723010856","liveqos":[{"videoSource":"douyu", "sourceIndex":0, "sourceSwitch":"", "containAd":"0", "sourcecases":[{"parseDuration":2136, "initBufferDuration":_1, "totalBufferTimes":_1, "totalBufferDuration":_1, "bufferDurations":[], "playDuration":_1, "preAdPlayDuration":_1, "mediumAdPlayDuration":_1, "postAdPlayDuration":_1, "playCode":_2}]}]}" contains invalid character(s) among " ,;{}()\n\t=". Please use alias to rename it.;
+
+convert file error[/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_play#eventId=ALL#actionId=ALL#key_day=20170723#key_hour=01(1260525k) -> /data_warehouse/ods_view.db/log_medusa_main3x_play/eventId=ALL/actionId=ALL/key_day=20170723/key_hour=01)] : paramMap -> null, exception -> Attribute name " I Just Wanna Dance _ 柳熙烈的写生簿 现场版 16/06/25" contains invalid character(s) among " ,;{}()\n\t=". Please use alias to rename it.;
+convert file error[/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_play#eventId=ALL#actionId=ALL#key_day=20170723#key_hour=01(1260525k) -> /data_warehouse/ods_view.db/log_medusa_main3x_play/eventId=ALL/actionId=ALL/key_day=20170723/key_hour=01)] : paramMap -> null, exception -> Attribute name " I Just Wanna Dance _ 柳熙烈的写生簿 现场版 16/06/25" contains invalid character(s) among " ,;{}()\n\t=". Please use alias to rename it.;
+
+convert file error[/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_playview#eventId=ALL#actionId=ALL#key_day=20170723#key_hour=01(681152k) -> /data_warehouse/ods_view.db/log_medusa_main3x_playview/eventId=ALL/actionId=ALL/key_day=20170723/key_hour=01)] : paramMap -> null, exception -> Attribute name " I Just Wanna Dance _ 柳熙烈的写生簿 现场版 16/06/25" contains invalid character(s) among " ,;{}()\n\t=". Please use alias to rename it.;
+convert file error[/log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_playview#eventId=ALL#actionId=ALL#key_day=20170723#key_hour=01(681152k) -> /data_warehouse/ods_view.db/log_medusa_main3x_playview/eventId=ALL/actionId=ALL/key_day=20170723/key_hour=01)] : paramMap -> null, exception -> Attribute name " I Just Wanna Dance _ 柳熙烈的写生簿 现场版 16/06/25" contains invalid character(s) among " ,;{}()\n\t=". Please use alias to rename it.;
+
+
+命令：
+hadoop fs -cat /log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_play#eventId=ALL#actionId=ALL#key_day=20170723#key_hour=01/* |grep 柳熙烈的写生簿|head
+hadoop fs -cat /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170723/key_hour=01/*|zcat|egrep "I Just Wanna Dance - 柳熙烈的写生簿 现场版"|head
+
+hadoop fs -cat /log/default/parquet/ods_view/1500875326682_json/ods_view.db#log_medusa_main3x_playview#eventId=ALL#actionId=ALL#key_day=20170723#key_hour=01/*|egrep "柳熙烈的写生簿 现场版"|head
+
+
+

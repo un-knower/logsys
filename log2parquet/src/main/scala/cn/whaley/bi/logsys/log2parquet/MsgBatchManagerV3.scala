@@ -365,7 +365,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       val path = e._1
       val jsonObject = e._2.result.get
 
-      if (rules.filter(rule => rule.path.equalsIgnoreCase(path)).size > 0) {
+      if (rules.exists(rule => rule.path.equalsIgnoreCase(path))) {
         //一个绝对路径唯一对应一条规则
         val rule = rules.filter(rule => rule.path.equalsIgnoreCase(path)).head
         //字段黑名单过滤
