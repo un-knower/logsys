@@ -40,12 +40,12 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     */
   def start(confManager: ConfManager): Unit = {
     val config = new SparkConf()
-    val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
     //本地化测试使用,MainObjTests
     if (confManager.getConf("masterURL") != null) {
       config.setMaster(confManager.getConf("masterURL"))
       println("---local master url:" + confManager.getConf("masterURL"))
     }
+    val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
 
     //读取原始文件
     val inputPath = confManager.getConf("inputPath")
@@ -87,7 +87,16 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     //将经过处理器处理后，正常状态的记录使用规则库过滤【字段黑名单、重命名、行过滤】
     val okRowsRdd = processedRdd.filter(e => e._2.hasErr == false)
+    //TODO debug
+    //println("okRowsRdd:"+okRowsRdd.collect().head)
+
     val afterRuleRdd = ruleHandle(pathRdd, okRowsRdd)
+
+    //TODO debug
+    //println("afterRuleRdd:"+afterRuleRdd.collect().head)
+
+    //TODO debug
+     //System.exit(0)
 
     //输出正常记录到HDFS文件
     val isJsonDirDelete = confManager.getConf("isJsonDirDelete").toBoolean
@@ -360,7 +369,10 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   def ruleHandle(pathRdd: RDD[(String, JSONObject, scala.collection.mutable.Map[String, String])], resultRdd: RDD[(String, ProcessResult[JSONObject])]): RDD[(String, JSONObject)] = {
     // 获得规则库的每条规则
     val rules = metaDataUtils.parseSpecialRules(pathRdd)
-
+    //TODO debug
+    //println("println rules start")
+    //rules.foreach(println)
+    //println("println rules end ")
     val afterRuleRdd = resultRdd.map(e => {
       val path = e._1
       val jsonObject = e._2.result.get
@@ -370,20 +382,25 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         val rule = rules.filter(rule => rule.path.equalsIgnoreCase(path)).head
         //字段黑名单过滤
         val fieldBlackFilter = rule.fieldBlackFilter
-        fieldBlackFilter.foreach(blackField => {
+        fieldBlackFilter.foreach(e => {
+          val blackField=e.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
           jsonObject.remove(blackField)
         })
         //字段重命名
         val rename = rule.rename
         rename.foreach(e => {
-          if (jsonObject.containsKey(e._1)) {
-            jsonObject.put(e._2, jsonObject.get(e._1))
-            jsonObject.remove(e._1)
+          val newKey=e._1.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
+          if (jsonObject.containsKey(newKey)) {
+            jsonObject.put(e._2, jsonObject.get(newKey))
+            jsonObject.remove(newKey)
           }
         })
         //行过滤
         val rowBlackFilter = rule.rowBlackFilter
-        val resultJsonObject = if (rowBlackFilter.filter(item => jsonObject.get(item._1) != null && item._2 == jsonObject.getString(item._1)).size > 0) None
+        //val resultJsonObject = if (rowBlackFilter.filter(item => jsonObject.get(item._1) != null && item._2 == jsonObject.getString(item._1)).size > 0) None
+        val resultJsonObject = if (rowBlackFilter.filter(item => {
+            val newKey = item._1.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
+            jsonObject.get(newKey) != null && item._2 == jsonObject.getString(newKey)}).size > 0) None
         else Some(jsonObject)
         (path, resultJsonObject)
       } else {

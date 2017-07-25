@@ -109,5 +109,12 @@ class MetadataUtilTest {
 
   }
 
+  @Test
+  def testJson(): Unit = {
+    val jsonObj= JSON.parseObject("{'a':'b'}")
+    jsonObj.put(" I Just Wanna Dance - 柳熙烈的写生簿 现场版 16/06/25","d")
+    jsonObj.remove(" I Just Wanna Dance - 柳熙烈的写生簿 现场版 16/06/25")
+    println(jsonObj.getString(" I Just Wanna Dance - 柳熙烈的写生簿 现场版 16/06/25"))
+  }
 
 }
