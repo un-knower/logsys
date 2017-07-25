@@ -241,13 +241,13 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                         Pattern.compile(conf._2)
                     }
                     val isReserve = specialValue.charAt(1) == '0'
-                    (Pattern.compile(conf._2, Pattern.CASE_INSENSITIVE), isReserve)
+                    //not used (Pattern.compile(conf._2, Pattern.CASE_INSENSITIVE), isReserve)
                     fields.filter(field => fieldPattern.matcher(field).find()).map(field => (field, isReserve))
                 })
 
                 //剔除白名单字段
-                val whiteList = fieldFilterList.filter(item => item._2 == true)
-                val fieldBlackFilter = fieldFilterList.filter(item => whiteList.exists(p => p._1 == item._1) == false).map(item => item._1)
+                val whiteList = fieldFilterList.filter(_._2)
+                val fieldBlackFilter = fieldFilterList.filter(item => !whiteList.exists(p => p._1 == item._1)).map(item => item._1)
 
 
                 //字段重命名: Seq[(源字段名,字段目标名)]

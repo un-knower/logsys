@@ -95,7 +95,7 @@ object Json2ParquetUtil {
             (outputPathTypeSize, inPath, outPath)
         })
 
-        println("all files:")
+        println("fileGroups size:"+fileGroups.length+",all files:")
         fileGroups.foreach(println)
 
         val executor = Executors.newFixedThreadPool(Math.min(100,fileGroups.size))

@@ -13,9 +13,11 @@ import org.junit.Test
 class MetadataUtilTest {
 
    // val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendoj8ilnoi7/key_day=20170630/key_hour=04/boikgpokn78sb95kjhfrendoj8ilnoi7_2017063004_raw_7_337326252.json.gz"
-    val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170707/key_hour=17/boikgpokn78sb95ktmsc1bnkechpgj9l_2017070717_raw_5_1046838202.json.gz"
+    //val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170707/key_hour=17/boikgpokn78sb95ktmsc1bnkechpgj9l_2017070717_raw_5_1046838202.json.gz"
+    val testPath = "/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170723/key_hour=00/boikgpokn78sb95ktmsc1bnkechpgj9l_2017072300_raw_9_1392296097.json.gz"
 
-    def getUtils()=new MetaDataUtils( "http://localhost:8084")
+    //def getUtils()=new MetaDataUtils( "http://localhost:8084")
+    def getUtils()=new MetaDataUtils( "http://bigdata-appsvr-130-5:8084")
 
     def getSparkContext() = {
         val conf = new SparkConf()
@@ -86,5 +88,33 @@ class MetadataUtilTest {
         println("whaleytv".r.findFirstMatchIn("ods_view.db/log_whaleytv_wui20/key_day=20170630/key_hour=04").isDefined)
     }
 
+
+  @Test
+  def testParseSpecialRules2(): Unit = {
+    val utils=getUtils()
+    val context = getSparkContext()
+    val rdd = context.textFile(testPath).map(row => {
+      val jsonObj= JSON.parseObject(row)
+      jsonObj.getJSONObject("logBody").put(" I Just Wanna Dance - 柳熙烈的写生簿 现场版 16/06/25","")
+    /*  jsonObj.getJSONObject("logBody").put("pro","test")
+      jsonObj.getJSONObject("logBody").put("accessLoc","test")*/
+      jsonObj
+    })
+
+    val pathRdd = utils.parseLogObjRddPath(rdd)
+    //pathRdd.take(10).foreach(println)
+    utils.parseSpecialRules(pathRdd).take(10).foreach(row => {
+      println(row)
+    })
+
+  }
+
+  @Test
+  def testJson(): Unit = {
+    val jsonObj= JSON.parseObject("{'a':'b'}")
+    jsonObj.put(" I Just Wanna Dance - 柳熙烈的写生簿 现场版 16/06/25","d")
+    jsonObj.remove(" I Just Wanna Dance - 柳熙烈的写生簿 现场版 16/06/25")
+    println(jsonObj.getString(" I Just Wanna Dance - 柳熙烈的写生簿 现场版 16/06/25"))
+  }
 
 }

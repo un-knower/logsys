@@ -15,3 +15,8 @@ MsgProcExecutor \
 --f MsgBatchManager.xml,settings.properties \
 --c prop.KafkaMsgSource.topicRegex=^log-raw-boikgpokn78sb95ktmsc1bnk.*$ \
 --c prop.kafka-consumer.group.id=forest-dist-medusa
+
+
+
+最新forest数据源：
+/log/nginx/rawlog/20170724/13 改为：/data_warehouse/ods_origin.db/log_raw/key_day=20170724/key_hour=16
