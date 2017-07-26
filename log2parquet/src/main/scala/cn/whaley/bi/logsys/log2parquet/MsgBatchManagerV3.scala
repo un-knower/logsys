@@ -13,6 +13,7 @@ import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.storage.StorageLevel
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -73,8 +74,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     }).filter(row => row.isDefined).map(row => row.get)
 
     //解析出输出目录
-    val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)
-
+    val pathRddMiddle = metaDataUtils.parseLogObjRddPath(rdd_original).persist(StorageLevel.MEMORY_AND_DISK)
+    //driver 端输出异常数据
+    pathRddMiddle.filter(rdd=>rdd._1 == null).collect().foreach(rdd=>{
+      println("异常数据 : "+rdd._2.toJSONString)
+    })
+    val pathRdd =  pathRddMiddle.filter(rdd=>rdd._1 !=null)
+    pathRddMiddle.unpersist()
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
     val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]

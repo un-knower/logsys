@@ -143,6 +143,9 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
+        if(!isValid(parStr)){
+            path = null;
+        }
         (path, logObj,dbMap++tableMap++parMap+(LogKeys.LOG_APP_ID->appId))
 
     }
@@ -271,4 +274,8 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
     case class AppLogFieldSpecialRules(path: String, fieldBlackFilter: Seq[String], rename: Seq[(String, String)], rowBlackFilter: Seq[(String, String)])
 
+    def isValid(s:String)={
+        val regex = """[a-zA-Z0-9-_=/\.]*"""
+        s.matches(regex)
+    }
 }
