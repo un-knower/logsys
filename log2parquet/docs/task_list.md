@@ -13,9 +13,6 @@ a. 有些不需要返回RDD的操作
 
 4. 只拿paruqet的一个文件生成metadata.logfile_field_desc表，需要测试，是否一个parquet文件的schema就可以代表所有parquet文件的schema
 
-5. taskFlag以程序传入方式
-
-6. crash日志还需要校验md5吗？yes
 
 11. Json2ParquetUtil.saveAsParquet 后期稳定后，删除临时文件代码修改
 
@@ -39,6 +36,7 @@ if(jsonObject.containsKey("logType")&&jsonObject.getString("logType").equalsIgno
 http://git.moretv.cn/turbo/logcenter/blob/develop/app/controllers/LogController.scala
 
 ####DONE----------------------------
+5. taskFlag以程序传入方式 DONE
 8. 规则检查
 * 字段名不允许出现"."和"-"
 * eventId的value作为输出路径的值的时候，将.变为""，-变为_;
@@ -74,6 +72,8 @@ hadoop fs -rm -r /log/default/parquet/aa/bb#cc 会删除的,并且只在/log/def
 http://bigdata-appsvr-130-5:8084/metadata/processTask/AAABXSxrUCwK4Aaq1wAAAAA/111
 解决方式：调整timeout方式
 
+17. 部分json转parquet失败原因排查
+  发现规则字段,-没有转_,调整逻辑解决
 
 TODO:
 forest改写【新建项目】
@@ -82,3 +82,4 @@ forest改写【新建项目】
          2.crash日志单独处理，md5校验
          3.除mdusa2.x、3x、微鲸主程序的其他appID配置与测试
          4.pathRdd处理helios-whaleyvip-activity异常逻辑
+         5.验证生成的json文件和parquet文件记录数量是否一致

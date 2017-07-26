@@ -155,6 +155,12 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
     def getOrDefault(fieldFlag: Int, jsonObj: JSONObject, conf: Option[List[(String, String, String, Int)]]): (String,scala.collection.mutable.HashMap[String,String]) = {
         if (conf.isDefined) {
             val logBody = jsonObj.getJSONObject("logBody")
+          //特殊处理 在没有logType，只有logtype的情况下，将logtype重命名为logType
+          if(logBody.containsKey("logtype") && !logBody.containsKey("logType")){
+            val logType = logBody.get("logtype")
+            logBody.put("logType",logType)
+            logBody.remove("logtype")
+          }
             val fields = conf.get.map(field => {
                 val fieldName = field._2
                 var fieldValue = field._3
@@ -173,10 +179,6 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 if (logBody.containsKey(fieldName)
                     && logBody.get(fieldName) != null
                     && logBody.get(fieldName).toString.trim.length > 0) {
-                  //特殊处理 helios-whaleyvip-activity
-                  if(fieldName.equals("logType")&&logBody.get(fieldName).equals("helios-whaleyvip-activity")){
-                    logBody.put(fieldName,"event")
-                  }
                     fieldValue = logBody.get(fieldName).toString
                 }
                 if (fieldValue != null && fieldValue.trim.length > 0) {

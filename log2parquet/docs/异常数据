@@ -1,0 +1,59 @@
+
+ hadoop fs -cat /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170723/key_hour=01/*|zcat|egrep "I Just Wanna Dance - 柳熙烈的 写生簿 现场版"|head
+
+发现logBody里面
+{
+    "msgSignFlag":0,
+    "msgId":"AAABXWtEMgcKE2uqRX28DQAB",
+    "msgFormat":"json",
+    "_sync":{
+        "rawTopic":"log-raw-boikgpokn78sb95ktmsc1bnk",
+        "rawTs":1500743218549,
+        "odsTs":1500743235684,
+        "rawOffset":1392269993,
+        "rawParId":2
+    },
+    "logTime":1500743217671,
+    "logBody":{
+        "logType":"play",
+        "productModel":"MiBOX_mini",
+        "svr_host":"log.tvmore.com.cn",
+        "weatherCode":"101011000",
+        "svr_remote_addr":"61.49.106.162",
+        "groupId":"178",
+        "pathSub":"",
+        "buildDate":"20160816",
+        "duration":"",
+        "searchText":"",
+        "promotionChannel":"shafa",
+        "apkVersion":"3.0.9",
+        " I Just Wanna Dance - 柳熙烈的写生簿 现场版 16/06/25":"",
+        "retrieval":"",
+        "videoName":"Heartbreak Hotel ",
+        "svr_req_url":"/medusalog/",
+        "event":"startplay",
+        "contentType":"mv",
+        "episodeSid":"fh233fxy3ftv",
+        "apkSeries":"MoreTV_TVApp3.0_Medusa",
+        "uploadTime":"20170723010656",
+        "userId":"721d70292dade8726323a01a95f820b0",
+        "versionCode":"309",
+        "pathMain":"home*classification*mv-mv*mvCategoryHomePage*site_mvstyle-mv_category*舞曲",
+        "accountId":"",
+        "svr_content_type":"-",
+        "svr_forwarded_for":"-",
+        "videoSid":"fh233fxy3ftv",
+        "pathSpecial":"",
+        "appEnterWay":"native",
+        "svr_receive_time":1500743217671,
+        "svr_fb_Time":"2017-07-22T17:06:58.549Z",
+        "svr_req_method":"GET"
+    },
+    "logSignFlag":0,
+    "appId":"boikgpokn78sb95ktmsc1bnkechpgj9l",
+    "logId":"AAABXWtEMgcKE2uqRX28DQAB0000",
+    "logVersion":"01",
+    "msgSource":"ngx_log",
+    "msgVersion":"1.0",
+    "msgSite":"10.19.107.170"
+}

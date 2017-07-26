@@ -20,7 +20,8 @@ class MainObjTest extends LogTrait{
   @Test
   def testMainObjTest: Unit = {
     val args = Array("MsgProcExecutor",
-      "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170101/key_hour=00/b.json","--c","masterURL=local[1]")
+      //"--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170101/key_hour=00/b.json","--c","masterURL=local[1]")
+      "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170723/key_hour=01/boikgpokn78sb95ktmsc1bnkechpgj9l_2017072301_raw_0_1392502233.json.gz","--c","masterURL=local[1]")
     MainObj.main(args)
   }
 
@@ -151,6 +152,16 @@ class MainObjTest extends LogTrait{
     val util=new JsonFormatProcessingUnits()
     val after = util.process(jsonObject)
     println(after.result.get.getString("videoName"))
+  }
+
+  @Test
+  def test4: Unit = {
+    val line="{\"msgId\":\"ac\"}"
+    val jsonObject=JSON.parseObject(line)
+    println(jsonObject)
+    if(jsonObject.get("msgId").equals("ac")){
+      println("====equal")
+    }
   }
 
 }

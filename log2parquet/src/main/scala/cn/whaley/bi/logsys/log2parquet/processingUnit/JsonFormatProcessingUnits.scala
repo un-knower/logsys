@@ -51,11 +51,6 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
       }
       jsonObject.remove(LogKeys.LOG_BODY)
 
-      //特殊处理 helios-whaleyvip-activity
-      if(jsonObject.containsKey("logType")&&jsonObject.getString("logType").equalsIgnoreCase("helios-whaleyvip-activity")){
-        jsonObject.put("logType","event")
-      }
-
       //realIp处理
       setUserRealIP(jsonObject)
 
