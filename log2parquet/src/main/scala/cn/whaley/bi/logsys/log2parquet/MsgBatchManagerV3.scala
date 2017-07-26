@@ -74,13 +74,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     }).filter(row => row.isDefined).map(row => row.get)
 
     //解析出输出目录
-    val pathRddMiddle = metaDataUtils.parseLogObjRddPath(rdd_original).persist(StorageLevel.MEMORY_AND_DISK)
-    //driver 端输出异常数据
-    pathRddMiddle.filter(rdd=>rdd._1 == null).collect().foreach(rdd=>{
-      println("异常数据 : "+rdd._2.toJSONString)
-    })
-    val pathRdd =  pathRddMiddle.filter(rdd=>rdd._1 !=null)
-    pathRddMiddle.unpersist()
+    val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
     val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]

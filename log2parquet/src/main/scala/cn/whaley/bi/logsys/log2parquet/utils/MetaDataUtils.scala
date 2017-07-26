@@ -6,8 +6,9 @@ import java.util.regex.Pattern
 
 import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
 import cn.whaley.bi.logsys.metadata.entity.AppLogKeyFieldDescEntity
-import com.alibaba.fastjson.{JSONObject, JSON}
+import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 
 import scala.collection.JavaConverters._
 
@@ -94,7 +95,14 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
         val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
         val parFieldMap = resolveAppLogKeyFieldDescConfig(2)
-        rdd.map(jsonObj => parseLogObjPath(jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap))
+        val pathRddMiddle = rdd.map(jsonObj => parseLogObjPath(jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap)).persist(StorageLevel.MEMORY_AND_DISK)
+        //driver 端输出异常数据
+        pathRddMiddle.filter(rdd=>rdd._1 == null).collect().foreach(rdd=>{
+            println("异常数据 : "+rdd._2.toJSONString)
+        })
+        val pathRdd = pathRddMiddle.filter(rdd=>rdd._1 !=null)
+        pathRddMiddle.unpersist()
+        pathRdd
     }
 
     def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
