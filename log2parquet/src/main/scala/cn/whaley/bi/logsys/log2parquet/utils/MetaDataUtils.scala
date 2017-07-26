@@ -95,14 +95,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
         val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
         val parFieldMap = resolveAppLogKeyFieldDescConfig(2)
-        val pathRddMiddle = rdd.map(jsonObj => parseLogObjPath(jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap)).persist(StorageLevel.MEMORY_AND_DISK)
-        //driver 端输出异常数据
-        pathRddMiddle.filter(rdd=>rdd._1 == null).collect().foreach(rdd=>{
-            println("异常数据 : "+rdd._2.toJSONString)
-        })
-        val pathRdd = pathRddMiddle.filter(rdd=>rdd._1 !=null)
-        pathRddMiddle.unpersist()
-        pathRdd
+        rdd.map(jsonObj => parseLogObjPath(jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap)).filter(rdd=>rdd._1 !=null)
     }
 
     def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
@@ -152,7 +145,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
         if(!isValid(parStr)){
-            path = null;
+            path = null
         }
         (path, logObj,dbMap++tableMap++parMap+(LogKeys.LOG_APP_ID->appId))
 
