@@ -13,6 +13,7 @@ import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.storage.StorageLevel
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -74,7 +75,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     //解析出输出目录
     val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)
-
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
     val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]

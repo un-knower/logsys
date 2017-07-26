@@ -6,8 +6,9 @@ import java.util.regex.Pattern
 
 import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
 import cn.whaley.bi.logsys.metadata.entity.AppLogKeyFieldDescEntity
-import com.alibaba.fastjson.{JSONObject, JSON}
+import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 
 import scala.collection.JavaConverters._
 
@@ -94,7 +95,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
         val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
         val parFieldMap = resolveAppLogKeyFieldDescConfig(2)
-        rdd.map(jsonObj => parseLogObjPath(jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap))
+        rdd.map(jsonObj => parseLogObjPath(jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap)).filter(rdd=>rdd._1 !=null)
     }
 
     def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
@@ -143,6 +144,9 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
+        if(!isValid(parStr)){
+            path = null
+        }
         (path, logObj,dbMap++tableMap++parMap+(LogKeys.LOG_APP_ID->appId))
 
     }
@@ -169,6 +173,10 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 if (logBody.containsKey(fieldName)
                     && logBody.get(fieldName) != null
                     && logBody.get(fieldName).toString.trim.length > 0) {
+                  //特殊处理 helios-whaleyvip-activity
+                  if(fieldName.equals("logType")&&logBody.get(fieldName).equals("helios-whaleyvip-activity")){
+                    logBody.put(fieldName,"event")
+                  }
                     fieldValue = logBody.get(fieldName).toString
                 }
                 if (fieldValue != null && fieldValue.trim.length > 0) {
@@ -271,4 +279,8 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
     case class AppLogFieldSpecialRules(path: String, fieldBlackFilter: Seq[String], rename: Seq[(String, String)], rowBlackFilter: Seq[(String, String)])
 
+    def isValid(s:String)={
+        val regex = """[a-zA-Z0-9-_=/\.]*"""
+        s.matches(regex)
+    }
 }
