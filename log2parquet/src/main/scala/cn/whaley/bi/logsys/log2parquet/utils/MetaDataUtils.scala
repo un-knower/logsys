@@ -173,6 +173,10 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 if (logBody.containsKey(fieldName)
                     && logBody.get(fieldName) != null
                     && logBody.get(fieldName).toString.trim.length > 0) {
+                  //特殊处理 helios-whaleyvip-activity
+                  if(fieldName.equals("logType")&&logBody.get(fieldName).equals("helios-whaleyvip-activity")){
+                    logBody.put(fieldName,"event")
+                  }
                     fieldValue = logBody.get(fieldName).toString
                 }
                 if (fieldValue != null && fieldValue.trim.length > 0) {
