@@ -1,0 +1,4 @@
+type=command
+command=sh ${working.dir}/../sbin/log2parquetDay.sh -p /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l  -d ${startDate} -j ${isJsonDirDelete} -t ${isTmpDirDelete} -f ${taskFlag}
+
+#电视猫3x主程序，按天运行
