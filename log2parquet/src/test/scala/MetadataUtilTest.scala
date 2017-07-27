@@ -117,4 +117,11 @@ class MetadataUtilTest {
     println(jsonObj.getString(" I Just Wanna Dance - 柳熙烈的写生簿 现场版 16/06/25"))
   }
 
+  @Test
+  def testReadPath(): Unit = {
+    val context = getSparkContext()
+    val rdd = context.textFile("hdfs://hans/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170101/*/")
+    println("----------"+rdd.count())
+  }
+
 }

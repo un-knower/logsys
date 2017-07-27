@@ -39,6 +39,6 @@ fi
 #日期减去一天，获得新的day
 newDate=`date -d "${d} -1 day" +"%Y%m%d"`
 echo "newDate:${newDate}"
-inputPath=${p}/key_day=${newDate}
+inputPath=${p}/key_day=${newDate}/*/
 echo "inputPath:${inputPath},newDate:${newDate},isJsonDirDelete:${j},isTmpDirDelete:${t},taskFlag:${f}"
 sh ${service_bin_home}/submit.sh cn.whaley.bi.logsys.log2parquet.MainObj MsgProcExecutor --f MsgBatchManagerV3.xml,settings.properties --c inputPath=${inputPath} --c isJsonDirDelete=${j} --c isTmpDirDelete=${t} --c taskFlag=${f}
