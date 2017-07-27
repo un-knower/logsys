@@ -8,4 +8,8 @@
         <name>FormatLogValueProcessingUnits.class</name>
         <value>cn.whaley.bi.logsys.log2parquet.processingUnit.FormatLogValueProcessingUnits</value>
     </property>
+    <property>
+        <name>CrashLogProcessingUnits.class</name>
+        <value>cn.whaley.bi.logsys.log2parquet.processingUnit.CrashLogProcessingUnits</value>
+    </property>
 </configuration>

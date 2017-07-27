@@ -80,7 +80,7 @@ object LogKeys {
 
 
 
-
+  val LOG_BODY_STACK_TRACE="STACK_TRACE"
     //---用来log2parquet使用,end
 
 }

@@ -25,4 +25,6 @@ object Constants {
   val EMPTY_STRING=""
 
   val MEDUSA2X_APP_ID="boikgpokn78sb95ktmsc1bnken8tuboa"
+  val MEDUSA3X_APP_ID="boikgpokn78sb95ktmsc1bnkechpgj9l"
+  val CRASH_KEY = "p&i#Hl5!gAo*#dwSa9sfluynvaoOKD3"
 }

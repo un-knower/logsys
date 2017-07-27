@@ -12,6 +12,6 @@
 
     <property>
         <name>LogProcessingUnits.processors</name>
-        <value>JsonFormatProcessingUnits,FormatLogValueProcessingUnits</value>
+        <value>JsonFormatProcessingUnits,FormatLogValueProcessingUnits,CrashLogProcessingUnits</value>
     </property>
 </configuration>

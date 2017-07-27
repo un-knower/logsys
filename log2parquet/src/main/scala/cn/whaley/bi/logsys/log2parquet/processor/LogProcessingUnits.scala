@@ -22,7 +22,9 @@ class LogProcessingUnits extends LogProcessorTraitV2 {
   override def init(confManager: ConfManager): Unit = {
     processes = {
       val procStr = confManager.getConf(this.name, "processors").split(",")
+      println("-----所有处理器为：")
       procStr.map(item => {
+        println("处理器:"+item)
         val confKeyPrefix = item.trim.replace("\n", "").replace("\r", "")
         instanceFrom(confManager, confKeyPrefix).asInstanceOf[LogProcessorTraitV2]
       })
