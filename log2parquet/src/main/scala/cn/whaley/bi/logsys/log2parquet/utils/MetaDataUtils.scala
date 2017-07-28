@@ -8,9 +8,8 @@ import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
 import cn.whaley.bi.logsys.metadata.entity.AppLogKeyFieldDescEntity
 import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.storage.StorageLevel
+import org.apache.spark.util.LongAccumulator
 
-import scala.collection.JavaConverters._
 
 case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
@@ -71,7 +70,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
       * @param rdd
      * @return
      */
-    def parseLogStrRddPath(rdd: RDD[String]): RDD[(String, JSONObject, scala.collection.mutable.Map[String,String])] = {
+    def parseLogStrRddPath(rdd: RDD[String])(implicit accumulator:LongAccumulator=rdd.sparkContext.longAccumulator): RDD[(String, JSONObject, scala.collection.mutable.Map[String,String])] = {
         val jsonObjRdd = rdd.map(row => {
             try {
                 Some(JSON.parseObject(row))
@@ -91,14 +90,14 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
       * @param rdd
      * @return
      */
-    def parseLogObjRddPath(rdd: RDD[JSONObject]): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
+    def parseLogObjRddPath(rdd: RDD[JSONObject])(implicit accumulator:LongAccumulator=rdd.sparkContext.longAccumulator): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
         val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
         val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
         val parFieldMap = resolveAppLogKeyFieldDescConfig(2)
-        rdd.map(jsonObj => parseLogObjPath(jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap)).filter(rdd=>rdd._1 !=null)
+        rdd.map(jsonObj => parseLogObjPath(accumulator,jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap)).filter(rdd=>rdd._1 !=null)
     }
 
-    def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
+  /*  def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
         /*  val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
           val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
           val parFieldMap = resolveAppLogKeyFieldDescConfig(2)*/
@@ -107,7 +106,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         val t = Map("boikgpokn78sb95ktmsc1bnkechpgj9l" -> List(("ALL", "tab_prefix", "log", 0), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "product_code", "medusa", 1), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "app_code", "main3x", 2), ("ALL", "logType", null, 3), ("ALL", "eventId", null, 4)))
         val partitionMap = Map("ALL" -> List(("ALL", "key_day", null, 0), ("ALL", "key_hour", null, 1)))
         rdd.map(jsonObj => parseLogObjPath(jsonObj, d, t, partitionMap))
-    }
+    }*/
 
     /**
      * 解析某条日志记录的输出路径
@@ -115,7 +114,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
       * @param logObj
      * @return
      */
-    def parseLogObjPath(logObj: JSONObject
+    def parseLogObjPath(implicit accumulator:LongAccumulator,logObj: JSONObject
                         , dbNameFieldMap: Map[String, List[(String, String, String, Int)]]
                         , tabNameFieldMap: Map[String, List[(String, String, String, Int)]]
                         , parFieldMap: Map[String, List[(String, String, String, Int)]]
@@ -145,6 +144,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
         if(!isValid(parStr)){
+            accumulator.add(1L)
             path = null
         }
         (path, logObj,dbMap++tableMap++parMap+(LogKeys.LOG_APP_ID->appId))
