@@ -73,8 +73,10 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }
     }).filter(row => row.isDefined).map(row => row.get)
 
+    //创建累加器
+    val exceptionJsonAcc = sparkSession.sparkContext.longAccumulator
     //解析出输出目录
-    val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)
+    val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)(exceptionJsonAcc)
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
     val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
@@ -83,6 +85,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       val jsonObjectProcessed = processGroupInstance.process(jsonObject)
       (e._1, jsonObjectProcessed)
     })
+
+    println("----json数据异常数 ："+exceptionJsonAcc.value)
 
 
     //将经过处理器处理后，正常状态的记录使用规则库过滤【字段黑名单、重命名、行过滤】
