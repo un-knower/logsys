@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <property>
+        <name>kafka-consumer.group.id</name>
+        <value>${prop.kafka-consumer.group.id}</value>
+    </property>
+    <property>
+        <name>kafka-consumer.bootstrap.servers</name>
+        <value>${prop.kafka.bootstrap.servers}</value>
+    </property>
+    <property>
+        <name>kafka-consumer.enable.auto.commit</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>kafka-consumer.rebalance.timeout.ms</name>
+        <value>${prop.kafka-consumer.rebalance.timeout.ms}</value>
+    </property>
+    <property>
+        <name>kafka-consumer.key.deserializer</name>
+        <value>org.apache.kafka.common.serialization.ByteArrayDeserializer</value>
+    </property>
+    <property>
+        <name>kafka-consumer.value.deserializer</name>
+        <value>org.apache.kafka.common.serialization.ByteArrayDeserializer</value>
+    </property>
+</configuration>

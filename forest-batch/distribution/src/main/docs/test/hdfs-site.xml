@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+
+    <property>
+        <name>dfs.nameservices</name>
+        <value>hans</value>
+    </property>
+    <property>
+        <name>dfs.ha.namenodes.hans</name>
+        <value>nn1,nn2</value>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.hans.nn1</name>
+        <value>bigdata-computing-02-013:9000</value>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address.hans.nn1</name>
+        <value>0.0.0.0:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.hans.nn2</name>
+        <value>bigdata-computing-02-014:9000</value>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address.hans.nn2</name>
+        <value>0.0.0.0:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.shared.edits.dir</name>
+        <value>qjournal://bigdata-computing-02-015:8485;bigdata-computing-02-016:8485;bigdata-computing-02-017:8485/hans</value>
+    </property>
+    <property>
+        <name>dfs.journalnode.edits.dir</name>
+        <value>/data/hdfs/journal</value>
+    </property>
+    <property>
+        <name>dfs.ha.automatic-failover.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>dfs.client.failover.proxy.provider.hans</name>
+        <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.methods</name>
+        <value>
+            sshfence
+            shell(/bin/true)
+        </value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.ssh.private-key-files</name>
+        <value>/home/hadoop/.ssh/id_rsa</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.ssh.connect-timeout</name>
+        <value>30000</value>
+    </property>
+
+    <property>
+        <name>dfs.replication</name>
+        <value>3</value>
+    </property>
+    <property>
+        <name>dfs.block.size</name>
+        <value>134217728</value>
+    </property>
+    <property>
+        <name>dfs.namenode.secondary.http-address</name>
+        <value>bigdata-computing-02-013:9001</value>
+    </property>
+    <property>
+        <name>dfs.namenode.handle.count</name>
+        <value>50</value>
+    </property>
+    <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>/data/hdfs/name</value>
+    </property>
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>/data1/hdfs/data,/data2/hdfs/data,/data3/hdfs/data</value>
+    </property>
+    <property>
+        <name>dfs.datanode.du.reserved</name>
+        <value>80530636800</value>
+    </property>
+</configuration>

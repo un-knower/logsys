@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <property>
+        <name>kafka-producer.bootstrap.servers</name>
+        <value>${prop.kafka.bootstrap.servers}</value>
+    </property>
+    <property>
+        <name>kafka-producer.acks</name>
+        <value>1</value>
+    </property>
+    <property>
+        <name>kafka-producer.compression.type</name>
+        <value>${prop.kafka-producer.compression.type}</value>
+    </property>
+    <property>
+        <name>kafka-producer.max.request.size</name>
+        <value>${prop.kafka-producer.max.request.size}</value>
+    </property>
+    <property>
+        <name>kafka-producer.key.serializer</name>
+        <value>org.apache.kafka.common.serialization.ByteArraySerializer</value>
+    </property>
+    <property>
+        <name>kafka-producer.value.serializer</name>
+        <value>org.apache.kafka.common.serialization.ByteArraySerializer</value>
+    </property>
+</configuration>
