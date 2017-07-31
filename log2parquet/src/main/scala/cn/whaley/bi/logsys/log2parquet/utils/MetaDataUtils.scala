@@ -266,7 +266,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 })
 
                 //行过滤器: Seq[(字段名,字段值)]
-                val rowBlackFilter = pathSpecialConf.filter(conf => conf._3 == "rowBlackFilter").flatMap(conf => {
+                val rowBlackFilter = pathSpecialConf.filter(conf => conf._3 == "rowFilter").flatMap(conf => {
                     fields.filter(field => conf._2.r.findFirstMatchIn(field).isDefined).map(field => (field, conf._4))
                 })
                 AppLogFieldSpecialRules(path, fieldBlackFilter, rename, rowBlackFilter)
