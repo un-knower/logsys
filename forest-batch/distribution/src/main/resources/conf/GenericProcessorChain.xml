@@ -24,7 +24,7 @@
     </property>
     <property>
         <name>GenericMsgDecoder.filebeatDecode</name>
-        <value>true</value>
+        <value>false</value>
     </property>
 
     <!-- GenericMsgProcessor -->

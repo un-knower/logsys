@@ -1,5 +1,6 @@
 package cn.whaley.bi.logsys.forest
 
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util
 import java.util.Date
@@ -9,21 +10,21 @@ import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
 import cn.whaley.bi.logsys.forest.entity.{LogEntity}
 import cn.whaley.bi.logsys.forest.sinker.MsgSinkTrait
-import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Created by fj on 16/10/30.
+  * Created by michael on 17/8/1.
  */
 class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
     type KafkaMessage = ConsumerRecord[Array[Byte], Array[Byte]]
-
-
+    var confManagerField: ConfManager=_
     /**
      * 初始化方法
      * 如果初始化异常，则应该抛出异常
@@ -45,19 +46,63 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         callableWaitSize = confManager.getConfOrElseValue(this.name, "callableWaitSize", callableWaitSize.toString).toInt
         callableWaitSec = confManager.getConfOrElseValue(this.name, "callableWaitSec", callableWaitSec.toString).toInt
 
+      confManagerField = confManager
     }
 
     /**
      * 启动
      */
     def start(): Unit = {
-        msgSource.addMsgQueueAddedListener(this.msgQueueAddedFn)
+      val config = new SparkConf()
+      val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
+      /** input path:/data_warehouse/ods_origin.db/log_raw/key_day=20170724/key_hour=16/${appId}.log-2017072416-bigdata-extsvr-log7
+         output path:/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170614/key_hour=13
+        */
+      val inputPath = confManagerField.getConf("inputPath")
+      val key_day = confManagerField.getConf("key_day")
+      val key_hour = confManagerField.getConf("key_hour")
+      val finalInputPath=inputPath+File.separator+"boikgpokn78sb95k*"
+
+
+      val rdd_original = sparkSession.sparkContext.textFile(finalInputPath, 200)
+      val processed_rdd = rdd_original.map(line=>{
+        processorChain.process(line)
+      })
+
+      /**读取数据
+        * 首先decode GenericProcessorChain 37
+        *
+        *
+        * 输出 ProcessResult[Seq[LogEntity]
+        * */
+
+      /** 拼接输出路径
+        * 通过日志中LogEntity获得appID,然后和key_day，key_hour以及通用基础路径/data_warehouse/ods_origin.db/log_origin*/
+
+      /**引入处理器
+        * 处理器初始化
+        *    检查 处理器里包含如下逻辑 decode、平展化、md5校验、crash日志md5校验单独处理、增加logId等必要字段
+        *    以及添加crash日志的MD5校验逻辑
+        *    */
+
+
+
+      //TODO 查找、抽取处理器链路逻辑
+      //TODO 编写输出元组rdd代码，元组格式(输出路径,日志字符串)
+      //TODO 正常\异常日志输出(参考json2parquetUtil的写json文件逻辑)
+      //TODO 累加器统计各个阶段的运行情况
+      //TODO decode、平展化、md5校验、crash日志md5校验单独处理、增加logId等必要字段
+
+
+
+      msgSource.addMsgQueueAddedListener(this.msgQueueAddedFn)
         msgSource.launch()
     }
 
     /**
      * 关停
-     * @param waiting 指示是否在处理线程完全停止后才返回
+      *
+      * @param waiting 指示是否在处理线程完全停止后才返回
      */
     def shutdown(waiting: Boolean): Unit = {
 
@@ -91,7 +136,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
     /**
      * 处于消费状态的topic列表
-     * @return
+      *
+      * @return
      */
     def consumingTopics: Seq[String] = {
         processThreads.filter(item => !item.isWaiting).map(item => item.consumerTopic)
@@ -99,7 +145,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
     /**
      * 负责一个topic消息的消费线程
-     * @param topic
+      *
+      * @param topic
      * @param queue
      */
     class BatchProcessThread(topic: String, queue: LinkedBlockingQueue[KafkaMessage], exF: (BatchProcessThread, Throwable) => Boolean) extends Thread {
@@ -118,7 +165,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
         /**
          * 指示当前是否正等待消息队列数据
-         * @return
+          *
+          * @return
          */
         def isWaiting: Boolean = {
             pIsWaiting
@@ -126,7 +174,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
         /**
          * 请求停止
-         * @param waiting 指示是否在完全停止才返回
+          *
+          * @param waiting 指示是否在完全停止才返回
          * @return
          */
         def stopProcess(waiting: Boolean): Unit = {
@@ -290,7 +339,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
             /**
              * 检查单步
-             * @return (单步序号，单步起始时间，单步耗时)
+              *
+              * @return (单步序号，单步起始时间，单步耗时)
              */
             def checkStep(): (Int, Long, String) = {
                 step = step + 1
@@ -301,7 +351,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
             /**
              * 检查完成
-             * @return (单步序号，任务起始时间，任务耗时)
+              *
+              * @return (单步序号，任务起始时间，任务耗时)
              */
             def checkDone(): (Int, Long, String) = {
                 step = step + 1
@@ -326,7 +377,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
     /**
      * 消息处理Callable封装，提交到消息处理线程池中执行
-     * @param id
+      *
+      * @param id
      * @param data
      */
     class ProcessCallable(id: Int, data: Seq[KafkaMessage]) extends Callable[(Int, Seq[(KafkaMessage, ProcessResult[Seq[LogEntity]])])] {

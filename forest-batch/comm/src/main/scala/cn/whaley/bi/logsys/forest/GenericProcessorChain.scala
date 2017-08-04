@@ -34,12 +34,12 @@ class GenericProcessorChain extends InitialTrait with LogTrait with NameTrait {
     }
 
 
-    def process(bytes: Array[Byte]): ProcessResult[Seq[LogEntity]] = {
-        val decRet = msgDecoder.decode(bytes)
+    def process(msgLog: String): ProcessResult[Seq[LogEntity]] = {
+        val decRet = msgDecoder.decode(msgLog)
 
         //解码错误
         if (decRet.hasErr) {
-            ProcessorChainException(("NONE", new String(bytes)), Array(decRet))
+            ProcessorChainException(("NONE", msgLog), Array(decRet))
             return new ProcessResult(this.name, decRet.code, decRet.message, None, decRet.ex)
         }
 
@@ -48,7 +48,7 @@ class GenericProcessorChain extends InitialTrait with LogTrait with NameTrait {
 
         //归集层消息处理错误
         if (msgRet.hasErr) {
-            val decRet = msgDecoder.decode(bytes)
+            val decRet = msgDecoder.decode(msgLog)
             val exception = Some(ProcessorChainException((msgEntity.msgId, decRet.result.get.toJSONString), Array(msgRet)))
             return new ProcessResult(this.name, ProcessResultCode.exception, "归集层消息处理错误", None, exception)
         }
@@ -62,7 +62,7 @@ class GenericProcessorChain extends InitialTrait with LogTrait with NameTrait {
         //应用层消息处理错误
         val errRets = logRet.filter(item => item.hasErr)
         if (errRets.length > 0) {
-            val decRet = msgDecoder.decode(bytes)
+            val decRet = msgDecoder.decode(msgLog)
             val exception = Some(ProcessorChainException((msgEntity.msgId, decRet.result.get.toJSONString), errRets))
             return new ProcessResult(this.name, ProcessResultCode.exception, "应用层消息处理错误", None, exception)
         }

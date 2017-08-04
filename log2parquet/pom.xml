@@ -203,10 +203,10 @@
                 </resources>
             </build>
             <activation>
-                <property>
-                    <name>env</name>
-                    <value>release</value>
-                </property>
+              <property>
+               <name>env</name>
+               <value>azkaban</value>
+              </property>
             </activation>
             <dependencies>
                 <dependency>

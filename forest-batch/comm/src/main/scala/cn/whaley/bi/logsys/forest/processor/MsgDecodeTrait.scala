@@ -15,6 +15,7 @@ trait MsgDecodeTrait extends InitialTrait with NameTrait {
      * 消息解码，从字节数组解析为归集层消息体格式
      * @return
      */
-    def decode(bytes: Array[Byte]): ProcessResult[MsgEntity]
+    //def decode(bytes: Array[Byte]): ProcessResult[MsgEntity]
+    def decode(msgLog: String): ProcessResult[MsgEntity]
 
 }
