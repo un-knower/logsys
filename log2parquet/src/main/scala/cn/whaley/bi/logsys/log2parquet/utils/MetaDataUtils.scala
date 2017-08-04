@@ -143,7 +143,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
-        if(!isValid(parStr)){
+        if(!isValid(parStr) || !isValid(tabNameStr) || !isValid(dbNameStr) ){
             accumulator.add(1L)
             path = null
         }

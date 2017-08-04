@@ -78,6 +78,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val removeFiledAcc = sparkSession.sparkContext.longAccumulator
     val renameFiledAcc = sparkSession.sparkContext.longAccumulator
     val deleteRowAcc = sparkSession.sparkContext.longAccumulator
+    val errRowAcc = sparkSession.sparkContext.longAccumulator
+    val okRowAcc = sparkSession.sparkContext.longAccumulator
+    val jsonRowAcc = sparkSession.sparkContext.longAccumulator
     //解析出输出目录
     val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)(exceptionJsonAcc)
     //经过处理器链处理
@@ -97,7 +100,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //TODO debug
     //println("okRowsRdd:"+okRowsRdd.collect().head)
 
-    val afterRuleRdd = ruleHandle(pathRdd, okRowsRdd)(removeFiledAcc,renameFiledAcc,deleteRowAcc)
+    val afterRuleRdd = ruleHandle(pathRdd, okRowsRdd)(okRowAcc,jsonRowAcc,removeFiledAcc,renameFiledAcc,deleteRowAcc)
 
     //TODO debug
     //println("afterRuleRdd:"+afterRuleRdd.collect().head)
@@ -112,19 +115,36 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     Json2ParquetUtil.saveAsParquet(afterRuleRdd, sparkSession,isJsonDirDelete,isTmpDirDelete)
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
 
-    println("-------平展化前删除记录数 ："+exceptionJsonAcc.value)
-    println("-------平展化后移除字段记录数 ："+removeFiledAcc.value)
-    println("-------平展化后重命名字段记录数 ："+renameFiledAcc.value)
-    println("-------平展化后删除记录数 ："+deleteRowAcc.value)
+    println("-------处理链前删除记录数 ："+exceptionJsonAcc.value)
+
 
     //输出异常记录到HDFS文件
     val errRowsRdd = processedRdd.filter(row => row._2.hasErr).map(row => {
+      errRowAcc.add(1)
       row._2
     })
     if (errRowsRdd.count() > 0) {
       val time = new Date().getTime
       errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
     }
+
+//    println("-------处理链后失败记录数 ："+errRowsRdd.count())
+    println("-------处理链后失败记录数 ："+errRowAcc.value/2)
+
+//    println("-------规则处理后的记录数 ："+afterRuleRdd.count())
+    println("-------规则处理后的记录数 ："+jsonRowAcc.value)
+
+//    println("-------处理链后成功记录数 ："+okRowsRdd.count())
+    println("-------处理链后成功记录数 ："+okRowAcc.value)
+
+    println("-------规则处理移除字段记录数 ："+removeFiledAcc.value)
+    println("-------规则处理重命名字段记录数 ："+renameFiledAcc.value)
+    println("-------规则处理删除记录数 ："+deleteRowAcc.value)
+
+
+
+
+
 
     //生成元数据信息给元数据模块使用
     val taskFlag = confManager.getConf("taskFlag")
@@ -379,7 +399,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
   /** 记录使用规则库过滤【字段黑名单、重命名、行过滤】 */
   def ruleHandle(pathRdd: RDD[(String, JSONObject, scala.collection.mutable.Map[String, String])], resultRdd: RDD[(String, ProcessResult[JSONObject])])(
-      implicit removeFiledAcc:LongAccumulator=pathRdd.sparkContext.longAccumulator,
+      implicit okRowAcc:LongAccumulator=pathRdd.sparkContext.longAccumulator,
+        jsonRowAcc:LongAccumulator=pathRdd.sparkContext.longAccumulator,
+        removeFiledAcc:LongAccumulator=pathRdd.sparkContext.longAccumulator,
         renameFiledAcc:LongAccumulator=pathRdd.sparkContext.longAccumulator,
        deleteRowAcc:LongAccumulator=pathRdd.sparkContext.longAccumulator
     ): RDD[(String, JSONObject)] = {
@@ -390,6 +412,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //rules.foreach(println)
     //println("println rules end ")
     val afterRuleRdd = resultRdd.map(e => {
+      //累加经过处理链之后的记录数
+      okRowAcc.add(1)
       val path = e._1
       val jsonObject = e._2.result.get
       //用于累加器比较规则处理后数据的变化
@@ -450,7 +474,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         //当路径没有找到规则的情况
         (path, Some(jsonObject))
       }
-    }).filter(e => !(e._2.isEmpty)).map(item => (item._1, item._2.get))
+    }).filter(e => !(e._2.isEmpty)).map(item => {
+      //统计输出json数据量
+      jsonRowAcc.add(1)
+      (item._1, item._2.get)
+    })
     afterRuleRdd
   }
 

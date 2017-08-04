@@ -4,14 +4,13 @@ import java.io.File
 import java.util.{Date, UUID}
 import java.util.concurrent.{Callable, Executors, TimeUnit}
 
-import cn.whaley.bi.logsys.log2parquet.ProcessResult
 import cn.whaley.bi.logsys.log2parquet.constant.Constants
 import com.alibaba.fastjson.JSONObject
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{ SaveMode}
+import org.apache.spark.sql.SaveMode
 
 import scala.collection.mutable
 
@@ -147,7 +146,6 @@ object Json2ParquetUtil {
 private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: String, sparkSession: SparkSession, fs: FileSystem, paramMap: Map[String, String]) extends Callable[String] {
     override def call(): String = {
         val tsFrom = System.currentTimeMillis()
-
         try {
             //json文件分片计算
            // val jsonSplitSize = paramMap.getOrElse("jsonSplitSize", (128 * 1024 * 1024).toString).toLong
@@ -165,11 +163,12 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
         }
         catch {
             case e: Throwable => {
-                //SendMail.post(e, s"[Log2Parquet][Json2ParquetUtil][${inputPath}]任务执行失败", Array("app-bigdata@whaley.cn"))
+                SendMail.post(e, s"[Log2Parquet][Json2ParquetUtil][${inputPath}]任务执行失败", Array("app-bigdata@whaley.cn"))
                 e.printStackTrace()
                 println( s"convert file error[$inputPath(${inputSize / 1024}k) -> $outputPath)] : paramMap -> null, exception -> ${e.getMessage}")
                 s"convert file error[$inputPath(${inputSize / 1024}k) -> $outputPath)] : paramMap -> null, exception -> ${e.getMessage}"
             }
         }
+
     }
 }
