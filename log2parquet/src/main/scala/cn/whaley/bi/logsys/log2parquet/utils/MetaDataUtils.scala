@@ -90,11 +90,12 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
       * @param rdd
      * @return
      */
-    def parseLogObjRddPath(rdd: RDD[JSONObject])(implicit accumulator:LongAccumulator=rdd.sparkContext.longAccumulator): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
+    def parseLogObjRddPath(rdd: RDD[JSONObject])(implicit myAccumulator:MyAccumulator=new MyAccumulator
+                          ): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
         val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
         val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
         val parFieldMap = resolveAppLogKeyFieldDescConfig(2)
-        rdd.map(jsonObj => parseLogObjPath(accumulator,jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap)).filter(rdd=>rdd._1 !=null)
+        rdd.map(jsonObj => parseLogObjPath(myAccumulator,jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap)).filter(rdd=>rdd._1 !=null)
     }
 
   /*  def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
@@ -114,7 +115,8 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
       * @param logObj
      * @return
      */
-    def parseLogObjPath(implicit accumulator:LongAccumulator,logObj: JSONObject
+    def parseLogObjPath(implicit myAccumulator:MyAccumulator=new MyAccumulator,
+                        logObj: JSONObject
                         , dbNameFieldMap: Map[String, List[(String, String, String, Int)]]
                         , tabNameFieldMap: Map[String, List[(String, String, String, Int)]]
                         , parFieldMap: Map[String, List[(String, String, String, Int)]]
@@ -144,7 +146,8 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
         if(!isValid(parStr) || !isValid(tabNameStr) || !isValid(dbNameStr) ){
-            accumulator.add(1L)
+            myAccumulator.add("exceptionJsonAcc")
+//            accumulator.add(1L)
             path = null
         }
         (path, logObj,dbMap++tableMap++parMap+(LogKeys.LOG_APP_ID->appId))
