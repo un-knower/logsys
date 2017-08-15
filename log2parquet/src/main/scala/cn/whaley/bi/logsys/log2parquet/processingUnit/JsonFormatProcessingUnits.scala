@@ -6,6 +6,7 @@ import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTraitV2
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
 import cn.whaley.bi.logsys.log2parquet.{ProcessResult, ProcessResultCode}
 import com.alibaba.fastjson.JSONObject
+import scala.collection.JavaConversions._
 
 
 /**
@@ -35,8 +36,8 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
     try {
       //展开logBody
       val logBody = jsonObject.getJSONObject(LogKeys.LOG_BODY)
-      val logBodyKeySetIterator = logBody.keySet().iterator()
-      while (logBodyKeySetIterator.hasNext) {
+      /*  val logBodyKeySetIterator = logBody.keySet().iterator()
+       while (logBodyKeySetIterator.hasNext) {
         val key = logBodyKeySetIterator.next()
         val value = logBody.get(key)
 
@@ -48,7 +49,9 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
         }else{
           jsonObject.put(key, value)
         }
-      }
+      }*/
+      jsonObject.asInstanceOf[java.util.Map[String, Object]].putAll(logBody.asInstanceOf[java.util.Map[String, Object]])
+
       jsonObject.remove(LogKeys.LOG_BODY)
 
       //realIp处理

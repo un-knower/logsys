@@ -164,4 +164,17 @@ class MainObjTest extends LogTrait{
     }
   }
 
+
+  @Test
+  def testJsonObject: Unit ={
+   val line="{\n    \"_sync\":{\n            \"rawTopic\":\"log-raw-boikgpokn78sb95ktmsc1bnk\",\n            \"rawTs\":1497416396072,\n            \"odsTs\":1497416402715,\n            \"rawOffset\":575016728,\n            \"rawParId\":9\n        },\n    \"appId\":\"boikgpokn78sb95ktmsc1bnkechpgj9l\"\n}"
+   val jsonObject = JSON.parseObject(line)
+   val logBody = jsonObject.getJSONObject("_sync")
+    println(logBody)
+    jsonObject.putAll(logBody)
+    jsonObject.asInstanceOf[java.util.Map[String, Object]].putAll(logBody.asInstanceOf[java.util.Map[String, Object]])
+    jsonObject.remove("_sync")
+    println(jsonObject)
+  }
+
 }
