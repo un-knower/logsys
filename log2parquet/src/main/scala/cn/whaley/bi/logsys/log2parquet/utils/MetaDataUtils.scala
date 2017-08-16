@@ -151,7 +151,6 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
             path = null
         }
         (path, logObj,dbMap++tableMap++parMap+(LogKeys.LOG_APP_ID->appId))
-
     }
 
     //优先级: jsonObj字段值 -> conf字段值 , 如果两者都为空,则忽略该字段
@@ -272,6 +271,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 val rowBlackFilter = pathSpecialConf.filter(conf => conf._3 == "rowFilter").flatMap(conf => {
                     fields.filter(field => conf._2.r.findFirstMatchIn(field).isDefined).map(field => (field, conf._4))
                 })
+
                 AppLogFieldSpecialRules(path, fieldBlackFilter, rename, rowBlackFilter)
             } else {
                 AppLogFieldSpecialRules(path, Array[String](), Array[(String, String)](), Array[(String, String)]())

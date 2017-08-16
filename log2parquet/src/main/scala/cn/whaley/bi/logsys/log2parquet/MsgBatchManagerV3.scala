@@ -7,15 +7,15 @@ import cn.whaley.bi.logsys.common.{ConfManager, IdGenerator}
 import cn.whaley.bi.logsys.log2parquet.constant.{Constants, LogKeys}
 import cn.whaley.bi.logsys.log2parquet.moretv2x.{LogPreProcess, LogUtils}
 import cn.whaley.bi.logsys.log2parquet.traits._
-import cn.whaley.bi.logsys.log2parquet.utils.{Json2ParquetUtil, MetaDataUtils, MyAccumulator, ParquetHiveUtils}
+import cn.whaley.bi.logsys.log2parquet.utils._
 import cn.whaley.bi.logsys.metadata.entity.{LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
 import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.util.LongAccumulator
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 /**
   * Created by michael on 2017/6/22.
@@ -130,7 +130,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //输出异常记录到HDFS文件
     val errRowsRdd = processedRdd.filter(row => row._2.hasErr).map(row => {
       myAccumulator.add("errRowAcc")
-//      errRowAcc.add(1)
       row._2
     })
     if (errRowsRdd.count() > 0) {
@@ -150,14 +149,45 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 //    println("-------规则处理删除记录数 ："+deleteRowAcc.value)
 //    println("-------规则处理移除字段记录数 ："+removeFiledAcc.value)
     println("=============== 规则处理移除字段 =============== ：")
-    removeFiledMyAcc.value.foreach(r=>{
-      println("移除字段："+r._1+" --> 移除次数:"+r._2)
+
+    removeFiledMyAcc.value.toList.sortBy(_._2).foreach(r=>{
+      if(isValid(r._1)){
+          println("移除字段："+r._1+" --> 移除次数:"+r._2)
+      }
     })
+
+/*
+
+    val lines = FileUtil.loadFile()
+    val map = new mutable.HashMap[String,String]
+    lines.filter(f=> ! f.contains("#") && ! f.isEmpty).foreach(f=>{
+      val key = f.split(":")(0)
+      val productLine = f.split(":")(1)
+      val flag = f.split(":")(2)
+      if("0".equals(flag)){
+        map += (key->productLine)
+      }
+    })
+
+    removeFiledMyAcc.value.toList.sortBy(-_._2).foreach(r=>{
+      if(isValid(r._1)){
+        //处在名单里，且flag=0的不打印
+        val key = r._1.split("->")(0)
+        val value = r._1.split("->")(1)
+        if(!map.getOrElseUpdate(key,"").equals(value)){
+          println("移除字段："+r._1+" --> 移除次数:"+r._2)
+        }
+      }
+    })
+*/
 
 //    println("-------规则处理重命名字段记录数 ："+renameFiledAcc.value)
     println("=============== 规则处理重命名字段 =============== ：")
-    renameFiledMyAcc.value.foreach(r=>{
-      println("重命名字段："+r._1+" --> 重命名次数:"+r._2)
+    renameFiledMyAcc.value.toList.sortBy(-_._2).foreach(r=>{
+      if(isValid(r._1)){
+        println("重命名字段："+r._1+" --> 重命名次数:"+r._2)
+      }
+
     })
 
     myAccumulator.value.foreach(r=>{
@@ -182,7 +212,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
 
     //生成元数据信息给元数据模块使用
-    val taskFlag = confManager.getConf("taskFlag")
+  val taskFlag = confManager.getConf("taskFlag")
     assert(taskFlag.length==3)
     generateMetaDataToTable(sparkSession, pathRdd,taskFlag)
   }
@@ -430,108 +460,164 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     })
     arrayBuffer
   }
-
-
   /** 记录使用规则库过滤【字段黑名单、重命名、行过滤】 */
   def ruleHandle(pathRdd: RDD[(String, JSONObject, scala.collection.mutable.Map[String, String])], resultRdd: RDD[(String, ProcessResult[JSONObject])])(
-      implicit myAccumulator:MyAccumulator=new MyAccumulator,
-        renameFiledMyAcc:MyAccumulator=new MyAccumulator,
-        removeFiledMyAcc:MyAccumulator=new MyAccumulator
-    ): RDD[(String, JSONObject)] = {
+    implicit myAccumulator:MyAccumulator=new MyAccumulator,
+    renameFiledMyAcc:MyAccumulator=new MyAccumulator,
+    removeFiledMyAcc:MyAccumulator=new MyAccumulator
+  ): RDD[(String, JSONObject)] = {
     // 获得规则库的每条规则
     val rules = metaDataUtils.parseSpecialRules(pathRdd)
+    val rowBlackFilterMap = mutable.Map[String,Map[String,String]]()
+    val fieldBlackFilterMap = mutable.Map[String,List[String]]()
+    val renameMap = mutable.Map[String,Map[String,String]]()
+    rules.foreach(rule=>{
+      val path = rule.path
+      //字段删除
+      val fieldBlackFilter = rule.fieldBlackFilter
+      println(s"cccc  ${fieldBlackFilter.toList.toString()}")
+      val list = new ListBuffer[String]()
+      fieldBlackFilter.foreach(e=>{
+        val key = e.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
+        list +=(key)
+      })
+      fieldBlackFilterMap.put(path,list.toList)
+      //行删除
+      val rowBlackFilter = rule.rowBlackFilter
+      val map1 = mutable.Map[String,String]()
+      rowBlackFilter.foreach(e=>{
+        val key = e._1.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
+        val value = e._2
+        map1.put(key,value)
+      })
+      rowBlackFilterMap.put(path,map1.toMap)
+      //重命名
+      val rename = rule.rename
+      val map2 = mutable.Map[String,String]()
+      rename.foreach(e=>{
+        val oldName = e._1.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
+        val newName = e._2
+        map2.put(oldName,newName)
+      })
+      renameMap.put(path,map2.toMap)
+
+    })
+    println("广播之前")
+    fieldBlackFilterMap.values.foreach(list=>{
+      if(list.contains("User_Agent")){
+        println(list.toString())
+      }
+    })
+    println("广播之前")
+
+
+    val myBroadcast = MyBroadcast(rowBlackFilterMap.toMap,fieldBlackFilterMap.toMap,renameMap.toMap)
+    val broadcast = pathRdd.sparkContext.broadcast(myBroadcast)
     //TODO debug
-    //println("println rules start")
-    //rules.foreach(println)
-    //println("println rules end ")
     val afterRuleRdd = resultRdd.map(e => {
       //累加经过处理链之后的记录数
-//      okRowAcc.add(1)
+      //      okRowAcc.add(1)
+      val rowBlackFilterMap = broadcast.value.rowBlackFilterMap
+      val fieldBlackFilterMap =  broadcast.value.fieldBlackFilterMap
+      val renameMap =  broadcast.value.renameMap
+
+      println("广播之后")
+      fieldBlackFilterMap.values.foreach(list=>{
+        if(list.contains("User_Agent")){
+          println(list.toString())
+        }
+      })
+      println("广播之后")
+
       myAccumulator.add("okRowAcc")
       val path = e._1
       val jsonObject = e._2.result.get
       //用于累加器比较规则处理后数据的变化
-
       val compareJson = JSON.parseObject(jsonObject.toJSONString)
-
-
-      if (rules.exists(rule => rule.path.equalsIgnoreCase(path))) {
-        //一个绝对路径唯一对应一条规则
-        val rule = rules.filter(rule => rule.path.equalsIgnoreCase(path)).head
-
-
-
-        //行过滤
-        val rowBlackFilter = rule.rowBlackFilter
-        //val resultJsonObject = if (rowBlackFilter.filter(item => jsonObject.get(item._1) != null && item._2 == jsonObject.getString(item._1)).size > 0) None
-        val resultJsonObject = if (rowBlackFilter.filter(item => {
-          val newKey = item._1.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
-          jsonObject.get(newKey) != null && item._2 == jsonObject.getString(newKey)
-        }).size > 0){
-          None
-        }else{
-          //字段黑名单过滤
-          val fieldBlackFilter = rule.fieldBlackFilter
-          fieldBlackFilter.foreach(e => {
-            val blackField=e.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
-            if(jsonObject.containsKey(blackField)){
-              removeFiledMyAcc.add(blackField)
-              jsonObject.remove(blackField)
-            }
-
-          })
-          //字段重命名
-          val rename = rule.rename
-          rename.foreach(e => {
-            val newKey=e._1.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
-            if (jsonObject.containsKey(newKey)) {
-              renameFiledMyAcc.add(newKey)
-              jsonObject.put(e._2, jsonObject.get(newKey))
-              jsonObject.remove(newKey)
-            }
-          })
-          Some(jsonObject)
-        }
-        //累加器
-        if(resultJsonObject == None){
-          //记录删除
-//          deleteRowAcc.add(1)
-          myAccumulator.add("deleteRowAcc")
-//          removeFiledAcc.add(1)
-//          renameFiledAcc.add(1)
-        }else{
-          if(resultJsonObject.get.size()!=compareJson.size()){
-            //删除字段
-//            removeFiledAcc.add(1)
-            myAccumulator.add("removeFiledAcc")
+      //删除行
+      if(rowBlackFilterMap.keySet.contains(path) && !rowBlackFilterMap.get(path).isEmpty){
+        val map = rowBlackFilterMap.get(path).get
+        map.keys.foreach(key=>{
+          if(jsonObject.containsKey(key) && jsonObject.getString(key) == map.get(key).get){
+            jsonObject.clear()
           }
-          val keys = compareJson.keySet()
-          val difKeysNum = resultJsonObject.get.keySet().toArray(new Array[String](0)).filter(key=>{
-            !keys.contains(key)
-          }).size
-          if(difKeysNum >0){
-            myAccumulator.add("renameFiledAcc")
-//            renameFiledAcc.add(1)
-          }
-        }
-        (path, resultJsonObject)
-      } else {
-        //当路径没有找到规则的情况
-        (path, Some(jsonObject))
+        })
       }
+      if(!jsonObject.isEmpty){
+        //删除字段
+        if(fieldBlackFilterMap.keySet.contains(path) && !fieldBlackFilterMap.get(path).isEmpty){
+          val array = fieldBlackFilterMap.get(path).get
+          if(array.contains("User_Agent") && jsonObject.containsKey("User_Agent")){
+            println(s"User_Agent path is $path" )
+            println(s"User_Agent jsonObject is ${jsonObject.toString}" )
+          }
+          array.foreach(field=>{
+            if(jsonObject.containsKey(field)){
+              removeFiledMyAcc.add(field+"->"+path.split("/")(1).split("_")(1))
+              if(field.equals("User_Agent")){
+                println("aaaaaaaaaaaaaa")
+                println(s"111111  $path ")
+                println(s"删除前  ${jsonObject.toString} ")
+              }
+              jsonObject.remove(field)
+              if(field.equals("User_Agent")){
+                println(s"删除后  ${jsonObject.toString} ")
+              }
+            }
+          })
+        }
+        //重命名
+        if(renameMap.keySet.contains(path) && !renameMap.get(path).isEmpty){
+          val map = renameMap.get(path).get
+          map.keys.foreach(oldName=>{
+            if(jsonObject.containsKey(oldName)){
+              val newName = map.get(oldName).get
+              jsonObject.put(newName, jsonObject.get(oldName))
+              renameFiledMyAcc.add(oldName+"->"+path.split("/")(1).split("_")(1))
+              jsonObject.remove(oldName)
+            }
+          })
+        }
+      }
+      //累加器影响的行数
+      if(!jsonObject.isEmpty){
+        if(jsonObject.size()!=compareJson.size()){
+          //删除字段
+          myAccumulator.add("removeFiledAcc")
+        }
+        val keys = compareJson.keySet()
+        val difKeysNum = jsonObject.keySet().toArray(new Array[String](0)).filter(key=>{
+          !keys.contains(key)
+        }).size
+        if(difKeysNum >0){
+          myAccumulator.add("renameFiledAcc")
+          // renameFiledAcc.add(1)
+        }
+      }else{
+        //记录删除
+        myAccumulator.add("deleteRowAcc")
+      }
+      (path, Some(jsonObject))
+
     }).filter(e => !(e._2.isEmpty)).map(item => {
       //统计输出json数据量
-//      jsonRowAcc.add(1)
+      //      jsonRowAcc.add(1)
       myAccumulator.add("jsonRowAcc")
       (item._1, item._2.get)
     })
     afterRuleRdd
   }
-
   //释放资源
   def shutdown(): Unit = {
     //sparkSession.close()
   }
+  case class MyBroadcast(rowBlackFilterMap:Map[String,Map[String,String]],fieldBlackFilterMap:Map[String,List[String]],renameMap:Map[String,Map[String,String]])
+
+  def isValid(s:String)={
+    val regex = """[a-zA-Z0-9-_>]*"""
+    s.matches(regex)
+  }
+
 }
 
 
