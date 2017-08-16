@@ -34,6 +34,7 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
     */
   def process(jsonObject: JSONObject): ProcessResult[JSONObject] = {
     try {
+      
       //展开logBody
       val logBody = jsonObject.getJSONObject(LogKeys.LOG_BODY)
       jsonObject.asInstanceOf[java.util.Map[String, Object]].putAll(logBody.asInstanceOf[java.util.Map[String, Object]])
