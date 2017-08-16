@@ -36,22 +36,7 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
     try {
       //展开logBody
       val logBody = jsonObject.getJSONObject(LogKeys.LOG_BODY)
-      /*  val logBodyKeySetIterator = logBody.keySet().iterator()
-       while (logBodyKeySetIterator.hasNext) {
-        val key = logBodyKeySetIterator.next()
-        val value = logBody.get(key)
-
-        //字段名不允许出现"."和"-"
-        if(key!=null&&(key.contains(Constants.STRING_PERIOD)||key.contains(Constants.STRIKE_THROUGH))){
-          val newKey=key.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
-          jsonObject.put(newKey, value)
-          jsonObject.remove(key)
-        }else{
-          jsonObject.put(key, value)
-        }
-      }*/
       jsonObject.asInstanceOf[java.util.Map[String, Object]].putAll(logBody.asInstanceOf[java.util.Map[String, Object]])
-
       jsonObject.remove(LogKeys.LOG_BODY)
 
       //realIp处理
