@@ -102,14 +102,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     })
 
 
-
-
     //将经过处理器处理后，正常状态的记录使用规则库过滤【字段黑名单、重命名、行过滤】
     val okRowsRdd = processedRdd.filter(e => e._2.hasErr == false)
     //TODO debug
     //println("okRowsRdd:"+okRowsRdd.collect().head)
 
-//    val afterRuleRdd = ruleHandle(pathRdd, okRowsRdd)(myAccumulator,renameFiledMyAcc,removeFiledMyAcc,okRowAcc,jsonRowAcc,removeFiledAcc,renameFiledAcc,deleteRowAcc)
     val afterRuleRdd = ruleHandle(pathRdd, okRowsRdd)(myAccumulator,renameFiledMyAcc,removeFiledMyAcc)
     //TODO debug
     //println("afterRuleRdd:"+afterRuleRdd.collect().head)
@@ -475,18 +472,16 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       val path = rule.path
       //字段删除
       val fieldBlackFilter = rule.fieldBlackFilter
-      println(s"cccc  ${fieldBlackFilter.toList.toString()}")
       val list = new ListBuffer[String]()
       fieldBlackFilter.foreach(e=>{
-        val key = e.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
-        list +=(key)
+        list +=(e)
       })
       fieldBlackFilterMap.put(path,list.toList)
       //行删除
       val rowBlackFilter = rule.rowBlackFilter
       val map1 = mutable.Map[String,String]()
       rowBlackFilter.foreach(e=>{
-        val key = e._1.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
+        val key = e._1
         val value = e._2
         map1.put(key,value)
       })
@@ -495,22 +490,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       val rename = rule.rename
       val map2 = mutable.Map[String,String]()
       rename.foreach(e=>{
-        val oldName = e._1.replace(Constants.STRING_PERIOD,Constants.EMPTY_STRING).replace(Constants.STRIKE_THROUGH,Constants.UNDER_LINE)
+        val oldName = e._1
         val newName = e._2
         map2.put(oldName,newName)
       })
       renameMap.put(path,map2.toMap)
 
     })
-    println("广播之前")
-    fieldBlackFilterMap.values.foreach(list=>{
-      if(list.contains("User_Agent")){
-        println(list.toString())
-      }
-    })
-    println("广播之前")
-
-
     val myBroadcast = MyBroadcast(rowBlackFilterMap.toMap,fieldBlackFilterMap.toMap,renameMap.toMap)
     val broadcast = pathRdd.sparkContext.broadcast(myBroadcast)
     //TODO debug
@@ -520,15 +506,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       val rowBlackFilterMap = broadcast.value.rowBlackFilterMap
       val fieldBlackFilterMap =  broadcast.value.fieldBlackFilterMap
       val renameMap =  broadcast.value.renameMap
-
-      println("广播之后")
-      fieldBlackFilterMap.values.foreach(list=>{
-        if(list.contains("User_Agent")){
-          println(list.toString())
-        }
-      })
-      println("广播之后")
-
       myAccumulator.add("okRowAcc")
       val path = e._1
       val jsonObject = e._2.result.get
@@ -547,22 +524,10 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         //删除字段
         if(fieldBlackFilterMap.keySet.contains(path) && !fieldBlackFilterMap.get(path).isEmpty){
           val array = fieldBlackFilterMap.get(path).get
-          if(array.contains("User_Agent") && jsonObject.containsKey("User_Agent")){
-            println(s"User_Agent path is $path" )
-            println(s"User_Agent jsonObject is ${jsonObject.toString}" )
-          }
           array.foreach(field=>{
             if(jsonObject.containsKey(field)){
               removeFiledMyAcc.add(field+"->"+path.split("/")(1).split("_")(1))
-              if(field.equals("User_Agent")){
-                println("aaaaaaaaaaaaaa")
-                println(s"111111  $path ")
-                println(s"删除前  ${jsonObject.toString} ")
-              }
               jsonObject.remove(field)
-              if(field.equals("User_Agent")){
-                println(s"删除后  ${jsonObject.toString} ")
-              }
             }
           })
         }

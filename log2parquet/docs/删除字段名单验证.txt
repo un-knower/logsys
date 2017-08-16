@@ -18,7 +18,7 @@ triggerCondition:medusa:1
 robuildyunos:whaleytv:0
 roproductmodel:whaleytv:0
 roproductmodel2:whaleytv:0
-User_Agent:whaleytv:0
+User-Agent:whaleytv:0
 userid:medusa:0
 recognizeAge:whaleytv:1
 recognizeEmotion:whaleytv:1
@@ -36,4 +36,6 @@ con:medusa:0
 rgtrieval:medusa:0
 prod:medusa:0
 produ:medusa:0
+ANDROID_VERSION:medusa:0
+USER_CRASH_DATE:medusa:0
 

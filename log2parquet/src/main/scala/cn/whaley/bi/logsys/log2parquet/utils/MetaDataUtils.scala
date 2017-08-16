@@ -207,8 +207,6 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
           ("",scala.collection.mutable.HashMap.empty[String,String])
         }
     }
-
-
     /**
      * 解析字段特例规则库
       *
@@ -216,10 +214,8 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
      * @return Map[logPath,(字段黑名单,字段重命名清单,行过滤器)]
      */
     def parseSpecialRules(rdd: RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])]): Array[AppLogFieldSpecialRules] = {
-
         //特例字段配置数据
         val specialFieldDescConf = queryAppLogSpecialFieldDescConf
-
         //路径及其所有字段集合
         val pathAndFields = rdd.map(row => (row._1, row._2.getJSONObject("logBody").keySet().toArray(new Array[String](0)))).reduceByKey((set1, set2) => {
             val set = set1.filter(item => set2.contains(item) == false)
