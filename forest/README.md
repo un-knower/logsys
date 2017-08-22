@@ -7,6 +7,8 @@
 
 运行方式：常驻进程
 运行机器：app-1,2,3
+用户：hadoop 
+位置：/opt/forest-dist
 程序入口：
 cn.whaley.bi.logsys.forest.MainObj
 
