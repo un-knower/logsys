@@ -1,0 +1,3 @@
+type=command
+mainClass=cn.whaley.bi.logsys.batchforest.MainObjTest
+command=sh ${working.dir}/../bin/submit.sh --mainClass ${mainClass} --startDate ${startDate} --startHour ${startHour}
