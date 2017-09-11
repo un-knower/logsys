@@ -19,24 +19,24 @@ import scala.collection.mutable
  */
 object Json2ParquetUtil {
 
-    def saveAsParquet(logRdd: RDD[(String, JSONObject)], sparkSession: SparkSession,isJsonDirDelete:Boolean,isTmpDirDelete:Boolean) = {
+    def saveAsParquet(logRdd: RDD[(String, JSONObject)],time:String,sparkSession: SparkSession) = {
         val conf = new Configuration()
         val fs = FileSystem.get(conf)
-        val date=new Date
         //time字段，用来多个azkaban任务一起运行时，区分不同任务写入的目录
-        val time=date.getTime
-
         val outputPathTmp = s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP}${File.separator}${time}"
         val jsonDir = s"${outputPathTmp}_json"
         val tmpDir = s"${outputPathTmp}_tmp"
         //运行任务之前重建临时文件目录
-        //fs.delete(new Path(jsonDir), true)
-        //fs.delete(new Path(tmpDir), true)
-        fs.mkdirs(new Path(jsonDir))
-        fs.mkdirs(new Path(tmpDir))
-
+        fs.deleteOnExit(new Path(jsonDir))
+        fs.deleteOnExit(new Path(tmpDir))
+        if(!fs.exists(new Path(jsonDir))){
+            fs.mkdirs(new Path(jsonDir))
+        }
+        if(!fs.exists(new Path(tmpDir))){
+            fs.mkdirs(new Path(tmpDir))
+        }
         /*********  写json文件阶段 ************/
-        logRdd.foreachPartition(iter => {
+        logRdd.repartition(50).foreachPartition(iter => {
             val partId = UUID.randomUUID().toString
             println(s"process partition $partId")
             val conf = new Configuration()
@@ -76,7 +76,6 @@ object Json2ParquetUtil {
                     fs.mkdirs(jsonFileDir)
                 }
                 fs.rename(tmpFilePath, jsonFilePath)
-
                 val ts = System.currentTimeMillis() - item._2._4
                 println(s"finished tmp file[${ts},${tmpSize / 1024L}k]: $tmpFilePath -> $jsonFilePath")
             })
@@ -118,8 +117,8 @@ object Json2ParquetUtil {
         println("shutdown.")
 
         //删除json文件
-        val preserveJsonDir = !isJsonDirDelete
-        val preserveTmpDir = !isTmpDirDelete
+        val preserveJsonDir = false
+        val preserveTmpDir = false
        if (!preserveTmpDir) {
            fs.delete(new Path(tmpDir), true)
            println(s"delete dir:$tmpDir")
@@ -130,7 +129,8 @@ object Json2ParquetUtil {
                println(s"delete empty dir:$tmpDir")
            }
        }
-       if (!preserveJsonDir) {
+
+      if (!preserveJsonDir) {
            fs.delete(new Path(jsonDir), true)
            println(s"delete dir:$jsonDir")
        }else{

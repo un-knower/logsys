@@ -74,10 +74,6 @@ class MetadataUtilTest {
 
         val pathRdd = utils.parseLogObjRddPath(rdd)
         //pathRdd.take(10).foreach(println)
-        utils.parseSpecialRules(pathRdd).take(10).foreach(row => {
-            println(row)
-        })
-
     }
 
     @Test
@@ -103,9 +99,7 @@ class MetadataUtilTest {
 
     val pathRdd = utils.parseLogObjRddPath(rdd)
     //pathRdd.take(10).foreach(println)
-    utils.parseSpecialRules(pathRdd).take(10).foreach(row => {
-      println(row)
-    })
+
 
   }
 

@@ -10,9 +10,12 @@ import cn.whaley.bi.logsys.log2parquet.traits._
 import cn.whaley.bi.logsys.log2parquet.utils._
 import cn.whaley.bi.logsys.metadata.entity.{LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
 import com.alibaba.fastjson.{JSON, JSONObject}
-import org.apache.spark.SparkConf
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.storage.StorageLevel
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -48,9 +51,18 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     }
     val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
 
+    val sc = sparkSession.sparkContext
+    //创建累加器
+    val renameFiledMyAcc = new MyAccumulator
+    val removeFiledMyAcc = new MyAccumulator
+    val myAccumulator =  new MyAccumulator
+    sc.register(renameFiledMyAcc,"renameFiledMyAcc")
+    sc.register(removeFiledMyAcc,"removeFiledMyAcc")
+    sc.register(myAccumulator,"myAccumulator")
+
     //读取原始文件
     val inputPath = confManager.getConf("inputPath")
-    val rdd_original = sparkSession.sparkContext.textFile(inputPath, 200).map(line => {
+    val rdd_original = sc.textFile(inputPath).map(line => {
       try {
         //如果是medusa2x日志，首先做规范化处理
         if (line.indexOf("\"appId\":\"" + Constants.MEDUSA2X_APP_ID + "\"") > 0) {
@@ -73,88 +85,65 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }
     }).filter(row => row.isDefined).map(row => row.get)
 
-    val sc = sparkSession.sparkContext
-    //创建累加器
-    /*val exceptionJsonAcc = sc.longAccumulator
-    val removeFiledAcc = sc.longAccumulator
-    val renameFiledAcc = sc.longAccumulator
-    val deleteRowAcc = sc.longAccumulator
-    val errRowAcc = sc.longAccumulator
-    val okRowAcc = sc.longAccumulator
-    val jsonRowAcc = sc.longAccumulator*/
-    val renameFiledMyAcc = new MyAccumulator
-    val removeFiledMyAcc = new MyAccumulator
-    val myAccumulator =  new MyAccumulator
-    sc.register(renameFiledMyAcc,"renameFiledMyAcc")
-    sc.register(removeFiledMyAcc,"removeFiledMyAcc")
-    sc.register(myAccumulator,"myAccumulator")
-//    sc.register()
-    //解析出输出目录
-//    val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)(myAccumulator,exceptionJsonAcc)
-    val pathRdd = metaDataUtils.parseLogObjRddPath(rdd_original)(myAccumulator)
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
     val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
-    val processedRdd = pathRdd.map(e => {
-      val jsonObject = e._2
-      val jsonObjectProcessed = processGroupInstance.process(jsonObject)
-      (e._1, jsonObjectProcessed)
-    })
-
-
-    //将经过处理器处理后，正常状态的记录使用规则库过滤【字段黑名单、重命名、行过滤】
-    val okRowsRdd = processedRdd.filter(e => e._2.hasErr == false)
-    //TODO debug
-    //println("okRowsRdd:"+okRowsRdd.collect().head)
-
-    val afterRuleRdd = ruleHandle(pathRdd, okRowsRdd)(myAccumulator,renameFiledMyAcc,removeFiledMyAcc)
-    //TODO debug
-    //println("afterRuleRdd:"+afterRuleRdd.collect().head)
-
-    //TODO debug
-     //System.exit(0)
-
-    //输出正常记录到HDFS文件
-    val isJsonDirDelete = confManager.getConf("isJsonDirDelete").toBoolean
-    val isTmpDirDelete = confManager.getConf("isTmpDirDelete").toBoolean
-    println("-------Json2ParquetUtil.saveAsParquet start at "+new Date())
-    Json2ParquetUtil.saveAsParquet(afterRuleRdd, sparkSession,isJsonDirDelete,isTmpDirDelete)
-    println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
-
-//    println("-------处理链前删除异常记录数 ："+exceptionJsonAcc.value)
+    val processedRdd = rdd_original.map(e => {
+      processGroupInstance.process(e)
+    }).repartition(3000)
+      .persist(StorageLevel.MEMORY_AND_DISK)
 
 
     //输出异常记录到HDFS文件
-    val errRowsRdd = processedRdd.filter(row => row._2.hasErr).map(row => {
-      myAccumulator.add("errRowAcc")
-      row._2
+    val errRowsRdd = processedRdd.filter(row => {
+      if(row.hasErr){
+        myAccumulator.add("errRowAcc")
+      }
+        row.hasErr
     })
-    if (errRowsRdd.count() > 0) {
-      val time = new Date().getTime
-      errRowsRdd.saveAsTextFile(s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}")
+
+    val startDate = confManager.getConf("startDate")
+    val startHour = confManager.getConf("startHour")
+    val time = s"${startDate}${startHour}"
+    if(errRowsRdd.count()>0){
+      val errRowNum = myAccumulator.value.getOrElseUpdate("errRowAcc",0)
+      println(s"处理链后失败记录数 : $errRowNum")
+      val conf = new Configuration()
+      val fs = FileSystem.get(conf)
+      val errOutPath = s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}"
+      fs.deleteOnExit(new Path(errOutPath))
+      errRowsRdd.repartition(5).saveAsTextFile(errOutPath)
     }
 
-//    println("-------处理链后失败记录数 ："+errRowsRdd.count())
-//    println("-------处理链后失败记录数 ："+errRowAcc.value/2)
-
-//    println("-------规则处理后的记录数 ："+afterRuleRdd.count())
-//    println("-------规则处理后的记录数 ："+jsonRowAcc.value)
-
-//    println("-------处理链后成功记录数 ："+okRowsRdd.count())
-//    println("-------处理链后成功记录数 ："+okRowAcc.value)
-
-//    println("-------规则处理删除记录数 ："+deleteRowAcc.value)
-//    println("-------规则处理移除字段记录数 ："+removeFiledAcc.value)
+    //将经过处理器处理后，正常状态的记录使用规则库过滤【字段黑名单、重命名、行过滤】
+    val okRowsRdd = processedRdd.filter(row => !row.hasErr).map(row=>row.result.get)
+    //解析出输出目录
+    val rddSchame = metaDataUtils.parseLogObjRddPath(okRowsRdd)(myAccumulator)
+      .persist(StorageLevel.MEMORY_AND_DISK)
+    val pathRdd = rddSchame.map(row=>{
+      val path = row._1
+      val jSONObject = row._2
+      (path,jSONObject)
+    })
+    val pathSchema:Array[(String,scala.collection.mutable.Map[String,String])] = rddSchame.map(row=>{
+      val path = row._1
+      val schema = row._3
+      (path,schema)
+    }).distinct().collect()
+    val afterRuleRdd = ruleHandle(sc,pathRdd)(myAccumulator,renameFiledMyAcc,removeFiledMyAcc)
+    //输出正常记录到HDFS文件
+    println("-------Json2ParquetUtil.saveAsParquet start at "+new Date())
+    Json2ParquetUtil.saveAsParquet(afterRuleRdd,time,sparkSession)
+    println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
+    rddSchame.unpersist()
+    processedRdd.unpersist()
     println("=============== 规则处理移除字段 =============== ：")
-
     removeFiledMyAcc.value.toList.sortBy(_._2).foreach(r=>{
       if(isValid(r._1)){
           println("移除字段："+r._1+" --> 移除次数:"+r._2)
       }
     })
-
 /*
-
     val lines = FileUtil.loadFile()
     val map = new mutable.HashMap[String,String]
     lines.filter(f=> ! f.contains("#") && ! f.isEmpty).foreach(f=>{
@@ -177,21 +166,18 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }
     })
 */
-
-//    println("-------规则处理重命名字段记录数 ："+renameFiledAcc.value)
     println("=============== 规则处理重命名字段 =============== ：")
     renameFiledMyAcc.value.toList.sortBy(-_._2).foreach(r=>{
       if(isValid(r._1)){
         println("重命名字段："+r._1+" --> 重命名次数:"+r._2)
       }
-
     })
 
     myAccumulator.value.foreach(r=>{
       val key = r._1
       key match {
-        case "exceptionJsonAcc" => println("处理链前删除异常记录数 : "+r._2/2)
-        case "errRowAcc" => println("处理链后失败记录数 : "+r._2/2)
+        case "exceptionJsonAcc" => println("处理链前删除异常记录数 : "+r._2)
+
         case "jsonRowAcc" => println("规则处理后的记录数 : "+r._2)
         case "okRowAcc" => println("处理链后成功记录数 : "+r._2)
         case "deleteRowAcc" => println("规则处理删除记录数 : "+r._2)
@@ -201,28 +187,22 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }
     })
 
-
-
-
-
-
-
-
     //生成元数据信息给元数据模块使用
-  val taskFlag = confManager.getConf("taskFlag")
+
+   val taskFlag = confManager.getConf("taskFlag")
     assert(taskFlag.length==3)
-    generateMetaDataToTable(sparkSession, pathRdd,taskFlag)
+    generateMetaDataToTable(sparkSession, pathSchema,taskFlag)
   }
+
 
 
   /**
     * 向phoenix表插入数据[metadata.logfile_key_field_value,metadata.logfile_field_desc]
     **/
-  def generateMetaDataToTable(sparkSession: SparkSession, pathRdd:RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])],taskFlag:String): Unit = {
+  def generateMetaDataToTable(sparkSession: SparkSession, pathSchema:Array[(String,scala.collection.mutable.Map[String,String])],taskFlag:String): Unit = {
     //生成元组的RDD，元组内容为:(输出路径,用来拼接表名称或分区的字段的Map[logType->detail,key_day->20170712,....])
-    val path_file_value_map = pathRdd.map(e => (e._1, e._3)).distinct().collect()
+    val path_file_value_map = pathSchema
     println("path_file_value_map.length():" + path_file_value_map.length)
-
     //生成taskId
     val generator = IdGenerator.defaultInstance
     val taskId = generator.nextId().replace("/", "")
@@ -458,13 +438,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     arrayBuffer
   }
   /** 记录使用规则库过滤【字段黑名单、重命名、行过滤】 */
-  def ruleHandle(pathRdd: RDD[(String, JSONObject, scala.collection.mutable.Map[String, String])], resultRdd: RDD[(String, ProcessResult[JSONObject])])(
+  def ruleHandle(sc:SparkContext,resultRdd: RDD[(String, JSONObject)])(
     implicit myAccumulator:MyAccumulator=new MyAccumulator,
     renameFiledMyAcc:MyAccumulator=new MyAccumulator,
     removeFiledMyAcc:MyAccumulator=new MyAccumulator
   ): RDD[(String, JSONObject)] = {
     // 获得规则库的每条规则
-    val rules = metaDataUtils.parseSpecialRules(pathRdd)
+    val rules = metaDataUtils.parseSpecialRules(resultRdd)
     val rowBlackFilterMap = mutable.Map[String,Map[String,String]]()
     val fieldBlackFilterMap = mutable.Map[String,List[String]]()
     val renameMap = mutable.Map[String,Map[String,String]]()
@@ -498,17 +478,15 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     })
     val myBroadcast = MyBroadcast(rowBlackFilterMap.toMap,fieldBlackFilterMap.toMap,renameMap.toMap)
-    val broadcast = pathRdd.sparkContext.broadcast(myBroadcast)
+    val broadcast = sc.broadcast(myBroadcast)
     //TODO debug
     val afterRuleRdd = resultRdd.map(e => {
-      //累加经过处理链之后的记录数
-      //      okRowAcc.add(1)
       val rowBlackFilterMap = broadcast.value.rowBlackFilterMap
       val fieldBlackFilterMap =  broadcast.value.fieldBlackFilterMap
       val renameMap =  broadcast.value.renameMap
       myAccumulator.add("okRowAcc")
       val path = e._1
-      val jsonObject = e._2.result.get
+      val jsonObject = e._2
       //用于累加器比较规则处理后数据的变化
       val compareJson = JSON.parseObject(jsonObject.toJSONString)
       //删除行

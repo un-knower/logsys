@@ -6,6 +6,7 @@ import cn.whaley.bi.logsys.log2parquet.processor.LogProcessorTraitV2
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
 import cn.whaley.bi.logsys.log2parquet.{ProcessResult, ProcessResultCode}
 import com.alibaba.fastjson.JSONObject
+
 import scala.collection.JavaConversions._
 
 
@@ -34,9 +35,37 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
     */
   def process(jsonObject: JSONObject): ProcessResult[JSONObject] = {
     try {
-      
       //展开logBody
       val logBody = jsonObject.getJSONObject(LogKeys.LOG_BODY)
+      //处理 params
+      if(logBody.containsKey(LogKeys.LOG_PARAMS)){
+        logBody.get(LogKeys.LOG_PARAMS) match {
+          // 处理params非json格式的情形
+          case paramsInfo:String => {
+            if (paramsInfo.contains(",")) {
+              val paramSplit = paramsInfo.split(",")
+              if (paramSplit.nonEmpty) {
+                paramSplit.foreach(parameterInfo => {
+                  if (parameterInfo.contains("=")) {
+                    val parameterSplit = parameterInfo.trim.split("=")
+                    if (parameterSplit.length == 2) {
+                      logBody.put(parameterSplit(0), parameterSplit(1))
+                    }
+                  }
+                })
+              }
+            }
+          }
+          case paramsInfo:JSONObject => {
+            paramsInfo.keys.foreach(i => {
+              logBody.put(i, paramsInfo.get(i))
+            })
+          }
+          case _ => System.err.println(s"ERROR: invalid attribute[${LogKeys.LOG_PARAMS}] string: ${logBody.toJSONString}")
+        }
+        logBody.remove(LogKeys.LOG_PARAMS)
+      }
+
       jsonObject.asInstanceOf[java.util.Map[String, Object]].putAll(logBody.asInstanceOf[java.util.Map[String, Object]])
       jsonObject.remove(LogKeys.LOG_BODY)
 

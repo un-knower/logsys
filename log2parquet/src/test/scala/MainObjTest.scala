@@ -20,8 +20,12 @@ class MainObjTest extends LogTrait{
   @Test
   def testMainObjTest: Unit = {
     val args = Array("MsgProcExecutor",
-      //"--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170101/key_hour=00/b.json","--c","masterURL=local[1]")
-      "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170723/key_hour=01/boikgpokn78sb95ktmsc1bnkechpgj9l_2017072301_raw_0_1392502233.json.gz","--c","masterURL=local[1]")
+      "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId2=boikgpokn78sb95kjhfrendo8dc5mlsr/key_day=20170904/key_hour=23/boikgpokn78sb95kjhfrendo8dc5mlsr_ffcb2dea-6bad-474a-832c-8129257908c0.json.gz","--c","masterURL=local[1]","--c","isJsonDirDelete=true", "--c" ,"isTmpDirDelete=false")
+      //      "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendo8dc5mlsr/key_day=20170731/key_hour=20/boikgpokn78sb95kjhfrendo8dc5mlsr_2017073120_raw_9_589961803.json.gz","--c","masterURL=local[1]","--c","isJsonDirDelete=true", "--c" ,"isTmpDirDelete=false")
+//      "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendo8dc5mlsr/key_day=20170101/key_hour=00/a.json","--c","masterURL=local[1]","--c","isJsonDirDelete=true", "--c" ,"isTmpDirDelete=false")
+    //    "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170101/key_hour=00/a.json","--c","masterURL=local[1]")
+    //     "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95ktmsc1bnkechpgj9l/key_day=20170723/key_hour=01/boikgpokn78sb95ktmsc1bnkechpgj9l_2017072301_raw_0_1392502233.json.gz","--c","masterURL=local[1]")
+
     MainObj.main(args)
   }
 
@@ -170,8 +174,7 @@ class MainObjTest extends LogTrait{
    val line="{\n    \"_sync\":{\n            \"rawTopic\":\"log-raw-boikgpokn78sb95ktmsc1bnk\",\n            \"rawTs\":1497416396072,\n            \"odsTs\":1497416402715,\n            \"rawOffset\":575016728,\n            \"rawParId\":9\n        },\n    \"appId\":\"boikgpokn78sb95ktmsc1bnkechpgj9l\"\n}"
    val jsonObject = JSON.parseObject(line)
    val logBody = jsonObject.getJSONObject("_sync")
-    println(logBody)
-    jsonObject.putAll(logBody)
+
     jsonObject.asInstanceOf[java.util.Map[String, Object]].putAll(logBody.asInstanceOf[java.util.Map[String, Object]])
     jsonObject.remove("_sync")
     println(jsonObject)

@@ -39,6 +39,8 @@ fi
 #日期减去一个小时，获得新的日期
 newDate=`date -d "${d} ${h} -1 hour" +"%Y%m%d"`
 newHour=`date -d "${d} ${h} -1 hour" +"%H"`
-inputPath=/data_warehouse/ods_origin.db/log_origin/*/key_day=${newDate}/key_hour=${newHour}
-echo "inputPath:${inputPath},newDate:${newDate},isJsonDirDelete:${j},isTmpDirDelete:${t},taskFlag:${f}"
-sh ${service_bin_home}/submit.sh cn.whaley.bi.logsys.log2parquet.MainObj MsgProcExecutor --f MsgBatchManagerV3.xml,settings.properties --c inputPath=${inputPath} --c isJsonDirDelete=${j} --c isTmpDirDelete=${t} --c taskFlag=${f}
+inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId2=*/key_day=${newDate}/key_hour=${newHour}
+##微鲸电视主程序
+##inputPath=/data_warehouse/ods_origin.db/log_origin/key_appId2=boikgpokn78sb95kjhfrendo8dc5mlsr/key_day=${newDate}/key_hour=${newHour}
+echo "inputPath:${inputPath},newDate:${newDate},taskFlag:${f}"
+sh ${service_bin_home}/submit.sh cn.whaley.bi.logsys.log2parquet.MainObj MsgProcExecutor --f MsgBatchManagerV3.xml,settings.properties --c inputPath=${inputPath} --c startDate=${newDate} --c startHour=${newHour} --c taskFlag=${f}
