@@ -15,7 +15,7 @@ pwd=`pwd`
 
 source ./envFn.sh
 
-load_properties ../conf/spark.properties
+load_properties ../conf/spark_log2parquet.properties
 
 #params: $1 className, $2 propName
 getSparkProp(){
@@ -57,6 +57,8 @@ spark_yarn_queue=$(getSparkProp $MainClass "spark.yarn.queue")
 
 export CLASSPATH=.:${CLASSPATH}:${pwd}/../conf
 
+dependenceDir=/data/apps/azkaban/log2parquet
+
 for file in ../conf/*
 do
 	if [ -n "$resFiles" ]; then
@@ -65,6 +67,19 @@ do
 		resFiles="$file"
     fi
 done
+for file in ${dependenceDir}/lib/*.jar
+do
+    if [[ "$file" == *${spark_mainJarName} ]]; then
+        echo "skip $file"
+    else
+        if [ -n "$jarFiles" ]; then
+            jarFiles="$jarFiles,$file"
+        else
+            jarFiles="$file"
+        fi
+    fi
+done
+
 
 for file in ../lib/*.jar
 do
@@ -78,6 +93,9 @@ do
         fi
     fi
 done
+
+
+
 
 #if [ -f "/data/apps/azkaban/share/libs/phoenix-4.10.0-HBase-1.2-thin-client-without-hadoop.jar" ]; then
 #    jarFiles="$jarFiles,/data/apps/azkaban/share/libs/phoenix-4.10.0-HBase-1.2-thin-client-without-hadoop.jar"

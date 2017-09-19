@@ -5,44 +5,35 @@ pwd=`pwd`
 echo "${pwd}"
 service_bin_home="../sbin"
 
-ARGS=`getopt -o p:d:m:j:t:f -l path:,startDate:,startHour:,isJsonDirDelete:,isTmpDirDelete:,taskFlag: -- "$@"`
+usage() { echo "Usage: $0 [-d <string:day> -h <string:hour>  -f <string:taskFlag>]" 1>&2; exit 1; }
 
-#将规范化后的命令行参数分配至位置参数（$1,$2,...)
-eval set -- "${ARGS}"
-while true
-do
-    case "$1" in
-        -p|--path)
-            path=$2;
-            shift 2;;
-		-d|--startDate)
-            startDate=$2;
-            shift 2;;
-        -m|--startHour)
-            startHour=$2;
-            shift 2;;
-        -j|--isJsonDirDelete)
-            isJsonDirDelete=$2;
-            shift 2;;
-        -t|--isTmpDirDelete)
-            isTmpDirDelete=$2;
-            shift 2;;
-        -f|--taskFlag)
-            taskFlag=$2;
-            shift 2;;
-        --)
-            shift;
-            break;;
+while getopts ":d:h:f:" o; do
+    case "${o}" in
+        d)
+            d=${OPTARG}
+            ;;
+        h)
+            h=${OPTARG}
+            ;;
+        f)
+            f=${OPTARG}
+            ;;
         *)
-            exit 1
+            usage
             ;;
     esac
 done
+shift $((OPTIND-1))
 
-newDate=`date -d "${startDate} ${startHour} -1 hour" +"%Y%m%d"`
-newHour=`date -d "${startDate} ${startHour} -1 hour" +"%H"`
+if [ -z "${d}" ] || [ -z "${h}" ] ||  [ -z "${f}" ]; then
+    usage
+fi
 
-echo "path:${path},newDate:${newDate},newHour:${newHour},isJsonDirDelete:${isJsonDirDelete},isTmpDirDelete:${isTmpDirDelete},taskFlag:${taskFlag}"
-inputPath=${path}/key_day=${newDate}/key_hour=${newHour}
-echo "${inputPath}"
-sh ${service_bin_home}/submit.sh cn.whaley.bi.logsys.log2parquet.MainObj MsgProcExecutor --f MsgBatchManagerV3.xml,settings.properties --c inputPath=${inputPath} --c isJsonDirDelete=${isJsonDirDelete} --c isTmpDirDelete=${isTmpDirDelete} --c taskFlag=${taskFlag}
+
+#日期减去一个小时，获得新的日期
+newDate=`date -d "${d} ${h} -1 hour" +"%Y%m%d"`
+newHour=`date -d "${d} ${h} -1 hour" +"%H"`
+inputPath=/data_warehouse/ods_origin.db/log_origin/key_day=${newDate}/key_hour=${newHour}
+##微鲸电视主程序
+echo "inputPath:${inputPath},newDate:${newDate},taskFlag:${f}"
+sh ${service_bin_home}/submit_log2parquet.sh cn.whaley.bi.logsys.log2parquet.MainObj MsgProcExecutor --f MsgBatchManagerV3.xml,settings.properties --c inputPath=${inputPath} --c startDate=${newDate} --c startHour=${newHour} --c taskFlag=${f}

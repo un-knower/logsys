@@ -90,7 +90,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
     val processedRdd = rdd_original.map(e => {
       processGroupInstance.process(e)
-    }).repartition(3000)
+    })
+//      .repartition(3000)
       .persist(StorageLevel.MEMORY_AND_DISK)
 
 
@@ -118,7 +119,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //将经过处理器处理后，正常状态的记录使用规则库过滤【字段黑名单、重命名、行过滤】
     val okRowsRdd = processedRdd.filter(row => !row.hasErr).map(row=>row.result.get)
     //解析出输出目录
-    val rddSchame = metaDataUtils.parseLogObjRddPath(okRowsRdd)(myAccumulator)
+    val rddSchame = metaDataUtils.parseLogObjRddPath(okRowsRdd,startDate,startHour)(myAccumulator)
       .persist(StorageLevel.MEMORY_AND_DISK)
     val pathRdd = rddSchame.map(row=>{
       val path = row._1
@@ -130,10 +131,12 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       val schema = row._3
       (path,schema)
     }).distinct().collect()
+
     val afterRuleRdd = ruleHandle(sc,pathRdd)(myAccumulator,renameFiledMyAcc,removeFiledMyAcc)
     //输出正常记录到HDFS文件
     println("-------Json2ParquetUtil.saveAsParquet start at "+new Date())
     Json2ParquetUtil.saveAsParquet(afterRuleRdd,time,sparkSession)
+//    println(s"afterRuleRdd count : ${afterRuleRdd.count()}")
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
     rddSchame.unpersist()
     processedRdd.unpersist()
@@ -177,7 +180,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       val key = r._1
       key match {
         case "exceptionJsonAcc" => println("处理链前删除异常记录数 : "+r._2)
-
         case "jsonRowAcc" => println("规则处理后的记录数 : "+r._2)
         case "okRowAcc" => println("处理链后成功记录数 : "+r._2)
         case "deleteRowAcc" => println("规则处理删除记录数 : "+r._2)
@@ -186,7 +188,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         case _ => ""
       }
     })
-
     //生成元数据信息给元数据模块使用
 
    val taskFlag = confManager.getConf("taskFlag")

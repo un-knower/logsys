@@ -116,3 +116,13 @@ b. select * from metadata.applog_key_field_desc where APPID='boikgpokn78sb95ktms
 分区字段为：
 key_day=xxx/key_hour=yyy
 通过logTime获得key_day和key_hour
+
+
+select * from  METADATA.APPLOG_KEY_FIELD_DESC where FIELDNAME='actionId' and FIELDFLAG = 2;
+		  | ALL    | actionId   | 2          | 1           | ALL           | false      | 2017-07-11 08:14:19.595  | 2017-07-11 08:14:19.595  |
+
+select * from  METADATA.APPLOG_KEY_FIELD_DESC where FIELDNAME='eventId' and FIELDFLAG = 2;
+		  ALL    | eventId    | 2          | 0           | ALL           | false      | 2017-07-11 08:14:19.581  | 2017-07-11 08:14:19.581
+
+ select * from METADATA.APPLOG_KEY_FIELD_DESC where FIELDNAME='logType' and FIELDFLAG = 1;
+		  | ALL    | logType    | 1          | 3           |               | false      | 2017-07-11 07:50:24.244  | 2017-07-11 07:50:24.244  |

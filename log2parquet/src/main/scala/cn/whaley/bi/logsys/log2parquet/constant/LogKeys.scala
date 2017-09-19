@@ -18,6 +18,7 @@ object LogKeys {
     val SPEED = "speed"
     val SIZE = "size"
     val EVENT = "event"
+    val START_END = "start_end"
     val PRE_MEMORY = "preMemory"
     val POST_MEMORY = "postMemory"
     val CONTENT_TYPE = "contentType"
@@ -82,5 +83,11 @@ object LogKeys {
 
   val LOG_BODY_STACK_TRACE="STACK_TRACE"
     //---用来log2parquet使用,end
+
+
+  //处理ip
+  val REMOTE_IP = "remoteIp"
+  val FORWARDED_IP = "forwardedIp"
+  val REAL_IP = "realIP"
 
 }

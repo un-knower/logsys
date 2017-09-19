@@ -1,15 +1,11 @@
 package cn.whaley.bi.logsys.log2parquet.utils
 
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.regex.Pattern
 
-import cn.whaley.bi.logsys.log2parquet.ProcessResult
 import cn.whaley.bi.logsys.log2parquet.constant.LogKeys
 import cn.whaley.bi.logsys.metadata.entity.AppLogKeyFieldDescEntity
-import com.alibaba.fastjson.{JSON, JSONObject}
+import com.alibaba.fastjson.JSONObject
 import org.apache.spark.rdd.RDD
-import org.apache.spark.util.LongAccumulator
 
 
 case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
@@ -68,10 +64,9 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
     /**
      * 对RDD的每条记录解析其输出路径,格式错误的行将被忽略
       *
-      * @param rdd
      * @return
      */
-    def parseLogStrRddPath(rdd: RDD[String])(implicit accumulator:LongAccumulator=rdd.sparkContext.longAccumulator): RDD[(String, JSONObject, scala.collection.mutable.Map[String,String])] = {
+ /*   def parseLogStrRddPath(rdd: RDD[String])(implicit accumulator:LongAccumulator=rdd.sparkContext.longAccumulator): RDD[(String, JSONObject, scala.collection.mutable.Map[String,String])] = {
         val jsonObjRdd = rdd.map(row => {
             try {
                 Some(JSON.parseObject(row))
@@ -83,7 +78,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
             }
         }).filter(row => row.isDefined).map(row => row.get)
         parseLogObjRddPath(jsonObjRdd)
-    }
+    }*/
 
     /**
      * 对RDD的每条记录解析其输出路径
@@ -91,13 +86,14 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
       * @param rdd
      * @return
      */
-    def parseLogObjRddPath(rdd: RDD[JSONObject])(implicit myAccumulator:MyAccumulator=new MyAccumulator
+    def parseLogObjRddPath(rdd: RDD[JSONObject],key_day:String,key_hour:String)
+                          (implicit myAccumulator:MyAccumulator=new MyAccumulator
                           ): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
         val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
         val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
         val parFieldMap = resolveAppLogKeyFieldDescConfig(2)
 
-        rdd.map(jsonObj => parseLogObjPath(myAccumulator,jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap)).filter(rdd=>rdd._1 !=null)
+        rdd.map(jsonObj => parseLogObjPath(myAccumulator,jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap,key_day,key_hour)).filter(rdd=>rdd._1 !=null)
     }
 
   /*  def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
@@ -122,7 +118,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                         , dbNameFieldMap: Map[String, List[(String, String, String, Int)]]
                         , tabNameFieldMap: Map[String, List[(String, String, String, Int)]]
                         , parFieldMap: Map[String, List[(String, String, String, Int)]]
-                           ): (String,JSONObject, scala.collection.mutable.Map[String,String]) = {
+                        ,key_day:String,key_hour:String): (String,JSONObject, scala.collection.mutable.Map[String,String]) = {
         val appId = logObj.getString(LogKeys.LOG_APP_ID)
         var dbNameFields = dbNameFieldMap.get(appId)
         var tabNameFields = tabNameFieldMap.get(appId)
@@ -132,45 +128,57 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         if (tabNameFields.isEmpty) tabNameFields = tabNameFieldMap.get("ALL")
         if (parFields.isEmpty) parFields = parFieldMap.get("ALL")
 
-        val dbTuple=getOrDefault(0, logObj, dbNameFields)
+        val dbTuple=getOrDefault(0, logObj, dbNameFields,key_day,key_hour)
         val dbNameStr =  dbTuple._1
         val dbMap =  dbTuple._2
 
-        val tableTuple = getOrDefault(1, logObj, tabNameFields)
+        val tableTuple = getOrDefault(1, logObj, tabNameFields,key_day,key_hour)
         val tabNameStr =tableTuple._1
         val tableMap =tableTuple._2
 
-        val parTuple = getOrDefault(2, logObj, parFields)
+        val parTuple = getOrDefault(2, logObj, parFields,key_day,key_hour)
         val parStr = parTuple._1
         val parMap = parTuple._2
-
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
         if(!isValid(parStr) || !isValid(tabNameStr) || !isValid(dbNameStr) ){
             myAccumulator.add("exceptionJsonAcc")
-//            accumulator.add(1L)
             path = null
         }
         (path, logObj,dbMap++tableMap++parMap+(LogKeys.LOG_APP_ID->appId))
     }
 
     //优先级: jsonObj字段值 -> conf字段值 , 如果两者都为空,则忽略该字段
-    def getOrDefault(fieldFlag: Int, jsonObj: JSONObject, conf: Option[List[(String, String, String, Int)]]): (String,scala.collection.mutable.HashMap[String,String]) = {
+    def getOrDefault(fieldFlag: Int, jsonObj: JSONObject,
+                     conf: Option[List[(String, String, String, Int)]],
+                     key_day:String,key_hour:String): (String,scala.collection.mutable.HashMap[String,String]) = {
         if (conf.isDefined) {
 
           val logBody = jsonObj //jsonObj.getJSONObject("logBody")
           //特殊处理 在没有logType，只有logtype的情况下，将logtype重命名为logType
-          if(logBody.containsKey("logtype") && !logBody.containsKey("logType")){
+          if(logBody.containsKey("logtype") && !logBody.containsKey(LogKeys.LOG_TYPE)){
             val logType = logBody.get("logtype")
-            logBody.put("logType",logType)
+            logBody.put(LogKeys.LOG_TYPE,logType)
             logBody.remove("logtype")
           }
+
+            //处理table 路径生成规则
+            val logType = logBody.getString(LogKeys.LOG_TYPE)
+            val realLogType = if(LogKeys.EVENT.equals(logType)){
+                logBody.getString(LogKeys.LOG_BODY_EVENT_ID)
+            }else if(LogKeys.START_END.equals(logType)){
+                logBody.getString(LogKeys.LOG_BODY_ACTION_ID)
+            }else{
+                logType
+            }
+
+            logBody.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
             val fields = conf.get.map(field => {
                 val fieldName = field._2
                 var fieldValue = field._3
                 val fieldOrder = field._4
 
-                if (fieldName == "key_day" && !logBody.containsKey("key_day")) {
+                /*if (fieldName == "key_day" && !logBody.containsKey("key_day")) {
                     val logTime = new Date()
                     logTime.setTime(jsonObj.getLongValue("logTime"))
                     fieldValue = new SimpleDateFormat("yyyyMMdd").format(logTime)
@@ -178,7 +186,14 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                     val logTime = new Date()
                     logTime.setTime(jsonObj.getLongValue("logTime"))
                     fieldValue = new SimpleDateFormat("HH").format(logTime)
+                }*/
+
+                if (fieldName == LogKeys.LOG_KEY_DAY) {
+                    fieldValue = key_day
+                } else if (fieldName == LogKeys.LOG_KEY_HOUR) {
+                    fieldValue = key_hour
                 }
+
 
                 if (logBody.containsKey(fieldName)
                     && logBody.get(fieldName) != null
@@ -191,6 +206,8 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                     None
                 }
             }).filter(item => item.isDefined).map(item => item.get).sortBy(item => item._3)
+
+
             val map = scala.collection.mutable.HashMap.empty[String,String]
             if (fieldFlag == 0 || fieldFlag == 1) {
                 val name=fields.map(item => {
