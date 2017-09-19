@@ -20,6 +20,7 @@
         <module>ods-view-metadata</module>
         <module>file-compressor</module>
         <module>hadoop-support</module>
+        <module>batch-forest</module>
 
     </modules>
 

@@ -15,17 +15,17 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-
 /**
- * Created by fj on 16/10/30.
- */
+  * Created by fj on 16/10/30.
+  */
 class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
     type KafkaMessage = ConsumerRecord[Array[Byte], Array[Byte]]
 
 
-    /**
-     * 初始化方法
+/**
+  * 初始化方法
+
      * 如果初始化异常，则应该抛出异常
      */
     override def init(confManager: ConfManager = new ConfManager(Array("MsgBatchManager.xml"))): Unit = {

@@ -1,0 +1,5 @@
+type=command
+dependencies=batch_forest
+command=sh ${working.dir}/../sbin/log2parquet.sh -d ${startDate} -h ${startHour}  -f ${taskFlag}
+
+#所有程序AppId

@@ -41,4 +41,16 @@ class MainObjTest extends LogTrait{
 
 
   }
+
+  @Test
+  def testGZ(): Unit ={
+    val inputPath = "/data_warehouse/ods_origin.db/log_origin/key_appId2=boikgpokn78sb95ktmsc1bnkklf477ap/key_day=20170905/key_hour=19/boikgpokn78sb95ktmsc1bnkklf477ap_95065f50-41b3-496a-a53b-aab95399be50.json.gz"
+    val sparkContext = getSparkContext()
+    val rdd = sparkContext.textFile(inputPath).map(line=>{
+      println(line)
+    })
+
+    println(s"count ${rdd.count()}")
+  }
+
 }

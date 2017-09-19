@@ -1,4 +1,0 @@
-type=command
-command=sh ${working.dir}/../sbin/log2parquetDay.sh -p /data_warehouse/ods_origin.db/log_origin/key_appId=boikgpokn78sb95kjhfrendo8dc5mlsr  -d ${startDate} -j ${isJsonDirDelete} -t ${isTmpDirDelete} -f ${taskFlag}
-
-#微鲸电视主程序，按天运行

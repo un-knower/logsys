@@ -1,4 +1,0 @@
-type=command
-command=sh ${working.dir}/../sbin/log2parquetAllAppId.sh -d ${startDate} -h ${startHour} -j ${isJsonDirDelete} -t ${isTmpDirDelete} -f ${taskFlag}
-
-#所有程序AppId
