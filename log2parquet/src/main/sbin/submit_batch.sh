@@ -8,7 +8,7 @@ source ./envFn.sh
 load_properties ../conf/spark_batch.properties
 load_args $*
 
-ARGS=`getopt -o m:d:h --long mainClass:,startDate:,startHour: -- "$@"`
+ARGS=`getopt -o m:a:d:h --long mainClass:,appId:,startDate:,startHour: -- "$@"`
 
 #将规范化后的命令行参数分配至位置参数（$1,$2,...)
 eval set -- "${ARGS}"
@@ -18,6 +18,9 @@ do
     case "$1" in
         -m|--mainClass)
             mainClass=$2;
+            shift 2;;
+        -m|--appId)
+            appId=$2;
             shift 2;;
 		-d|--startDate)
             startDate=$2;
@@ -35,12 +38,15 @@ do
     esac
 done
 
-key_day=`date -d "${startDate} ${startHour} -1 hour" +"%Y%m%d"`
-key_hour=`date -d "${startDate} ${startHour} -1 hour" +"%H"`
+#key_day=`date -d "${startDate} ${startHour} -1 hour" +"%Y%m%d"`
+#key_hour=`date -d "${startDate} ${startHour} -1 hour" +"%H"`
+
+key_day=${startDate}
+key_hour=${startHour}
 
 inputPath="/data_warehouse/ods_origin.db/log_raw"
-
 echo "key_day is ${key_day}"
+echo "appId is ${appId}"
 echo "key_hour is ${key_hour}"
 echo "inputPath is ${inputPath}"
 #params: $1 className, $2 propName
@@ -123,4 +129,4 @@ ${spark_home}/bin/spark-submit -v \
  --conf spark.default.parallelism=${spark_default_parallelism} \
  --conf spark.yarn.queue=${spark_yarn_queue} \
  --conf spark.executor.cores=${spark_executor_cores} \
- --class $mainClass ${spark_mainJar} ${inputPath} ${key_day} ${key_hour}
+ --class $mainClass ${spark_mainJar} ${inputPath} ${appId} ${key_day} ${key_hour}

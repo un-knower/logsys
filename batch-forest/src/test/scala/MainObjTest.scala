@@ -53,4 +53,40 @@ class MainObjTest extends LogTrait{
     println(s"count ${rdd.count()}")
   }
 
+  @Test
+  def testFilter(): Unit ={
+    var array = Array("1","2","3","4")
+    val array2 = Array("3","4")
+    array = array.filter(f=>{
+      if(!array2.contains(f)){
+        true
+      }else{
+        false
+      }
+
+    })
+
+    println(array.toList.toString())
+  }
+
+
+  @Test
+  def test11(): Unit ={
+    val inputPath1 = "/data_warehouse/ods_view.db/log_medusa_main3x_*/key_day=20170918/*"
+    val inputPath2 = "/data_warehouse/ods_view.db/log_medusa_main3x_default/key_day=20170918/*"
+    val inputPath3 = "/data_warehouse/ods_view.db/log_whaleytv_main_*/key_day=20170918/*"
+    val inputPath4 = "/data_warehouse/ods_view.db/log_whaleytv_main_default/key_day=20170918/*"
+    val sparkContext = getSparkContext()
+    val cn1 = sparkContext.textFile(inputPath1).count()
+    println(s"cn1 $cn1")
+    val cn2 = sparkContext.textFile(inputPath2).count()
+    println(s"cn2 $cn2")
+    val cn3 = sparkContext.textFile(inputPath3).count()
+    println(s"cn3 $cn3")
+    val cn4 = sparkContext.textFile(inputPath4).count()
+    println(s"cn4 $cn4")
+
+
+
+  }
 }

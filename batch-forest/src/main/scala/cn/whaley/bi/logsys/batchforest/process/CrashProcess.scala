@@ -17,6 +17,7 @@ object CrashProcess extends NameTrait with LogTrait{
   def handleCrash(message:JSONObject)
                  (implicit myAccumulator:MyAccumulator=new MyAccumulator):Seq[Option[JSONObject]]={
     val msgBody = message.getJSONObject("msgBody")
+    msgBody.put("logType","crashlog")
     val appId = msgBody.getString("appId")
     val result = appId match {
       //whaley main crash 日志不做处理

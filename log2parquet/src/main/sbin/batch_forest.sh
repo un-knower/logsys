@@ -1,10 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 cd `dirname $0`
 pwd=`pwd`
-echo "${pwd}"
 
-ARGS=`getopt -o m:t:s:e:b:h --long mainClass:,taskFlag:,startDate:,endDate:,startHour:,endHour: -- "$@"`
+ARGS=`getopt -o m:a:s:e:b:h --long mainClass:,appId:,startDate:,endDate:,startHour:,endHour: -- "$@"`
 
 #将规范化后的命令行参数分配至位置参数（$1,$2,...)
 eval set -- "${ARGS}"
@@ -15,8 +14,8 @@ do
         -m|--mainClass)
             mainClass=$2;
             shift 2;;
-        -t|--taskFlag)
-            taskFlag=$2;
+        -a|--appId)
+            appId=$2;
             shift 2;;
 		-s|--startDate)
             startDate=$2;
@@ -48,15 +47,12 @@ while [[ ${startTime}  -le  ${endTime} ]]
     echo "execute time ... is ${startTime}"
     startDate=${startTime:0:8}
     startHour=${startTime:8:2}
-    inputPath=/data_warehouse/ods_origin.db/log_origin/key_day=${startDate}/key_hour=${startHour}
-    echo "inputPath:${inputPath},startDate:${startDate},startHour:${startHour},taskFlag:${taskFlag}"
-    sh  ./submit_log2parquet.sh ${mainClass} MsgProcExecutor --f MsgBatchManagerV3.xml,settings.properties --c inputPath=${inputPath} --c startDate=${startDate} --c startHour=${startHour} --c taskFlag=${taskFlag}
+    sh  ./submit_batch.sh  --mainClass ${mainClass} --appId ${appId} --startDate ${startDate} --startHour ${startHour}
     if [ $? -ne 0 ];then
-            echo "log2parquet ${startTime} is fail ..."
+            echo "batch forest ${startTime} is fail ..."
             exit 1
     fi
     startTime=`date -d "${startDate} ${startHour} 1 hour" +"%Y%m%d%H"`
 done
-
 
 

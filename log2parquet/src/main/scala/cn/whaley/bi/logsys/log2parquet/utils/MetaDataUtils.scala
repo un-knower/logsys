@@ -154,30 +154,76 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                      key_day:String,key_hour:String): (String,scala.collection.mutable.HashMap[String,String]) = {
         if (conf.isDefined) {
 
-          val logBody = jsonObj //jsonObj.getJSONObject("logBody")
+//          val logBody = jsonObj //jsonObj.getJSONObject("logBody")
           //特殊处理 在没有logType，只有logtype的情况下，将logtype重命名为logType
-          if(logBody.containsKey("logtype") && !logBody.containsKey(LogKeys.LOG_TYPE)){
-            val logType = logBody.get("logtype")
-            logBody.put(LogKeys.LOG_TYPE,logType)
-            logBody.remove("logtype")
+          if(jsonObj.containsKey("logtype") && !jsonObj.containsKey(LogKeys.LOG_TYPE)){
+            val logType = jsonObj.get("logtype")
+              jsonObj.put(LogKeys.LOG_TYPE,logType)
+              jsonObj.remove("logtype")
           }
 
             //处理table 路径生成规则
-            val logType = logBody.getString(LogKeys.LOG_TYPE)
-            val realLogType = if(LogKeys.EVENT.equals(logType)){
-                logBody.getString(LogKeys.LOG_BODY_EVENT_ID)
+            val logType = jsonObj.getString(LogKeys.LOG_TYPE)
+            var realLogType = if(LogKeys.EVENT.equals(logType)){
+                jsonObj.getString(LogKeys.LOG_BODY_EVENT_ID)
             }else if(LogKeys.START_END.equals(logType)){
-                logBody.getString(LogKeys.LOG_BODY_ACTION_ID)
+                jsonObj.getString(LogKeys.LOG_BODY_ACTION_ID)
             }else{
                 logType
             }
 
-            logBody.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
+            if(realLogType == null){
+                realLogType = "default"
+            }
+            val appId = jsonObj.getString("appId")
+            appId match {
+                case LogKeys.WUI_20_APPID =>{
+                    //修复wui20,未打logType字段
+                    if(realLogType == "default"){
+                        val eventId = jsonObj.getString("eventId")
+                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
+                        jsonObj.put(LogKeys.LOG_TYPE,"event")
+                    }
+                }
+                case LogKeys.EAGLE_APPID =>{
+                    //修复eagle,未打logType字段
+                    if(realLogType == "default"){
+                        val eventId = jsonObj.getString("eventId")
+                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
+                        jsonObj.put(LogKeys.LOG_TYPE,"event")
+                    }
+                }
+                case LogKeys.EPOP_APPID =>{
+                    //修复epop  线下店演示用的应用，作用是 保证所有电视播的画面是同步的
+                    if(realLogType == "default"){
+                        val eventId = jsonObj.getString("eventId")
+                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
+                        jsonObj.put(LogKeys.LOG_TYPE,"event")
+                    }
+                }
+                case LogKeys.GLOBAL_MENU_2_APPID =>{
+                    //修复global_menu_2 全局菜单2.0
+                    if(realLogType == "default"){
+                        val eventId = jsonObj.getString("eventId")
+                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
+                        jsonObj.put(LogKeys.LOG_TYPE,"event")
+                    }
+                }
+                case LogKeys.MOBILEHELPER_APPID =>{
+                    //修复mobilehelper 微鲸手机助手
+                    if(realLogType == "default"){
+                        val eventId = jsonObj.getString("eventId")
+                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
+                        jsonObj.put(LogKeys.LOG_TYPE,"event")
+                    }
+                }
+                case _ => ""
+            }
+            jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
             val fields = conf.get.map(field => {
                 val fieldName = field._2
                 var fieldValue = field._3
                 val fieldOrder = field._4
-
                 /*if (fieldName == "key_day" && !logBody.containsKey("key_day")) {
                     val logTime = new Date()
                     logTime.setTime(jsonObj.getLongValue("logTime"))
@@ -195,10 +241,10 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 }
 
 
-                if (logBody.containsKey(fieldName)
-                    && logBody.get(fieldName) != null
-                    && logBody.get(fieldName).toString.trim.length > 0) {
-                    fieldValue = logBody.get(fieldName).toString
+                if (jsonObj.containsKey(fieldName)
+                    && jsonObj.get(fieldName) != null
+                    && jsonObj.get(fieldName).toString.trim.length > 0) {
+                    fieldValue = jsonObj.get(fieldName).toString
                 }
                 if (fieldValue != null && fieldValue.trim.length > 0) {
                     Some((fieldName, fieldValue, fieldOrder))

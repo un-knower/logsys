@@ -37,18 +37,53 @@ object MainObj extends NameTrait with LogTrait{
       sparkContext.register(myAccumulator,"myAccumulator")
       //路径处理
       val inputPath = args(0)
-      val key_day =args(1)
-      val key_hour = args(2)
+      val appId = args(1)
+      val key_day =args(2)
+      val key_hour = args(3)
       val config = new Configuration()
       val fs = FileSystem.get(config)
       val fileStatus = fs.listStatus(new Path(s"$inputPath/key_day=${key_day}/key_hour=${key_hour}"))
-      val paths = new ArrayBuffer[String]()
+      var paths = new ArrayBuffer[String]()
       fileStatus.foreach(f=>{
         val path = f.getPath.toString
-        if(path.contains("boikgpokn78sb95k") && !path.contains("boikgpokn78sb95kbqei6cc98dc5mlsr")){
+        if(path.split("/").size == 9 && path.split("/")(8).startsWith("boikgpokn78sb95k")){
           paths.append(path)
         }
       })
+
+
+      //过滤的appId,不需要处理
+      val filterAppId = Array("boikgpokn78sb95k0000000000000000",
+        "boikgpokn78sb95ktmsc1bnkbe9pbhgu",
+        "boikgpokn78sb95ktmsc1bnkfipphckl",
+        "boikgpokn78sb95kjtihcg268dc5mlsr",
+        "boikgpokn78sb95kbqei6cc98dc5mlsr",
+        "boikgpokn78sb95kkls3bhmtjqosocdj",
+        "boikgpokn78sb95kkls3bhmtichjhhm8",
+        "boikgpokn78sb95ktmsc1bnkklf477ap",
+        "boikgpokn78sb95kicggqhbkepkseljn")
+
+      paths = appId match {
+        //过滤不需要转换的appId
+        case "all" =>{
+          paths = paths.filter(path=>{
+            if(!filterAppId.contains(path.split("/")(8).split("\\.")(0))){
+              true
+            }else{
+              false
+            }
+          })
+          paths
+        }
+        //指定的appId
+        case _ =>{
+          paths = paths.filter(p=>{
+            p.contains(appId)
+          })
+          paths
+        }
+
+      }
       var inputRdd:RDD[String ] = sparkContext.textFile(paths(0))
       for(i<- 1 to paths.size -1){
         val rdd = sparkContext.textFile(paths(i))

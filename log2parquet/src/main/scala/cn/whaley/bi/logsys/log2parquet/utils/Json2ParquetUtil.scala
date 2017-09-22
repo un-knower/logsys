@@ -27,8 +27,14 @@ object Json2ParquetUtil {
         val jsonDir = s"${outputPathTmp}_json"
         val tmpDir = s"${outputPathTmp}_tmp"
         //运行任务之前重建临时文件目录
-        fs.deleteOnExit(new Path(jsonDir))
-        fs.deleteOnExit(new Path(tmpDir))
+
+        if(fs.exists(new Path(jsonDir))){
+            fs.delete(new Path(jsonDir),true)
+        }
+        if(fs.exists(new Path(tmpDir))){
+            fs.delete(new Path(tmpDir),true)
+        }
+
         if(!fs.exists(new Path(jsonDir))){
             fs.mkdirs(new Path(jsonDir))
         }
@@ -130,7 +136,7 @@ object Json2ParquetUtil {
            }
        }
 
-      if (!preserveJsonDir) {
+     /* if (!preserveJsonDir) {
            fs.delete(new Path(jsonDir), true)
            println(s"delete dir:$jsonDir")
        }else{
@@ -139,7 +145,7 @@ object Json2ParquetUtil {
                fs.delete(new Path(jsonDir), true)
                println(s"delete empty dir:$jsonDir")
            }
-       }
+       }*/
     }
 }
 
@@ -156,7 +162,7 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
             sparkSession.read.json(inputPath).coalesce(jsonSplitNum).write.mode(SaveMode.Overwrite).parquet(outputPath)
             println(s"write file: $outputPath")
             //删除输入目录
-            //fs.delete(new Path(inputPath), true)
+            fs.delete(new Path(inputPath), true)
             val outputSize = fs.getContentSummary(new Path(outputPath)).getLength
             s"convert file: $inputPath(${inputSize / 1024}k) -> $outputPath(${outputSize / 1024}k),ts:${System.currentTimeMillis() - tsFrom}"
 

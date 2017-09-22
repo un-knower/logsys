@@ -102,16 +102,19 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }
         row.hasErr
     })
-
+    val conf = new Configuration()
+    val fs = FileSystem.get(conf)
     val startDate = confManager.getConf("startDate")
     val startHour = confManager.getConf("startHour")
     val time = s"${startDate}${startHour}"
     if(errRowsRdd.count()>0){
       val errRowNum = myAccumulator.value.getOrElseUpdate("errRowAcc",0)
       println(s"处理链后失败记录数 : $errRowNum")
-      val conf = new Configuration()
-      val fs = FileSystem.get(conf)
+
       val errOutPath = s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}"
+      if(fs.exists(new Path(errOutPath))){
+        fs.delete(new Path(errOutPath),true)
+      }
       fs.deleteOnExit(new Path(errOutPath))
       errRowsRdd.repartition(5).saveAsTextFile(errOutPath)
     }
@@ -137,9 +140,16 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     println("-------Json2ParquetUtil.saveAsParquet start at "+new Date())
     Json2ParquetUtil.saveAsParquet(afterRuleRdd,time,sparkSession)
 //    println(s"afterRuleRdd count : ${afterRuleRdd.count()}")
+//    System.exit(1)
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
     rddSchame.unpersist()
     processedRdd.unpersist()
+    //删除输入数据源
+    if(fs.exists(new Path(inputPath))){
+      fs.delete(new Path(inputPath),true)
+    }
+
+
     println("=============== 规则处理移除字段 =============== ：")
     removeFiledMyAcc.value.toList.sortBy(_._2).foreach(r=>{
       if(isValid(r._1)){

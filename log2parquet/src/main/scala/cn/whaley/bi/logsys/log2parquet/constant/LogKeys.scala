@@ -72,6 +72,8 @@ object LogKeys {
 
   //----------拼接输出路径使用
    //logTime计算出来的字段
+   val  LOG_PRODUCT_CODE = "product_code"
+    val  LOG_APP_CODE = "app_code"
     val LOG_KEY_DAY = "key_day"
     val LOG_KEY_HOUR = "key_hour"
     val LOG_OUTPUT_PATH = "output_path"
@@ -89,5 +91,21 @@ object LogKeys {
   val REMOTE_IP = "remoteIp"
   val FORWARDED_IP = "forwardedIp"
   val REAL_IP = "realIP"
+  //修复wui20 WUI2.0
+  val WUI_20_APPID = "boikgpokn78sb95kjhfrendoj8ilnoi7"
+  val WUI_20 = "wui20"
+  //修复eagle
+  val EAGLE_APPID = "boikgpokn78sb95k7id7n8eb8dc5mlsr"
+  val EAGLE = "eagle"
 
+  //修复epop  线下店演示用的应用，作用是 保证所有电视播的画面是同步的
+  val EPOP_APPID = "boikgpokn78sb95kjhfrendobgjgjolq"
+  val EPOP = "epop"
+  //修复global_menu_2 全局菜单2.0
+  val GLOBAL_MENU_2_APPID = "boikgpokn78sb95kjhfrendoepkseljn"
+  val GLOBAL_MENU_2 = "global_menu_2"
+
+  //修复mobilehelper 微鲸手机助手
+  val MOBILEHELPER_APPID = "boikgpokn78sb95kjhfrendojtihcg26"
+  val MOBILEHELPER = "mobilehelper"
 }

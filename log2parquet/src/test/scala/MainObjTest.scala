@@ -95,7 +95,7 @@ class MainObjTest extends LogTrait{
   @Test
   def postTaskId2MetaModel(): Unit ={
     //http://bigdata-appsvr-130-5:8084/metadata/processTask/AAABXS9LtE8K4Ax2FoAAAAA/111
-    val taskId="AAABXS9LtE8K4Ax2FoAAAAA"
+    val taskId="AAABXqhdFC4K4Akn1AAAAAA"
     val taskFlag="111"
     val response=getUtils.metadataService().postTaskId2MetaModel(taskId,taskFlag)
    println(response)
