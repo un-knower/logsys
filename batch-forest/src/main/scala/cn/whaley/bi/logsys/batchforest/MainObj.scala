@@ -137,7 +137,7 @@ object MainObj extends NameTrait with LogTrait{
         log.put("date",date)
         log.put("datetime",datetime)
         log
-      }).repartition(1000)
+      }).repartition(850)
 
       val outputPath = s"/data_warehouse/ods_origin.db/log_origin/key_day=${key_day}/key_hour=${key_hour}"
       if(fs.exists(new Path(outputPath))){

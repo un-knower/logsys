@@ -40,8 +40,8 @@ do
     esac
 done
 
-startTime=`date -d "$startDate $startHour -24 hour" +"%Y%m%d%H"`
-endTime=`date -d "$endDate $endHour -24 hour" +"%Y%m%d%H"`
+startTime=`date -d "$startDate $startHour -1 hour" +"%Y%m%d%H"`
+endTime=`date -d "$endDate $endHour -1 hour" +"%Y%m%d%H"`
 
 while [[ ${startTime}  -le  ${endTime} ]]
    do

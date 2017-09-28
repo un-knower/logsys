@@ -14,7 +14,6 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import java.util.List;
 import java.util.function.Consumer;
 
-
 /**
  * Created by fj on 2017/6/16.
  */

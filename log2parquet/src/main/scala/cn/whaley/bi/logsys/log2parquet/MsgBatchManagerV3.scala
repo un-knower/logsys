@@ -90,9 +90,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
     val processedRdd = rdd_original.map(e => {
       processGroupInstance.process(e)
-    })
-//      .repartition(3000)
-      .persist(StorageLevel.MEMORY_AND_DISK)
+    }).persist(StorageLevel.MEMORY_AND_DISK)
 
 
     //输出异常记录到HDFS文件
@@ -145,8 +143,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     rddSchame.unpersist()
     processedRdd.unpersist()
     //删除输入数据源
-    if(fs.exists(new Path(inputPath))){
-      fs.delete(new Path(inputPath),true)
+   if(fs.exists(new Path(inputPath))){
+      fs.delete(new Path(inputPath.split("/key_hour")(0)),true)
     }
 
 
@@ -202,7 +200,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
    val taskFlag = confManager.getConf("taskFlag")
     assert(taskFlag.length==3)
+    println("-------generateMetaDataToTable start at "+new Date())
     generateMetaDataToTable(sparkSession, pathSchema,taskFlag)
+    println("-------generateMetaDataToTable start at "+new Date())
   }
 
 
@@ -214,6 +214,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //生成元组的RDD，元组内容为:(输出路径,用来拼接表名称或分区的字段的Map[logType->detail,key_day->20170712,....])
     val path_file_value_map = pathSchema
     println("path_file_value_map.length():" + path_file_value_map.length)
+
     //生成taskId
     val generator = IdGenerator.defaultInstance
     val taskId = generator.nextId().replace("/", "")
@@ -281,8 +282,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       if (remain > 0) {
         val fragment = seq.slice(times * batchSize, seq.length)
         val responseFieldDesc = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, fragment)
-        LOG.info(s"FieldValue_remain $remain: " + responseFieldDesc.toJSONString)
-        println(s"----FieldValue_remain $remain: " + responseFieldDesc.toJSONString)
+        LOG.info(s"FieldValue_remain ${fragment.length}: " + responseFieldDesc.toJSONString)
+        println(s"----FieldValue_remain ${fragment.length}: " + responseFieldDesc.toJSONString)
       }
     } else {
       val responseFieldDesc = metaDataUtils.metadataService().putLogFileKeyFieldValue(taskId, seq)
@@ -315,8 +316,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       if (remain > 0) {
         val fragment = seq.slice(times * batchSize, seq.length)
         val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, fragment)
-        LOG.info(s"remain $remain: " + responseFieldDesc.toJSONString)
-        println(s"----remain $remain: " + responseFieldDesc.toJSONString)
+        LOG.info(s"remain ${fragment.length}: " + responseFieldDesc.toJSONString)
+        println(s"----remain ${fragment.length}: " + responseFieldDesc.toJSONString)
       }
     } else {
       val responseFieldDesc = metaDataUtils.metadataService().putLogFileFieldDesc(taskId, seq)

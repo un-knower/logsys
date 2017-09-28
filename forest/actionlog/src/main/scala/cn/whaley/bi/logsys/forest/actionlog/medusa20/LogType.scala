@@ -41,7 +41,7 @@ object LogType {
   val OPERATION_ST = "operation-st"
 
   //corrupt log type
-  val CORRUPT = "_corrupt"
+  val CORRUPT = "corrupt"
 //  val CORRUPT_OPERATION = "corrupt/operation"
 //  val CORRUPT_PLAY = "corrupt/play"
 //  val CORRUPT_DETAIL = "corrupt/detail"

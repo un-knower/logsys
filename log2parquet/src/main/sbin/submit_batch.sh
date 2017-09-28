@@ -38,8 +38,6 @@ do
     esac
 done
 
-#key_day=`date -d "${startDate} ${startHour} -1 hour" +"%Y%m%d"`
-#key_hour=`date -d "${startDate} ${startHour} -1 hour" +"%H"`
 
 key_day=${startDate}
 key_hour=${startHour}

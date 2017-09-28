@@ -1,3 +1,4 @@
 type=command
+dependencies=hdfsMonitor_day
 mainClass=cn.whaley.bi.logsys.batchforest.MainObj
 command=sh ${working.dir}/../sbin/batch_forest.sh --mainClass ${mainClass} --appId ${appId} --startDate ${startDate} --endDate ${endDate} --startHour ${startHour} --endHour ${endHour}

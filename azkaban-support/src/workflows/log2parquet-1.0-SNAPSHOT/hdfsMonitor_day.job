@@ -1,0 +1,2 @@
+type=command
+command=sh ${working.dir}/../sbin/hdfsMonitor.sh --startDate ${startDate} --endDate ${endDate} --startHour ${startHour} --endHour ${endHour}

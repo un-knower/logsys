@@ -172,14 +172,14 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 logType
             }
 
-            if(realLogType == null){
+            /*if(realLogType == null){
                 realLogType = "default"
-            }
+            }*/
             val appId = jsonObj.getString("appId")
             appId match {
                 case LogKeys.WUI_20_APPID =>{
                     //修复wui20,未打logType字段
-                    if(realLogType == "default"){
+                    if(realLogType == null){
                         val eventId = jsonObj.getString("eventId")
                         jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
@@ -187,7 +187,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 }
                 case LogKeys.EAGLE_APPID =>{
                     //修复eagle,未打logType字段
-                    if(realLogType == "default"){
+                    if(realLogType == null){
                         val eventId = jsonObj.getString("eventId")
                         jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
@@ -195,7 +195,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 }
                 case LogKeys.EPOP_APPID =>{
                     //修复epop  线下店演示用的应用，作用是 保证所有电视播的画面是同步的
-                    if(realLogType == "default"){
+                    if(realLogType == null){
                         val eventId = jsonObj.getString("eventId")
                         jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
@@ -203,7 +203,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 }
                 case LogKeys.GLOBAL_MENU_2_APPID =>{
                     //修复global_menu_2 全局菜单2.0
-                    if(realLogType == "default"){
+                    if(realLogType == null){
                         val eventId = jsonObj.getString("eventId")
                         jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
@@ -211,7 +211,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 }
                 case LogKeys.MOBILEHELPER_APPID =>{
                     //修复mobilehelper 微鲸手机助手
-                    if(realLogType == "default"){
+                    if(realLogType == null){
                         val eventId = jsonObj.getString("eventId")
                         jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
@@ -219,7 +219,11 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 }
                 case _ => ""
             }
-            jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
+
+            if(realLogType == null){
+              realLogType = "default"
+            }
+            jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType.toLowerCase)
             val fields = conf.get.map(field => {
                 val fieldName = field._2
                 var fieldValue = field._3
