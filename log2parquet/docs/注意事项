@@ -1,0 +1,2 @@
+1.productCode、appCode 不要包含下划线
+2.appCode不要为global,避免与global_menu_2冲突。理由在从path中获取到的的appcode为global会转换成global_menu_2

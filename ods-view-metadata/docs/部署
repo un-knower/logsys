@@ -1,0 +1,4 @@
+bigdata-appsvr-130-5
+spark用户
+cd /opt/ods-view-metadata/sbin
+sh launch.sh

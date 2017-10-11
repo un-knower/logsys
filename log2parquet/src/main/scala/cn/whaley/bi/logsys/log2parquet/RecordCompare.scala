@@ -21,7 +21,6 @@ object RecordCompare {
     val sparkSession = SparkSession.builder().appName(this.getClass.getSimpleName).config(conf).getOrCreate()
     val parquetPath="/data_warehouse/ods_view.db/"
     val jsonPath="/log/default/parquet/ods_view/1501055504124_json/"
-//    val totalParquetSize = sparkSession.read.parquet("/data_warehouse/ods_view.db/*/*/*/key_day=20170726/key_hour=04").count()
 //    val totalJsonSize = sparkSession.read.json("/log/default/parquet/ods_view/1501055504124_json/ods_view.db*key_day=20170726#key_hour=04").count()
 //    println("parquet total size is : "+totalParquetSize)
 //    println("json total size is : "+totalJsonSize)

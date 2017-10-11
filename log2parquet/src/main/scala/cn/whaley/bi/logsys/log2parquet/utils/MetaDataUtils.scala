@@ -45,18 +45,18 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
     def resolveAppLogKeyFieldDescConfig(confs: Seq[AppLogKeyFieldDescEntity]): Map[String, List[(String, String, String, Int)]] = {
         val rs = confs.map(row => (row.getAppId, row.getFieldName, row.getFieldDefault, row.getFieldOrder.toInt))
         rs.map(row => row._1).distinct.map(appId => {
-            //同一顺序只允许一个字段名
-            //合并,最多两行,ALL行和appId行
-            val appFields = rs.filter(row => row._1 == "ALL" || row._1 == appId)
-            val fields = appFields.groupBy(row => row._4).map(group => {
-                assert(group._2.map(item => item._2).distinct.size == 1)
-                if (group._2.size == 1 || group._2.head._1 != "ALL") {
-                    group._2(0)
-                } else {
-                    group._2(1)
-                }
-            }).toList.sortBy(row => row._4)
-            (appId, fields)
+          //同一顺序只允许一个字段名
+          //合并,最多两行,ALL行和appId行
+          val appFields = rs.filter(row => row._1 == "ALL" || row._1 == appId)
+          val fields = appFields.groupBy(row => row._4).map(group => {
+            assert(group._2.map(item => item._2).distinct.size == 1)
+            if (group._2.size == 1 || group._2.head._1 != "ALL") {
+              group._2(0)
+            } else {
+              group._2(1)
+            }
+          }).toList.sortBy(row => row._4)
+          (appId, fields)
         }).toMap
     }
 

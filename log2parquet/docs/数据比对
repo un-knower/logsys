@@ -1,0 +1,122 @@
+20点-21点
+whaley
+
+
+
+125.6 M  /data_warehouse/ods_view.db/log_whaleytv_main_play/eventId=ALL/actionId=ALL/key_day=20170904/key_hour=20
+156.5 K  /data_warehouse/ods_view.db/log_whaleytv_main_event/eventId=play/actionId=ALL/key_day=20170904/key_hour=20
+
+
+1.play
+/data_warehouse/ods_view.db/log_whaleytv_main_play/eventId=ALL/actionId=ALL/key_day=20170904/key_hour=*
+/data_warehouse/ods_view.db/log_whaleytv_main_event/eventId=play/actionId=ALL/key_day=20170904/key_hour=*
+select count(1) from  log_data where logTime between 1504526400000 and 1504530000000
+512074
+logTime 1115
+happenTime  1112
+/log/whaley/parquet/20170904/play/
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+513205
+select count(1) from  log_data where  happenTime between '1504526400' and '1504530000'
+1112
+
+
+
+2.on
+/data_warehouse/ods_view.db/log_whaleytv_main_on/eventId=ALL/actionId=ALL/key_day=20170904
+87788
+0
+/log/whaley/parquet/20170904/on/
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+87752
+select count(1) from  log_data where  happenTime between '1504526400' and '1504530000'
+0
+
+
+3.off
+/data_warehouse/ods_view.db/log_whaleytv_main_off/eventId=ALL/actionId=ALL/key_day=20170904/
+63799
+0
+/log/whaley/parquet/20170904/off/
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+63777
+select count(1) from  log_data where  happenTime between '1504526400' and '1504530000'
+0
+
+3.detail 详情
+/data_warehouse/ods_view.db/log_whaleytv_main_detail/eventId=ALL/actionId=ALL/key_day=20170904/key_hour=20
+148536
+/log/whaley/parquet/20170904/detail/
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+148549
+
+
+
+
+4.pageview 页面浏览
+/data_warehouse/ods_view.db/log_whaleytv_main_pageview/eventId=ALL/actionId=ALL/key_day=20170904/key_hour
+7307
+/log/whaley/parquet/20170904/pageview/
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+7299
+5.whaleylive 轮播
+/data_warehouse/ods_view.db/log_whaleytv_main_whaleylive/eventId=ALL/actionId=ALL/key_day=20170904/key_hour
+4449
+/log/whaley/parquet/20170904/whaleylive/
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+4449
+6.playqos 播放质量
+/data_warehouse/ods_view.db/log_whaleytv_main_playqos/eventId=ALL/actionId=ALL/key_day=20170904/key_hour
+431998
+/log/whaley/parquet/20170904/playqos/
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+432003
+7.voiceuse 语音
+/data_warehouse/ods_view.db/log_whaleytv_main_voiceuse/eventId=ALL/actionId=ALL/key_day=20170904/key_hour
+32738
+/log/whaley/parquet/20170904/voiceuse/
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+32736
+
+
+
+
+medusa
+
+1.play
+/data_warehouse/ods_view.db/log_medusa_main3x_play/eventId=ALL/actionId=ALL/key_day=20170904/key_hour
+10739978
+/log/medusa/parquet/20170904/play
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+10742051
+2.detail
+/data_warehouse/ods_view.db/log_medusa_main3x_detail/eventId=ALL/actionId=ALL/key_day=20170904/key_hour=
+2015581
+/log/medusa/parquet/20170904/detail
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+2015973
+3.pageview 页面浏览
+
+/data_warehouse/ods_view.db/log_medusa_main3x_pageview/eventId=ALL/actionId=ALL/key_day=20170904/key_hour
+4606
+/log/medusa/parquet/20170904/playview
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+4598
+4.live
+/data_warehouse/ods_view.db/log_medusa_main3x_live/eventId=ALL/actionId=ALL/key_day=20170904/key_hour
+1893876
+/log/medusa/parquet/20170904/live
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+1894248
+5.homeaccess 首页点击
+/data_warehouse/ods_view.db/log_medusa_main3x_homeaccess/eventId=ALL/actionId=ALL/key_day=20170904/key_hour
+1780098
+/log/medusa/parquet/20170904/homeaccess
+select datetime from  log_data where  datetime between '2017-09-04 20:00:00' and '2017-09-04 21:00:00'
+1780400
+
+
+
+
+
+

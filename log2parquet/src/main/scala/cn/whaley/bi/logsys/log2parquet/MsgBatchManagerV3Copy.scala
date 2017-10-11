@@ -12,9 +12,10 @@ import cn.whaley.bi.logsys.metadata.entity.{LogFileFieldDescEntity, LogFileKeyFi
 import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -22,7 +23,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 /**
   * Created by michael on 2017/6/22.
   */
-class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with java.io.Serializable {
+class MsgBatchManagerV3Copy extends InitialTrait with NameTrait with LogTrait with java.io.Serializable {
 
   var metaDataUtils: MetaDataUtils = null
 
@@ -93,24 +94,49 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
     val processedRdd = rdd_original.map(e => {
       processGroupInstance.process(e)
-    })
+    }).persist(StorageLevel.MEMORY_AND_DISK)
+
 
     //输出异常记录到HDFS文件
+    val errRowsRdd = processedRdd.filter(row => {
+      if(row.hasErr){
+        myAccumulator.add("errRowAcc")
+      }
+        row.hasErr
+    })
     val conf = new Configuration()
     val fs = FileSystem.get(conf)
     val startDate = confManager.getConf("startDate")
     val startHour = confManager.getConf("startHour")
     val time = s"${startDate}${startHour}"
+    if(errRowsRdd.count()>0){
+      val errRowNum = myAccumulator.value.getOrElseUpdate("errRowAcc",0)
+      println(s"处理链后失败记录数 : $errRowNum")
+
+      val errOutPath = s"${Constants.ODS_VIEW_HDFS_OUTPUT_PATH_TMP_ERROR}${File.separator}${time}"
+      if(fs.exists(new Path(errOutPath))){
+        fs.delete(new Path(errOutPath),true)
+      }
+      fs.deleteOnExit(new Path(errOutPath))
+      errRowsRdd.repartition(5).saveAsTextFile(errOutPath)
+    }
+
     //将经过处理器处理后，正常状态的记录使用规则库过滤【字段黑名单、重命名、行过滤】
     val okRowsRdd = processedRdd.filter(row => !row.hasErr).map(row=>row.result.get)
     //解析出输出目录
     val rddSchame = metaDataUtils.parseLogObjRddPath(okRowsRdd,startDate,startHour)(myAccumulator)
-
+      .persist(StorageLevel.MEMORY_AND_DISK)
     val pathRdd = rddSchame.map(row=>{
       val path = row._1
       val jSONObject = row._2
       (path,jSONObject)
     })
+    val pathSchema:Array[(String,scala.collection.mutable.Map[String,String])] = rddSchame.map(row=>{
+      val path = row._1
+      val schema = row._3
+      (path,schema)
+    }).distinct().collect()
+
 
     val afterRuleRdd = ruleHandle(sc,pathRdd)(myAccumulator,renameFiledMyAcc,removeFiledMyAcc)
     //输出正常记录到HDFS文件
@@ -119,10 +145,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 //    println(s"afterRuleRdd count : ${afterRuleRdd.count()}")
 //    System.exit(1)
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
+    rddSchame.unpersist()
+    processedRdd.unpersist()
     //删除输入数据源
    if(fs.exists(new Path(inputPath))){
-     fs.delete(new Path(inputPath),true)
-//      fs.delete(new Path(inputPath.split("/key_hour")(0)),true)
+      fs.delete(new Path(inputPath.split("/key_hour")(0)),true)
     }
 
     println("=============== 规则处理移除字段 =============== ：")
@@ -174,6 +201,22 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }
     })
 
+
+/*
+    pathSchema.foreach(f=>{
+      println(s"path is ${f._1}")
+      val map =  f._2
+      println(map.toString())
+    })
+*/
+
+    //生成元数据信息给元数据模块使用
+
+   val taskFlag = confManager.getConf("taskFlag")
+    assert(taskFlag.length==3)
+    println("-------generateMetaDataToTable start at "+new Date())
+//    generateMetaDataToTable(sparkSession, pathSchema,taskFlag)
+    println("-------generateMetaDataToTable start at "+new Date())
   }
 
 

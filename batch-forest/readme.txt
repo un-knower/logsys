@@ -63,7 +63,7 @@ boikgpokn78sb95kjhfrendo8dc5mlsr
             3.6.6 entity.put("logBody",msgBody)
 
 
-三、时间校验
+三、时间校验(以移除)
 
 
 
