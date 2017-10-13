@@ -50,7 +50,7 @@
 
     <property>
         <name>GenericLogProcessor.processors</name>
-        <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor,GenericActionLogCommProcessor</value>
+        <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor</value>
     </property>
 
     <property>
