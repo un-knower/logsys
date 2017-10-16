@@ -1,0 +1,64 @@
+appId 组成16+8+8 ->公司Id（whaley）+	产品代码(product_code)	+ 应用代码(app_code)
+
+1.filebeat_v5 操作
+[3] 微鲸大数据-日常操作
+filebeat_v5
+moretv@bigdata-test-log_collect02
+
+cd /opt/filebeat_v5
+
+启动 whaley main 微鲸主程序  -> boikgpokn78sb95kjhfrendo8dc5mlsr 配置
+
+ nohup /opt/filebeat_v5/filebeat -c /opt/filebeat_v5/conf/filebeat_log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr.yml >> /data/logs/filebeat_v5/boikgpokn78sb95kjhfrendo8dc5mlsr.log 2>&1 &
+
+把监听文件放到 /data/logs/nginx 目录下。文件命名规则/data/logs/nginx/boikgpokn78sb95kjhfrendo8dc5mlsr*.test
+
+100条记录测试
+tail  boikgpokn78sb95kjhfrendo8dc5mlsr.1.test | head -n 100  >> boikgpokn78sb95kjhfrendo8dc5mlsr.5.test
+
+2.kafka
+moretv@bigtest-appsvr-129-6
+cd /opt/kafka3
+查看topic
+//测试环境
+ bin/kafka-topics.sh --list --zookeeper  bigtest-appsvr-129-1:2183,bigtest-appsvr-129-2:2183,bigtest-appsvr-129-3:2183,bigtest-appsvr-129-4:2183,bigtest-appsvr-129-5:2183
+//生产环境
+ bin/kafka-topics.sh --list --zookeeper  bigdata-appsvr-130-1:2183,bigdata-appsvr-130-2:2183,bigdata-appsvr-130-3:2183,bigdata-appsvr-130-4:2183,bigdata-appsvr-130-5:2183
+
+
+//创建topic
+bin/kafka-topics.sh --create --zookeeper bigtest-appsvr-129-1:2183,bigtest-appsvr-129-2:2183,bigtest-appsvr-129-3:2183,bigtest-appsvr-129-4:2183,bigtest-appsvr-129-5:2183  --replication-factor 3 --partitions 2 --topic log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr
+//输出topic
+bin/kafka-topics.sh --create --zookeeper bigtest-appsvr-129-1:2183,bigtest-appsvr-129-2:2183,bigtest-appsvr-129-3:2183,bigtest-appsvr-129-4:2183,bigtest-appsvr-129-5:2183  --replication-factor 3 --partitions 2 --topic log-origin-boikgpokn78sb95kjhfrendo8dc5mlsr
+
+
+ 查看此topic的属性
+ bin/kafka-topics.sh --describe --zookeeper   bigtest-appsvr-129-1:2183,bigtest-appsvr-129-2:2183,bigtest-appsvr-129-3:2183,bigtest-appsvr-129-4:2183,bigtest-appsvr-129-5:2183 --topic log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr
+
+//发送message
+bin/kafka-console-producer.sh --broker-list bigtest-appsvr-129-1:9094,bigtest-appsvr-129-2:9094,bigtest-appsvr-129-3:9094,bigtest-appsvr-129-4:9094,bigtest-appsvr-129-5:9094,bigtest-appsvr-129-6:9094 --topic   log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr
+
+//接收数据
+bin/kafka-console-consumer.sh --zookeeper  bigtest-appsvr-129-1:2183,bigtest-appsvr-129-2:2183,bigtest-appsvr-129-3:2183,bigtest-appsvr-129-4:2183,bigtest-appsvr-129-5:2183  --topic log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr --from-beginning
+
+
+
+
+3.forest部署
+hadoop@bigtest-appsvr-129-5，hadoop@bigtest-appsvr-129-6
+
+修改\WhaleyLogSys\forest\distribution\src\main\resources\conf\settings.properties
+修改为测试机器上的kafka
+prop.kafka.bootstrap.servers=bigtest-appsvr-130-1:9094,bigtest-appsvr-130-2:9094,bigtest-appsvr-130-3:9094,bigtest-appsvr-130-4:9094,bigtest-appsvr-130-5:9094,bigtest-appsvr-130-6:9094
+
+
+cd /opt/forest-dist/sbin
+启动
+./launch_msgproc.sh start --groupId=forest-dist-whaleytv --taskName=whaleytv 监听微鲸主程序
+
+停止
+./launch_msgproc.sh stop --groupId=forest-dist-whaleytv --taskName=whaleytv 监听微鲸主程序
+
+
+需要测试程序是否读入数据
+
