@@ -7,6 +7,8 @@ import cn.whaley.bi.logsys.metadata.entity.AppLogKeyFieldDescEntity
 import com.alibaba.fastjson.JSONObject
 import org.apache.spark.rdd.RDD
 
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+
 
 case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
@@ -283,6 +285,9 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
      * @return Map[logPath,(字段黑名单,字段重命名清单,行过滤器)]
      */
     def parseSpecialRules(rdd: RDD[(String, JSONObject)]): Array[AppLogFieldSpecialRules] = {
+
+
+
         //特例字段配置数据
         val specialFieldDescConf = queryAppLogSpecialFieldDescConf
         //路径及其所有字段集合
@@ -300,10 +305,27 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
             }
         }).collect()
 
+
+      //baseinfo 白名单
+      val logBaseInfos = metadataService().getAllLogBaseInfo().filter(item=>{
+        item.isDeleted == false
+      }).map(item=>{
+        (item.getProductCode,item.getFieldName)
+      })
+      val baseInfoMap = logBaseInfos.groupBy(item=>{
+        item._1
+      }).map(info=>{
+        val list = new ListBuffer[String]()
+        info._2.foreach(f=>{
+          list +=(f._2)
+        })
+        (info._1,list.toList)
+      })
+
         val rules = pathAndFields.map(item => {
             val path = item._1
+            val productCode = path.split("/")(1).split("_")(1)
             val fields = item._2
-
             //匹配当前路径的配置,且排序值最小的一组配置
             var pathSpecialConf = specialFieldDescConf.filter(conf => conf._1.r.findFirstMatchIn(path).isDefined)
             //println(s"${path}: all specialConf.length=${pathSpecialConf.length},pathFields.length=${fields.length}")
@@ -337,14 +359,23 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                     fields.filter(field => conf._2.r.findFirstMatchIn(field).isDefined).map(field => (field, conf._4))
                 })
 
+               //baseInfo 重命名
+               val baseInfoFields = baseInfoMap.getOrElse(productCode,List[String](""))
+              val baseInfoRename = ArrayBuffer[(String, String)]()
+              baseInfoFields.foreach(baseInfoField=>{
+                fields.foreach(field=>{
+                  if(!baseInfoField.equals(field) && baseInfoField.equalsIgnoreCase(field)){
+                    baseInfoRename.+=((field,s"${field}_r"))
+                  }
+                })
+              })
                 //行过滤器: Seq[(字段名,字段值)]
                 val rowBlackFilter = pathSpecialConf.filter(conf => conf._3 == "rowFilter").flatMap(conf => {
                     fields.filter(field => conf._2.r.findFirstMatchIn(field).isDefined).map(field => (field, conf._4))
                 })
-
-                AppLogFieldSpecialRules(path, fieldBlackFilter, rename, rowBlackFilter)
+                AppLogFieldSpecialRules(path, fieldBlackFilter, rename,baseInfoRename,rowBlackFilter)
             } else {
-                AppLogFieldSpecialRules(path, Array[String](), Array[(String, String)](), Array[(String, String)]())
+                AppLogFieldSpecialRules(path, Array[String](), Array[(String, String)](),Array[(String, String)](), Array[(String, String)]())
             }
         })
 
@@ -352,7 +383,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
     }
 
-    case class AppLogFieldSpecialRules(path: String, fieldBlackFilter: Seq[String], rename: Seq[(String, String)], rowBlackFilter: Seq[(String, String)])
+    case class AppLogFieldSpecialRules(path: String, fieldBlackFilter: Seq[String], rename: Seq[(String, String)],baseInfoRename: Seq[(String, String)], rowBlackFilter: Seq[(String, String)])
 
     def isValid(s:String)={
         val regex = """[a-zA-Z0-9-_=/\.]*"""

@@ -57,9 +57,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val sc = sparkSession.sparkContext
     //创建累加器
     val renameFiledMyAcc = new MyAccumulator
+    val baseInfoRenameFiledMyAcc = new MyAccumulator
     val removeFiledMyAcc = new MyAccumulator
     val myAccumulator =  new MyAccumulator
     sc.register(renameFiledMyAcc,"renameFiledMyAcc")
+    sc.register(baseInfoRenameFiledMyAcc,"baseInfoRenameFiledMyAcc")
     sc.register(removeFiledMyAcc,"removeFiledMyAcc")
     sc.register(myAccumulator,"myAccumulator")
 
@@ -112,7 +114,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       (path,jSONObject)
     })
 
-    val afterRuleRdd = ruleHandle(sc,pathRdd)(myAccumulator,renameFiledMyAcc,removeFiledMyAcc)
+    val afterRuleRdd = ruleHandle(sc,pathRdd)(myAccumulator,renameFiledMyAcc,baseInfoRenameFiledMyAcc,removeFiledMyAcc)
     //输出正常记录到HDFS文件
     println("-------Json2ParquetUtil.saveAsParquet start at "+new Date())
     Json2ParquetUtil.saveAsParquet(afterRuleRdd,time,sparkSession)
@@ -154,6 +156,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }
     })
 */
+    println("=============== 规则处理baseInfo 重命名字段 =============== ：")
+    baseInfoRenameFiledMyAcc.value.toList.sortBy(-_._2).foreach(r=>{
+      if(isValid(r._1)){
+        println("baseinfo 重命名字段："+r._1+" --> 重命名次数:"+r._2)
+      }
+    })
+
     println("=============== 规则处理重命名字段 =============== ：")
     renameFiledMyAcc.value.toList.sortBy(-_._2).foreach(r=>{
       if(isValid(r._1)){
@@ -170,6 +179,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         case "deleteRowAcc" => println("规则处理删除记录数 : "+r._2)
         case "removeFiledAcc" => println("规则处理移除字段记录数 : "+r._2)
         case "renameFiledAcc" => println("规则处理重命名字段记录数 : "+r._2)
+        case "baseInfoRenameFiledMyAcc" => println("规则处理baseInfo重命名字段记录数 : "+r._2)
         case _ => ""
       }
     })
@@ -425,6 +435,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   def ruleHandle(sc:SparkContext,resultRdd: RDD[(String, JSONObject)])(
     implicit myAccumulator:MyAccumulator=new MyAccumulator,
     renameFiledMyAcc:MyAccumulator=new MyAccumulator,
+    baseInfoRenameFiledMyAcc:MyAccumulator=new MyAccumulator,
     removeFiledMyAcc:MyAccumulator=new MyAccumulator
   ): RDD[(String, JSONObject)] = {
     // 获得规则库的每条规则
@@ -432,6 +443,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val rowBlackFilterMap = mutable.Map[String,Map[String,String]]()
     val fieldBlackFilterMap = mutable.Map[String,List[String]]()
     val renameMap = mutable.Map[String,Map[String,String]]()
+    val baseInfoRenameMap = mutable.Map[String,Map[String,String]]()
     rules.foreach(rule=>{
       val path = rule.path
       //字段删除
@@ -460,14 +472,33 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       })
       renameMap.put(path,map2.toMap)
 
+      //baseInfo重命名
+      val baseInfoRename = rule.baseInfoRename
+      val map3 = mutable.Map[String,String]()
+      baseInfoRename.foreach(e=>{
+        val oldName = e._1
+        val newName = e._2
+        map3.put(oldName,newName)
+      })
+      baseInfoRenameMap.put(path,map3.toMap)
+
     })
-    val myBroadcast = MyBroadcast(rowBlackFilterMap.toMap,fieldBlackFilterMap.toMap,renameMap.toMap)
+
+    println(s"baseInfoRenameMap size is ......  ${baseInfoRenameMap.size}")
+    baseInfoRenameMap.foreach(f=>{
+      println(s"productcode is ${f._1}")
+      println(s"baseInfoRename is ${f._2.toString()}")
+    })
+
+
+    val myBroadcast = MyBroadcast(rowBlackFilterMap.toMap,fieldBlackFilterMap.toMap,renameMap.toMap,baseInfoRenameMap.toMap)
     val broadcast = sc.broadcast(myBroadcast)
     //TODO debug
     val afterRuleRdd = resultRdd.map(e => {
       val rowBlackFilterMap = broadcast.value.rowBlackFilterMap
       val fieldBlackFilterMap =  broadcast.value.fieldBlackFilterMap
       val renameMap =  broadcast.value.renameMap
+      val baseInfoRenameMap = broadcast.value.baseInfoRenameMap
       myAccumulator.add("okRowAcc")
       val path = e._1
       val jsonObject = e._2
@@ -490,6 +521,18 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
             if(jsonObject.containsKey(field)){
               removeFiledMyAcc.add(field+"->"+path.split("/")(1).split("_")(1))
               jsonObject.remove(field)
+            }
+          })
+        }
+        //baseinfo 白名单处理
+        if(baseInfoRenameMap.keySet.contains(path) && !baseInfoRenameMap.get(path).isEmpty){
+          val map = baseInfoRenameMap.get(path).get
+          map.keys.foreach(oldName=>{
+            if(jsonObject.containsKey(oldName)){
+              val newName = map.get(oldName).get
+              jsonObject.put(newName, jsonObject.get(oldName))
+              baseInfoRenameFiledMyAcc.add(oldName+"->"+path.split("/")(1).split("_")(1))
+              jsonObject.remove(oldName)
             }
           })
         }
@@ -538,7 +581,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   def shutdown(): Unit = {
     //sparkSession.close()
   }
-  case class MyBroadcast(rowBlackFilterMap:Map[String,Map[String,String]],fieldBlackFilterMap:Map[String,List[String]],renameMap:Map[String,Map[String,String]])
+  case class MyBroadcast(rowBlackFilterMap:Map[String,Map[String,String]],fieldBlackFilterMap:Map[String,List[String]],renameMap:Map[String,Map[String,String]],baseInfoRenameMap:Map[String,Map[String,String]])
 
   def isValid(s:String)={
     val regex = """[a-zA-Z0-9-_>]*"""

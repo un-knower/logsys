@@ -16,7 +16,22 @@ class MetadataService(metadataServer: String, readTimeOut: Int = 900000) {
         "[" + entities.map(entity => JSON.toJSONString(entity, false)).mkString(",") + "]"
     }
 
-    /**
+
+  /**
+    * 查询所有log baseinfo 记录
+    */
+  def getAllLogBaseInfo(): List[LogBaseInfoEntity] = {
+    val response = Http(metadataServer + "/metadata/log_baseInfo/all")
+      .option(HttpOptions.readTimeout(readTimeOut))
+      .method("GET").asString
+    if (!response.isSuccess) {
+      throw new RuntimeException(response.body)
+    }
+    JSON.parseArray(response.body, classOf[LogBaseInfoEntity]).toList
+  }
+
+
+  /**
      * 查询所有applog_key_field_desc记录
      */
     def getAllAppLogKeyFieldDesc(): List[AppLogKeyFieldDescEntity] = {
