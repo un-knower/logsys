@@ -1,4 +1,12 @@
 bigdata-appsvr-130-5
 spark用户
 cd /opt/ods-view-metadata/sbin
+重启
+jps
+kill -9 ApplicationId
 sh launch.sh
+
+cd /opt/ods-view-metadata/lib 替换ods-view-metadata-1.0-SNAPSHOT.jar
+
+日志路径
+cd /opt/ods-view-metadata/logs

@@ -41,6 +41,17 @@ public class MetadataController {
     @Autowired
     LogFileKeyFieldValueRepo logFileKeyFieldValueRepo;
 
+    @Autowired
+    LogBaseInfoRepo logBaseInfoRepo;
+
+    //-------------------log_baseInfo--------------------------
+    //查询所有
+    @RequestMapping(value = "/log_baseInfo/all", method = RequestMethod.GET, produces = {"application/json"})
+    public List<LogBaseInfoEntity> getAllLogBaseInfo() {
+        List<LogBaseInfoEntity> all = logBaseInfoRepo.findAll();
+        return all;
+    }
+
     //-------------------applog_key_field_desc--------------------------
     //查询所有
     @RequestMapping(value = "/applog_key_field_desc/all", method = RequestMethod.GET, produces = {"application/json"})
