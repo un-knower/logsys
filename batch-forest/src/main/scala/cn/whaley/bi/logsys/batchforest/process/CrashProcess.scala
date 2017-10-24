@@ -23,7 +23,7 @@ object CrashProcess extends NameTrait with LogTrait{
       //whaley main crash 日志不做处理
       case "boikgpokn78sb95kjhfrendo8dc5mlsr" => {
         myAccumulator.add("handleCrashNoMd5Record")
-        handleCrashFiled(message)(myAccumulator)
+        handleCrashField(message)(myAccumulator)
       }
       // medusa main3.x crash md5校验
       case "boikgpokn78sb95ktmsc1bnkechpgj9l" => {
@@ -38,7 +38,7 @@ object CrashProcess extends NameTrait with LogTrait{
     Array(result)
   }
 
-  def  handleCrashFiled(message:JSONObject)
+  def  handleCrashField(message:JSONObject)
                        (implicit myAccumulator:MyAccumulator=new MyAccumulator()):Option[JSONObject]={
     val msgBody = message.getJSONObject("msgBody")
     message.remove("msgBody")
@@ -80,7 +80,7 @@ object CrashProcess extends NameTrait with LogTrait{
     }
     //校验通过为状态为1
     message.put("logSignFlag",1)
-    return handleCrashFiled(message)(myAccumulator)
+    return handleCrashField(message)(myAccumulator)
   }
 
 }

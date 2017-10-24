@@ -50,28 +50,38 @@ object PostProcess extends NameTrait with LogTrait{
       } else {
         Some(body.get("logs").asInstanceOf[JSONArray])
       }
+
     body.remove("logs")
-    if(!logs.isEmpty && logs.get != null){
+    if(!logs.isEmpty  && logs.get != null  && logs.get.size() !=0){
       //logs 非空{}
       val size = logs.get.size()
       for(i<-0 to size -1) yield {
         //将body中的属性合并到log中
-        val log = logs.get.getJSONObject(i)
-        log.asInstanceOf[java.util.Map[String,Object]].putAll(body)
-        //将log中的属性合并到msgBody中,一定要创建一个新的logBody而不能采用引用
-        val logBody = JSON.parseObject(msgBody.toJSONString)
-        logBody.asInstanceOf[java.util.Map[String,Object]].putAll(log)
-        val entity = JSON.parseObject(message.toJSONString)
-        val logId =msgId +StringUtil.fixLeftLen(Integer.toHexString(i),'0',4)
-        entity.put("logId",logId)
-        entity.put("logBody",logBody)
-        //提升字段
-        translateProp(entity.getJSONObject("logBody"),"appId",entity,"appId")
-        translateProp(entity.getJSONObject("logBody"),"logVersion",entity,"logVersion")
-        translateProp(entity.getJSONObject("logBody"),"logSignFlag",entity,"logSignFlag")
-        translateProp(entity.getJSONObject("logBody"),"logTime",entity,"logTime")
-        myAccumulator.add("handlePostOutRecord")
-        Some(entity)
+        try{
+          val log = logs.get.getJSONObject(i)
+          log.asInstanceOf[java.util.Map[String,Object]].putAll(body)
+          //将log中的属性合并到msgBody中,一定要创建一个新的logBody而不能采用引用
+          val logBody = JSON.parseObject(msgBody.toJSONString)
+          logBody.asInstanceOf[java.util.Map[String,Object]].putAll(log)
+          val entity = JSON.parseObject(message.toJSONString)
+          val logId =msgId +StringUtil.fixLeftLen(Integer.toHexString(i),'0',4)
+          entity.put("logId",logId)
+          entity.put("logBody",logBody)
+          //提升字段
+          translateProp(entity.getJSONObject("logBody"),"appId",entity,"appId")
+          translateProp(entity.getJSONObject("logBody"),"logVersion",entity,"logVersion")
+          translateProp(entity.getJSONObject("logBody"),"logSignFlag",entity,"logSignFlag")
+          translateProp(entity.getJSONObject("logBody"),"logTime",entity,"logTime")
+          myAccumulator.add("handlePostOutRecord")
+          Some(entity)
+        }catch {
+          case e:Exception=>{
+            LOG.info(s"logs ...... ${logs.get} ")
+            LOG.error(e.getMessage)
+            myAccumulator.add("handlePostExc")
+            return Array(None)
+          }
+        }
       }
       //处理展开后的日志
     }else{

@@ -68,9 +68,8 @@ class PathTest {
 
   @Test
   def test2(): Unit ={
-    val input = "/data_warehouse/ods_origin.db/log_raw/key_day=20170828/key_hour=00/"
+    val a = ""
 
-    println(input.substring(input.indexOf("/key_day")))
 
   }
 }
