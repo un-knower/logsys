@@ -1,0 +1,93 @@
+// whaley main
+
+1.play
+原始
+/log/whaley/parquet/20171020/play/
+select count(1) from  log_data where  datetime >= '2017-10-20 13:00:00' and datetime < '2017-10-20 14:00:00'
+850590
+batch_forest
+/data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171020/key_hour=*
+select count(1) from  log_data where logTime >= 1508475600000  and logTime < 1508479200000
+850665
+forest
+/data_warehouse/ods_view.db/log_*/key_day=20171020/key_hour=13
+select count(1)  from log_data
+851342
+
+2.detail
+64442
+64462
+64305
+
+3.on
+54827
+54856
+54689
+
+4.off
+49309
+49333
+49185
+
+5.pageview
+3735
+3738
+3726
+6.whaleylive
+1086
+1086
+1076
+7.playqos
+231873
+231927
+231197
+8.voiceuse
+13443
+13444
+13409
+
+
+
+
+
+
+
+boikgpokn78sb95ktmsc1bnkechpgj9l medusa main3.x
+1.play
+
+原始
+/log/medusa/parquet/20171021/play/
+select count(1) from  log_data where  datetime >= '2017-10-20 13:00:00' and datetime < '2017-10-20 14:00:00'
+4414963
+batch_forest
+/data_warehouse/ods_view.db/log_medusa_main3x_play/key_day=20171020/key_hour=*
+select count(1) from  log_data where logTime >= 1508475600000  and logTime < 1508479200000
+4414963
+forest
+/data_warehouse/ods_view.db/log_*/key_day=20171020/key_hour=13
+select count(1)  from log_data
+4411364
+
+2.detail
+606529
+606529
+606004
+3.pageview 页面浏览
+1408
+1408
+1407
+4.live
+278572
+278572
+278377
+5.homeaccess 首页点击
+
+530096
+530096
+529668
+
+
+
+
+
+

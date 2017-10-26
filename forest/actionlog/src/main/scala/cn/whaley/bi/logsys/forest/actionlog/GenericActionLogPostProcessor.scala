@@ -36,7 +36,7 @@ class GenericActionLogPostProcessor extends LogProcessorTrait with LogTrait {
             Some(JSON.parseObject(str))
         } catch {
             case e: Throwable => {
-                LOG.error("", e)
+//                LOG.error("", e)
                 None
             }
         }

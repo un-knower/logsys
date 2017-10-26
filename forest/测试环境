@@ -3,13 +3,16 @@ appId 组成16+8+8 ->公司Id（whaley）+	产品代码(product_code)	+ 应用�
 1.filebeat_v5 操作
 [3] 微鲸大数据-日常操作
 filebeat_v5
-moretv@bigdata-test-log_collect02
+[moretv@bigtest-appsvr-129-5
 
 cd /opt/filebeat_v5
-
+/data/filebeat_test
 启动 whaley main 微鲸主程序  -> boikgpokn78sb95kjhfrendo8dc5mlsr 配置
 
  nohup /opt/filebeat_v5/filebeat -c /opt/filebeat_v5/conf/filebeat_log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr.yml >> /data/logs/filebeat_v5/boikgpokn78sb95kjhfrendo8dc5mlsr.log 2>&1 &
+启动 medusa main3.x 微鲸主程序  -> boikgpokn78sb95ktmsc1bnkechpgj9l 配置
+ nohup /opt/filebeat_v5/filebeat -c /opt/filebeat_v5/conf/filebeat_log-raw-boikgpokn78sb95ktmsc1bnkechpgj9l.yml >> /data/logs/filebeat_v5/boikgpokn78sb95ktmsc1bnkechpgj9l.log 2>&1 &
+
 
 把监听文件放到 /data/logs/nginx 目录下。文件命名规则/data/logs/nginx/boikgpokn78sb95kjhfrendo8dc5mlsr*.test
 
@@ -28,6 +31,14 @@ cd /opt/kafka3
 
 //创建topic
 bin/kafka-topics.sh --create --zookeeper bigtest-appsvr-129-1:2183,bigtest-appsvr-129-2:2183,bigtest-appsvr-129-3:2183,bigtest-appsvr-129-4:2183,bigtest-appsvr-129-5:2183  --replication-factor 3 --partitions 2 --topic log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr
+bin/kafka-topics.sh --create --zookeeper bigtest-appsvr-129-1:2183,bigtest-appsvr-129-2:2183,bigtest-appsvr-129-3:2183,bigtest-appsvr-129-4:2183,bigtest-appsvr-129-5:2183  --replication-factor 3 --partitions 2 --topic log-raw-boikgpokn78sb95ktmsc1bnkechpgj9l
+
+
+
+bin/kafka-topics.sh --create --zookeeper bigtest-appsvr-129-1:2183,bigtest-appsvr-129-2:2183,bigtest-appsvr-129-3:2183,bigtest-appsvr-129-4:2183,bigtest-appsvr-129-5:2183  --replication-factor 3 --partitions 2 --topic log-origin-boikgpokn78sb95ktmsc1bnkechpgj9l
+
+
+
 //输出topic
 bin/kafka-topics.sh --create --zookeeper bigtest-appsvr-129-1:2183,bigtest-appsvr-129-2:2183,bigtest-appsvr-129-3:2183,bigtest-appsvr-129-4:2183,bigtest-appsvr-129-5:2183  --replication-factor 3 --partitions 2 --topic log-origin-boikgpokn78sb95kjhfrendo8dc5mlsr
 
@@ -54,7 +65,9 @@ prop.kafka.bootstrap.servers=bigtest-appsvr-130-1:9094,bigtest-appsvr-130-2:9094
 
 cd /opt/forest-dist/sbin
 启动
-./launch_msgproc.sh start --groupId=forest-dist-whaleytv --taskName=whaleytv 监听微鲸主程序
+
+sh /opt/forest-dist/sbin//launch_msgproc.sh start --groupId=forest-dist-whaleytv --taskName=whaleytv 监听微鲸主程序
+sh /opt/forest-dist/sbin//launch_msgproc.sh start --groupId=forest-dist-medusa --taskName=medusa 监听medusa main3.x主程序
 
 停止
 ./launch_msgproc.sh stop --groupId=forest-dist-whaleytv --taskName=whaleytv 监听微鲸主程序

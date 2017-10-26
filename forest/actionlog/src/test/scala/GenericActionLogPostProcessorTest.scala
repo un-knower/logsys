@@ -1,8 +1,8 @@
-import cn.whaley.bi.logsys.common.ConfManager
+import cn.whaley.bi.logsys.common.{ConfManager, StringDecoder}
 import cn.whaley.bi.logsys.forest.StringUtil
-import cn.whaley.bi.logsys.forest.actionlog.{NgxLogJSONMsgProcessor, GenericActionLogPostProcessor, GenericActionLogGetProcessor}
-import cn.whaley.bi.logsys.forest.entity.{MsgEntity, LogEntity}
-import com.alibaba.fastjson.{JSONObject, JSON}
+import cn.whaley.bi.logsys.forest.actionlog.{GenericActionLogGetProcessor, GenericActionLogPostProcessor, NgxLogJSONMsgProcessor}
+import cn.whaley.bi.logsys.forest.entity.{LogEntity, MsgEntity}
+import com.alibaba.fastjson.{JSON, JSONObject}
 import org.junit.Test
 
 import scala.collection.mutable.ArrayBuffer
@@ -28,10 +28,17 @@ class GenericActionLogPostProcessorTest {
 
     @Test
     def testPost: Unit = {
-        val stream = this.getClass.getClassLoader.getResourceAsStream("data/boikgpokn78sb95kjhfrendoj8ilnoi7.log-2017050718-bigdata-extsvr-log1")
+        val stream = this.getClass.getClassLoader.getResourceAsStream("data/medusamain3.x.2")
         val source = scala.io.Source.fromInputStream(stream)
         //val lines = source.getLines().toArray
-        val fileLines = source.getLines().map(item => StringUtil.decodeNgxStrToString(item)).toArray
+        val decoder = new StringDecoder()
+//        val fileLines = source.getLines().map(item => StringUtil.decodeNgxStrToString(item)).toArray
+        val fileLines = source.getLines().map(item => {
+            val bytes = decoder.decodeToBytes(item)
+            new String(bytes, "UTF-8")
+        }).toArray
+        fileLines.foreach(println(_))
+        println("_________________________________________________-----")
         val lines = new ArrayBuffer[String]()
 
         for (i <- 1 to 1) {
@@ -52,7 +59,6 @@ class GenericActionLogPostProcessorTest {
                         e.printStackTrace()
                     }
                 }
-
                 val ret = ngxLogProcessor.process(new MsgEntity(json))
                 if (ret.hasErr) {
                     println(item)
@@ -64,19 +70,14 @@ class GenericActionLogPostProcessorTest {
 
         println("ts:" + (System.currentTimeMillis() - from))
 
-
         logs.foreach(logEntity => {
             println("==============================")
             println(logEntity.toJSONString)
-            println("-------------------")
             val ret = processor.process(logEntity)
-            if (ret.hasErr) {
-                ret.ex.get.printStackTrace()
+            if (!ret.hasErr) {
+                ret.result.get.foreach(item => println(item.toJSONString))
             }
-            require(ret.hasErr == false)
-
-            ret.result.get.foreach(item => println(item.toJSONString))
-            println("")
+            println("==============================")
         })
 
         println("ts:" + (System.currentTimeMillis() - from))
