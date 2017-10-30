@@ -50,7 +50,7 @@ public class ODSViewServiceTest {
 
     @Test
     public void testGenerateDDLAndDML() {
-        String taskId = "AAABXTAEkRsK4AXxhMAAAAA";
+        String taskId = "AAABX2su86sKCgEPqi8AAAAA";
         Integer[] ret = service.generateDDLAndDML(taskId);
         LOG.info("fieldRet:{}, ddlRet:{}, dmlRet:{}", new Object[]{ret[0], ret[1], ret[2]});
         Assert.assertTrue(ret[0] >= 0 && ret[1] >= 0);

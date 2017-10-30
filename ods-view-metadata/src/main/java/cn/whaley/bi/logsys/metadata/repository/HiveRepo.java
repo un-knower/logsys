@@ -94,7 +94,7 @@ public class HiveRepo {
 
             for (String dbNameAndTabName : dbNameAndTabNameArray) {
                 HiveTableInfo tableInfo = new HiveTableInfo();
-                String[] dbNameDotTabName = dbNameAndTabName.split(".");
+                String[] dbNameDotTabName = dbNameAndTabName.split("\\.");
                 if (dbNameDotTabName.length < 2) {
                     tableInfo.setDbName("");
                     tableInfo.setTabName("");

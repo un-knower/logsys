@@ -1,0 +1,88 @@
+taskId:AAABX2su86sKCgEPqi8AAAAA
+
+
+select * from metadata.applog_key_field_desc limit 10;
+
++-----------------------------------+---------------+------------+-------------+---------------------+------------+--------------------------+--------------------------+
+|               APPID               |   FIELDNAME   | FIELDFLAG  | FIELDORDER  |    FIELDDEFAULT     | ISDELETED  |        CREATETIME        |        UPDATETIME        |
++-----------------------------------+---------------+------------+-------------+---------------------+------------+--------------------------+--------------------------+
+| ALL                               | app_code      | 1          | 2           |                     | false      | 2017-07-11 07:50:24.233  | 2017-07-11 07:50:24.233  |
+| ALL                               | db_name       | 0          | 0           | ods_view            | false      | 2017-06-26 08:54:07.007  | 2017-06-26 08:54:07.007  |
+| ALL                               | key_day       | 2          | 0           |                     | false      | 2017-09-14 06:31:05.740  | 2017-09-14 06:31:05.740  |
+| ALL                               | key_hour      | 2          | 1           |                     | false      | 2017-09-14 06:31:17.873  | 2017-09-14 06:31:17.873  |
+| ALL                               | product_code  | 1          | 1           | all                 | false      | 2017-07-11 07:50:24.223  | 2017-07-11 07:50:24.223  |
+| ALL                               | realLogType   | 1          | 3           |                     | false      | 2017-09-14 06:34:05.663  | 2017-09-14 06:34:05.663  |
+| ALL                               | tab_prefix    | 1          | 0           | log                 | false      | 2017-07-11 07:50:24.181  | 2017-07-11 07:50:24.181  |
+| boikgpokn78sb95k7id7n8eb8dc5mlsr  | app_code      | 1          | 2           | main                | false      | 2017-06-26 10:41:07.622  | 2017-06-26 10:41:07.622  |
+| boikgpokn78sb95k7id7n8eb8dc5mlsr  | product_code  | 1          | 1           | eagle               | false      | 2017-06-26 10:41:06.340  | 2017-06-26 10:41:06.340  |
+| boikgpokn78sb95kbqei6cc98dc5mlsr  | app_code      | 1          | 2           | main                | false      | 2017-06-26 10:41:07.697  | 2017-06-26 10:41:07.697  |
+| boikgpokn78sb95kbqei6cc98dc5mlsr  | product_code  | 1          | 1           | whaleyvr            | false      | 2017-06-26 10:41:06.364  | 2017-06-26 10:41:06.364  |
+| boikgpokn78sb95kicggqhbkepkseljn  | app_code      | 1          | 2           | global_menu_2       | false      | 2017-06-26 10:41:07.712  | 2017-06-26 10:41:07.712  |
+| boikgpokn78sb95kicggqhbkepkseljn  | product_code  | 1          | 1           | orca                | false      | 2017-06-26 10:41:06.407  | 2017-06-26 10:41:06.407  |
+| boikgpokn78sb95kjhfrendo8dc5mlsr  | app_code      | 1          | 2           | main                | false      | 2017-06-26 10:41:07.727  | 2017-06-26 10:41:07.727  |
+| boikgpokn78sb95kjhfrendo8dc5mlsr  | product_code  | 1          | 1           | whaleytv            | false      | 2017-06-26 10:41:06.519  | 2017-06-26 10:41:06.519  |
+| boikgpokn78sb95kjhfrendobgjgjolq  | app_code      | 1          | 2           | epop                | false      | 2017-06-26 10:41:07.846  | 2017-06-26 10:41:07.846  |
+| boikgpokn78sb95kjhfrendobgjgjolq  | product_code  | 1          | 1           | whaleytv            | false      | 2017-06-26 10:41:06.579  | 2017-06-26 10:41:06.579  |
+| boikgpokn78sb95kjhfrendoepkseljn  | app_code      | 1          | 2           | global_menu_2       | false      | 2017-06-26 10:41:07.897  | 2017-06-26 10:41:07.897  |
+| boikgpokn78sb95kjhfrendoepkseljn  | product_code  | 1          | 1           | whaleytv            | false      | 2017-06-26 10:41:06.638  | 2017-06-26 10:41:06.638  |
+| boikgpokn78sb95kjhfrendoj8ilnoi7  | app_code      | 1          | 2           | wui20               | false      | 2017-06-26 10:41:07.965  | 2017-06-26 10:41:07.965  |
+| boikgpokn78sb95kjhfrendoj8ilnoi7  | product_code  | 1          | 1           | whaleytv            | false      | 2017-06-26 10:41:06.703  | 2017-06-26 10:41:06.703  |
+| boikgpokn78sb95kjhfrendojtihcg26  | app_code      | 1          | 2           | mobilehelper        | false      | 2017-06-26 10:41:08.015  | 2017-06-26 10:41:08.015  |
+| boikgpokn78sb95kjhfrendojtihcg26  | product_code  | 1          | 1           | whaleytv            | false      | 2017-06-26 10:41:06.767  | 2017-06-26 10:41:06.767  |
+| boikgpokn78sb95kjhfrendoqgj2fgqh  | app_code      | 1          | 2           | comheliossmartcube  | false      | 2017-06-26 10:41:08.076  | 2017-06-26 10:41:08.076  |
+| boikgpokn78sb95kjhfrendoqgj2fgqh  | product_code  | 1          | 1           | whaleytv            | false      | 2017-06-26 10:41:06.831  | 2017-06-26 10:41:06.831  |
+| boikgpokn78sb95kjhfrendosesh6bmu  | app_code      | 1          | 2           | webportal           | false      | 2017-06-26 10:41:08.132  | 2017-06-26 10:41:08.132  |
+| boikgpokn78sb95kjhfrendosesh6bmu  | product_code  | 1          | 1           | whaleytv            | false      | 2017-06-26 10:41:06.906  | 2017-06-26 10:41:06.906  |
+| boikgpokn78sb95kjtihcg268dc5mlsr  | app_code      | 1          | 2           | main                | false      | 2017-06-26 10:41:08.176  | 2017-06-26 10:41:08.176  |
+| boikgpokn78sb95kjtihcg268dc5mlsr  | product_code  | 1          | 1           | mobilehelper        | false      | 2017-06-26 10:41:06.978  | 2017-06-26 10:41:06.978  |
+| boikgpokn78sb95kkls3bhmtichjhhm8  | app_code      | 1          | 2           | cis                 | false      | 2017-06-26 10:41:08.245  | 2017-06-26 10:41:08.245  |
+| boikgpokn78sb95kkls3bhmtichjhhm8  | product_code  | 1          | 1           | crawler             | false      | 2017-06-26 10:41:07.035  | 2017-06-26 10:41:07.035  |
+| boikgpokn78sb95kkls3bhmtjqosocdj  | app_code      | 1          | 2           | price               | false      | 2017-06-26 10:41:08.297  | 2017-06-26 10:41:08.297  |
+| boikgpokn78sb95kkls3bhmtjqosocdj  | product_code  | 1          | 1           | crawler             | false      | 2017-06-26 10:41:07.105  | 2017-06-26 10:41:07.105  |
+| boikgpokn78sb95kpghmafidrled9fm8  | app_code      | 1          | 2           | recommand_api       | false      | 2017-06-26 10:41:08.353  | 2017-06-26 10:41:08.353  |
+| boikgpokn78sb95kpghmafidrled9fm8  | product_code  | 1          | 1           | ai                  | false      | 2017-06-26 10:41:07.171  | 2017-06-26 10:41:07.171  |
+
+产生ddl,dml
+
+表信息描述
+select * from metadata.logfile_key_field_value where taskId = 'AAABX2su86sKCgEPqi8AAAAA' and logpath = '/data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09' limit 10;
+
++----------------------------------------------------------------------------------+---------------+-------------+-----------------------------------+---------------------------+------------+
+|                                     LOGPATH                                      |   FIELDNAME   | FIELDVALUE  |               APPID               |          TASKID           | ISDELETED  |
++----------------------------------------------------------------------------------+---------------+-------------+-----------------------------------+---------------------------+------------+
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | realLogType   | play        | boikgpokn78sb95kjhfrendo8dc5mlsr  | AAABX2su86sKCgEPqi8AAAAA  | false      |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | key_day       | 20171030    | boikgpokn78sb95kjhfrendo8dc5mlsr  | AAABX2su86sKCgEPqi8AAAAA  | false      |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | key_hour      | 09          | boikgpokn78sb95kjhfrendo8dc5mlsr  | AAABX2su86sKCgEPqi8AAAAA  | false      |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | app_code      | main        | boikgpokn78sb95kjhfrendo8dc5mlsr  | AAABX2su86sKCgEPqi8AAAAA  | false      |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | db_name       | ods_view    | boikgpokn78sb95kjhfrendo8dc5mlsr  | AAABX2su86sKCgEPqi8AAAAA  | false      |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | product_code  | whaleytv    | boikgpokn78sb95kjhfrendo8dc5mlsr  | AAABX2su86sKCgEPqi8AAAAA  | false      |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | tab_prefix    | log         | boikgpokn78sb95kjhfrendo8dc5mlsr  | AAABX2su86sKCgEPqi8AAAAA  | false      |
++----------------------------------------------------------------------------------+---------------+-------------+-----------------------------------+---------------------------+------------+
+
+字段信息
+select * from metadata.logfile_field_desc where taskId = 'AAABX2su86sKCgEPqi8AAAAA' and logpath = '/data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09' limit 10;
+|                                     LOGPATH                                      |        FIELDNAME         | FIELDTYPE  |             FIELDSQL              | RAWTYPE  |                   |
++----------------------------------------------------------------------------------+--------------------------+------------+-----------------------------------+----------+-------------------+
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | ts                       | bigint     | `ts` bigint                       | INT64    | optional int64 ts |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | accountId                | bigint     | `accountId` bigint                | INT64    | optional int64 ac |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | parentName               | string     | `parentName` string               | BINARY   | optional binary p |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | searchAssociationalWord  | string     | `searchAssociationalWord` string  | BINARY   | optional binary s |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | currentResolution        | string     | `currentResolution` string        | BINARY   | optional binary c |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | deviceResolution         | string     | `deviceResolution` string         | BINARY   | optional binary d |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | matchSid                 | string     | `matchSid` string                 | BINARY   | optional binary m |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | currentVipLevel          | string     | `currentVipLevel` string          | BINARY   | optional binary c |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | event                    | string     | `event` string                    | BINARY   | optional binary e |
+| /data_warehouse/ods_view.db/log_whaleytv_main_play/key_day=20171030/key_hour=09  | linkType                 | string     | `linkType` string                 | BINARY   | optional binary l |
++----------------------------------------------------------------------------------+--------------------------+------------+-----------------------------------+----------+-------------------+
+
+
+
+
+
+
+
+
+
+
+
+

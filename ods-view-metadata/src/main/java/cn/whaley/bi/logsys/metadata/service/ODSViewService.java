@@ -112,7 +112,9 @@ public class ODSViewService {
         List<LogFileFieldDescEntity> logFileFieldDescEntities = logFileFieldDescRepo.findByTaskId(taskId);
 
 
-        //扫描表字段元数据
+        //扫描表字段元数据[desc ->数据库名,表名,分区字段及其值,
+        // fieldDescEntities->从日志文件字段描述信息解析出表字段定义,
+        // hiveTabInfo->从hive schema 中解析字段相关信息]
         List<TabFieldDescItem> tabFieldDescItems = generateTabFieldDesc(appLogKeyFieldDescEntities, logFileKeyFieldDescEntities, logFileFieldDescEntities);
 
         //表定义
@@ -135,12 +137,12 @@ public class ODSViewService {
                 .flatMap(item -> generateDML(item.desc).stream())
                 .collect(Collectors.toList());
 
-        LOG.info("taskId:{}: field={} , ddl={} , dml={}", new Object[]{taskId
+      /*  LOG.info("taskId:{}: field={} , ddl={} , dml={}", new Object[]{taskId
                 , tabFieldDescItems.stream()
                 .map(item -> item.fieldDescEntities.size())
                 .collect(Collectors.summingInt(item -> item))
                 , ddlEntities.size()
-                , dmlEntities.size()});
+                , dmlEntities.size()});*/
 
         //保存字段描述,保存之前删除taskId对应的旧数据
         Integer fieldDelRet = getLogTabFieldDescRepo().deleteByTaskId(taskId);
