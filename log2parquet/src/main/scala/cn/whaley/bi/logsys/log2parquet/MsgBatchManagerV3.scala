@@ -117,6 +117,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val afterRuleRdd = ruleHandle(sc,pathRdd)(myAccumulator,renameFiledMyAcc,baseInfoRenameFiledMyAcc,removeFiledMyAcc)
     //输出正常记录到HDFS文件
     println("-------Json2ParquetUtil.saveAsParquet start at "+new Date())
+
     Json2ParquetUtil.saveAsParquet(afterRuleRdd,time,sparkSession)
 //    println(s"afterRuleRdd count : ${afterRuleRdd.count()}")
 //    System.exit(1)

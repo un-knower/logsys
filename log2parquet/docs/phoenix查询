@@ -3,7 +3,7 @@
 1.连接phoenix
 hadoop@bigdata-appsvr-130-5
 cd /opt/phoenix/bin
-./sqlline.py bigdata-cmpt-128-1:2181
+/opt/phoenix/bin/sqlline.py bigdata-cmpt-128-1:2181
 
 
 cd /opt/phoenix/bin;

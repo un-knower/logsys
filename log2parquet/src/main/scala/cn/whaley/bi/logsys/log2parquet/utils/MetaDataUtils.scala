@@ -143,6 +143,9 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         val parMap = parTuple._2
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
+
+//        println(s"dbNameStr -> $dbNameStr ; tabNameStr -> $tabNameStr ; parStr-> $parStr")
+
         if(!isValid(parStr) || !isValid(tabNameStr) || !isValid(dbNameStr) ){
             myAccumulator.add("exceptionJsonAcc")
             path = null
@@ -182,49 +185,55 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 case LogKeys.WUI_20_APPID =>{
                     //修复wui20,未打logType字段
                     if(realLogType == null){
-                        val eventId = jsonObj.getString("eventId")
-                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
+                        realLogType = jsonObj.getString("eventId")
+                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
+
                     }
                 }
                 case LogKeys.EAGLE_APPID =>{
                     //修复eagle,未打logType字段
                     if(realLogType == null){
-                        val eventId = jsonObj.getString("eventId")
-                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
+                        realLogType = jsonObj.getString("eventId")
+                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
                     }
                 }
                 case LogKeys.EPOP_APPID =>{
                     //修复epop  线下店演示用的应用，作用是 保证所有电视播的画面是同步的
                     if(realLogType == null){
-                        val eventId = jsonObj.getString("eventId")
-                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
+                        realLogType = jsonObj.getString("eventId")
+                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
                     }
                 }
                 case LogKeys.GLOBAL_MENU_2_APPID =>{
                     //修复global_menu_2 全局菜单2.0
                     if(realLogType == null){
-                        val eventId = jsonObj.getString("eventId")
-                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
+                        realLogType = jsonObj.getString("eventId")
+                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
                     }
                 }
                 case LogKeys.MOBILEHELPER_APPID =>{
                     //修复mobilehelper 微鲸手机助手
                     if(realLogType == null){
-                        val eventId = jsonObj.getString("eventId")
-                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,eventId)
+                        realLogType = jsonObj.getString("eventId")
+                        jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
                     }
                 }
                 case _ => ""
             }
 
-            if(realLogType == null){
+           /* if(realLogType == null){
               realLogType = "default"
-            }
+            }*/
+           if(isInValidLogType(realLogType)){
+             return  ("",scala.collection.mutable.HashMap.empty[String,String])
+           }
+
+
             jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType.toLowerCase)
             val fields = conf.get.map(field => {
                 val fieldName = field._2
@@ -349,9 +358,12 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                     fields.filter(field => fieldPattern.matcher(field).find()).map(field => (field, isReserve))
                 })
 
-                //剔除白名单字段
+                //剔除白名单字段 和 字母 ，纯数字
                 val whiteList = fieldFilterList.filter(_._2)
-                val fieldBlackFilter = fieldFilterList.filter(item => !whiteList.exists(p => p._1 == item._1)).map(item => item._1)
+                val fieldBlackFilter = fieldFilterList.filter(item => {
+                  val field = item._1
+                  !whiteList.exists(p => p._1 == field)  || field.length <=1 || isinValidKey(field)
+                }).map(item => item._1)
 
 
                 //字段重命名: Seq[(源字段名,字段目标名)]
@@ -385,8 +397,33 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
     case class AppLogFieldSpecialRules(path: String, fieldBlackFilter: Seq[String], rename: Seq[(String, String)],baseInfoRename: Seq[(String, String)], rowBlackFilter: Seq[(String, String)])
 
+  /**
+    * dbNameStr,tabNameStr,parStr 正则
+    * @param s
+    * @return
+    */
     def isValid(s:String)={
-        val regex = """[a-zA-Z0-9-_=/\.]*"""
+        val regex = """[a-zA-Z0-9-_=/\.]+"""
         s.matches(regex)
     }
+
+  /**
+    * json key 的正则
+    * @param s
+    * @return
+    */
+  def isinValidKey(s:String)={
+    val regex = "^[0-9]*$"
+    s.matches(regex)
+  }
+
+  /**
+    * realLogType正则
+    * @param realLogType
+    * @return
+    */
+ def isInValidLogType(realLogType:String)={
+   val regex = "^[a-zA-Z][\\w\\-]{1,100}$"
+   realLogType == null || realLogType.isEmpty  || realLogType.equalsIgnoreCase("null") || !realLogType.matches(regex)
+  }
 }

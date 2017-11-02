@@ -66,7 +66,9 @@ object LogKeys {
 
 
 
-
+  //isyunos
+  val SYS_PLATFORM = "sysPlatform"
+  val FIRMWARE_VERSION = "firmwareVersion"
 
 
 

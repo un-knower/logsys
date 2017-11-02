@@ -187,4 +187,16 @@ class MetadataUtilTest_guohao {
     })
   }
 
+@Test
+  def test5(): Unit ={
+  println(isValidLogType("w"))
+  println(isValidLogType("wqq"))
+  println(isValidLogType("1d"))
+}
+
+  def isValidLogType(s:String)={
+    val regex = "^[a-zA-Z][\\w\\-]{1,100}$"
+    s.matches(regex)
+  }
+
 }
