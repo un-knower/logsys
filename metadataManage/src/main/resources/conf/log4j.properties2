@@ -1,0 +1,25 @@
+log4j.rootCategory=error
+
+
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%-5p %d{yyyy-MM-dd HH\:mm\:ss,SSS} %C{1}\:%M - %m%n
+
+log4j.logger.org.apache.spark=WARN
+log4j.org.apache.phoenix=WARN
+log4j.org.apache.zookeeper=WARN
+
+
+
+
+
+
+
+
+
+
+log4j.rootLogger = ERROR,console
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+log4j.appender.console.target=System.out
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{2}: %m%n
