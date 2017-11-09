@@ -21,6 +21,8 @@
         <module>file-compressor</module>
         <module>hadoop-support</module>
         <module>batch-forest</module>
+        <module>metadataMerge</module>
+        <module>metadataManage</module>
 
     </modules>
 
