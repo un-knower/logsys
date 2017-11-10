@@ -3115,6 +3115,7 @@ upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,special
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff4455','medusa','fieldFilter','01',10,'^tcerId$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff487','medusa','fieldFilter','00',10,'^tencentAutoClarity$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff802','medusa','fieldFilter','00',10,'^tencentDuration$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff802','medusa','fieldFilter','00',10,'^tencentDuration$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff4456','medusa','fieldFilter','01',10,'^terId$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff2545','medusa','fieldFilter','01',10,'^termid$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff1382','medusa','fieldFilter','01',10,'^tersionCode$',false,now(),now());
@@ -3964,6 +3965,9 @@ upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,special
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5074','whaleytv','rename','isPlayAll',10,'^IsPlayAll$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5075','medusa','fieldFilter','01',10,'^appid$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5076','medusa','rename','isPlayAll',10,'^IsPlayAll$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5077','whaleytv','rename','DateTime_r',10,'^DateTime$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5078','eagle','rename','currentPageId',10,'^currenTPageId$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5079','eagle','rename','logVersion',10,'^logVersioN$',false,now(),now());
 
 
 

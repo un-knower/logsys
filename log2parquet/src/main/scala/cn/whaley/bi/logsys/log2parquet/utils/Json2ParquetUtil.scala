@@ -123,7 +123,7 @@ object Json2ParquetUtil {
         println("shutdown.")
 
         //删除json文件
-        val preserveJsonDir = false
+        /*val preserveJsonDir = false
         val preserveTmpDir = false
        if (!preserveTmpDir) {
            fs.delete(new Path(tmpDir), true)
@@ -134,7 +134,7 @@ object Json2ParquetUtil {
                fs.delete(new Path(tmpDir), true)
                println(s"delete empty dir:$tmpDir")
            }
-       }
+       }*/
 
      /* if (!preserveJsonDir) {
            fs.delete(new Path(jsonDir), true)
@@ -169,7 +169,7 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
         }
         catch {
             case e: Throwable => {
-                SendMail.post(e, s"[Log2Parquet][Json2ParquetUtil][${inputPath}]任务执行失败", Array("app-bigdata@whaley.cn"))
+                SendMail.post(e, s"[Log2Parquet new][Json2ParquetUtil][${inputPath}]任务执行失败", Array("app-bigdata@whaley.cn"))
                 e.printStackTrace()
                 println( s"convert file error[$inputPath(${inputSize / 1024}k) -> $outputPath)] : paramMap -> null, exception -> ${e.getMessage}")
                 s"convert file error[$inputPath(${inputSize / 1024}k) -> $outputPath)] : paramMap -> null, exception -> ${e.getMessage}"
