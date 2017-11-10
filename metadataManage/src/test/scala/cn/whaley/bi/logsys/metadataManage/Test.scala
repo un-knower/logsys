@@ -7,10 +7,10 @@ import org.scalatest.Suite
   */
 class Test extends  Suite{
 
-  val regExp = ("/data_warehouse/ods_view.db/log_([a-zA-Z-0-9]+)_(global_menu_2|[a-zA-Z-0-9]+)_(\\w+)/key_day=20171106/key_hour=11").r
+  val regExp = ("/data_warehouse/(\\w+).db/([a-zA-Z-0-9]+)_([a-zA-Z-0-9]+)_(global_menu_2|[a-zA-Z-0-9]+)_(\\w+)/key_day=20171109/key_hour=19").r
 
   def test(): Unit ={
-    val path = "hdfs://hans/data_warehouse/ods_view.db/log_whaleytv_wui20_quickentryreplace/key_day=20171106/key_hour=11"
+    val path = "hdfs://hans/data_warehouse/ods_view.db/log_eagle_main_dialog_menu_click/key_day=20171109/key_hour=19"
     println(regExp)
     regExp findFirstMatchIn path match {
       case Some(p)=>{

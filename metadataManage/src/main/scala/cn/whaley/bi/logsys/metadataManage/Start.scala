@@ -32,8 +32,8 @@ object Start {
     //通过配置获取phoenix服务url和链接返回超时时间
     val metadataService = ConfigurationManager.getProperty("metadataService")
     val readTimeout = ConfigurationManager.getInteger("metadata.readTimeout")
-    LOG.info(s"pathExp ...$pathExp")
-    LOG.info(s"pathReg ...$pathReg")
+    println(s"pathExp ...$pathExp")
+    println(s"pathReg ...$pathReg")
     //根据路径规则pathExp 获取到所有的路径
     val phoenixUtil = new PhoenixUtil(metadataService,readTimeout)
     val appIdInfoMap = getMapInfo(phoenixUtil)
@@ -77,7 +77,6 @@ object Start {
     val msgManager = new MsgManager
     msgManager.generateMetaDataToTable(phoenixUtil,arrayBuffer.toArray,"111")
   }
-
 
   def isValidParam(allParam:mutable.Map[String,String]): Boolean ={
     if(allParam.size != 7){
@@ -130,7 +129,7 @@ object Start {
         val key_hour = p.key_hour
 
         //解析路径规则->路径表达式pathExp、路径正则pathReg、缺失的参数、部分parquet参数
-        var regExpPath = analysisPath((path,path),"([a-zA-Z-0-9]+)",DB_NAME,dbname)
+        var regExpPath = analysisPath((path,path),"(\\w+)",DB_NAME,dbname)
         regExpPath = analysisPath(regExpPath,"([a-zA-Z-0-9]+)",TAB_PREFIX,tab_prefix)
         regExpPath = analysisPath(regExpPath,"([a-zA-Z-0-9]+)",PRODUCT_CODE,productCode)
         regExpPath = analysisPath(regExpPath,"(global_menu_2|[a-zA-Z-0-9]+)",APP_CODE,appCode)

@@ -35,6 +35,7 @@ class MsgManager {
     }).distinct
 
 
+    //获取parquet信息
     //生成metadata.logfile_field_desc表数据
     val fieldDescEntityArrayBuffer = generateFieldDescEntityArrayBuffer(taskId, distinctOutput)
     println("fieldDescEntityArrayBuffer.length:" + fieldDescEntityArrayBuffer.length)
@@ -145,11 +146,7 @@ class MsgManager {
       val list = ParquetHiveUtils.getParquetFilesFromHDFS(dir)
 
       val fieldInfo = if (list.size > 0) {
-        var path = list.head.getPath
-        if(path.toString.contains("part-r-00000")){
-          path = new Path(s"${dir}/_metadata")
-        }
-        val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(path)
+        val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(list.head.getPath)
         parquetMetaData.map(meta => {
           val fieldName = meta._1
           val fieldType = meta._2
