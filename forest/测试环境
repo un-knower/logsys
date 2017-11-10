@@ -53,8 +53,6 @@ bin/kafka-console-producer.sh --broker-list bigtest-appsvr-129-1:9094,bigtest-ap
 bin/kafka-console-consumer.sh --zookeeper  bigtest-appsvr-129-1:2183,bigtest-appsvr-129-2:2183,bigtest-appsvr-129-3:2183,bigtest-appsvr-129-4:2183,bigtest-appsvr-129-5:2183  --topic log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr --from-beginning
 
 
-
-
 3.forest部署
 hadoop@bigtest-appsvr-129-5，hadoop@bigtest-appsvr-129-6
 
@@ -75,3 +73,10 @@ sh /opt/forest-dist/sbin//launch_msgproc.sh start --groupId=forest-dist-medusa -
 
 需要测试程序是否读入数据
 
+
+group.id=forest-dist-medusa
+group.id=forest-dist-whaleytv
+group.id=forest-dist-whaleyvr_orca
+group.id=forest-dist-eagle_mobilehelper
+group.id=forest-dist-crawler
+group.id=forest-dist-whaley_other

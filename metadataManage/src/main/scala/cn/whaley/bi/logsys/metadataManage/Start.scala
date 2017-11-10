@@ -52,6 +52,7 @@ object Start {
       val allParam = defalutParam ++ addParam
       //校验parquet需要的参数allParam
       if(!isValidParam(allParam)){
+        println("param check exception .... ")
         LOG.error("param check exception ....")
         System.exit(-1)
       }
@@ -64,7 +65,8 @@ object Start {
     })
 
     if(arrayBuffer.toArray.size == 0){
-      LOG.error("no match path ... ")
+      println("no match path ...... ")
+      LOG.error("no match path ...... ")
       System.exit(-1)
     }
     arrayBuffer.toStream.foreach(f=>{

@@ -1,4 +1,0 @@
-type=command
-dependencies=log2parquet_day
-mainClass=cn.whaley.bi.logsys.log2parquet.MetaData2OdsView
-command=sh ${working.dir}/../sbin/metaData2OdsView.sh --mainClass ${mainClass} --taskFlag  ${taskFlag} --startDate ${startDate} --endDate ${endDate} --startHour ${startHour} --endHour ${endHour}

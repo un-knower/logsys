@@ -1,0 +1,9 @@
+type=command
+dependencies=log2parquet_day
+path=/data_warehouse/ods_view.db/log_[product_code]_[app_code]_[realLogType]/key_day=[key_day]/key_hour=[key_hour]
+dbName=ods_view
+tabPrefix=log
+productCode=null
+appCode=null
+realLogType=null
+command=sh ${working.dir}/../sbin/metadataManage.sh --username ${username} --password ${password} --path ${path} --dbName ${dbName} --tabPrefix ${tabPrefix} --productCode ${productCode} --appCode ${appCode} --realLogType ${realLogType}   --startDate ${startDate} --endDate ${endDate} --startHour ${startHour} --endHour ${endHour}

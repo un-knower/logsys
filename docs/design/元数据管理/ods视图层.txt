@@ -17,6 +17,22 @@ create table metadata.applog_key_field_desc(
 )
 ;
 
+--日志文件中baseinfo白名单字段表
+drop table if exists metadata.log_baseinfo;
+create table metadata.log_baseinfo(
+    id varchar(100) not null --唯一性ID [key]
+    ,productCode varchar(100) --产品线code
+    ,productCodeId varchar(100) --产品线加密后的id
+    ,fieldName varchar(100) --字段名称
+    ,isDeleted boolean --记录是否删除
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (id)
+)
+;
+
+
+
 --日志文件关键字段字段值表
 drop table if exists metadata.logfile_key_field_value;
 create table metadata.logfile_key_field_value(

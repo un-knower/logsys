@@ -45,7 +45,13 @@ do
         time=1
         while (( $time > 0 ))
         do
-          isok
+          startCn=`hadoop fs -ls /run_log/ods_origin_logupload/${startTime}_bigdata-extsvr-log*_start | wc -l`
+          endCn=`hadoop fs -ls /run_log/ods_origin_logupload/${startTime}_bigdata-extsvr-log*_end | wc -l`
+          echo "startCn ... ${startCn}"
+          echo "endCn ... ${endCn}"
+          if (( $startCn != $endCn )) || (( $startCn == 0 )) ; then
+              flag=0
+           fi
           if (( $flag != 1 )) ;then
            sleep 300s
            time=$(($time - 1))
@@ -62,12 +68,4 @@ do
         startTime=`date -d "${startDate} ${startHour} 1 hour" +"%Y%m%d%H"`
 done
 
-
-isok(){
-    startCn=`hadoop fs -ls /run_log/ods_origin_logupload/${startTime}_*_start | wc -l`
-    endCn=`hadoop fs -ls /run_log/ods_origin_logupload/${startTime}_*_end | wc -l`
-     if (( $startCn != $endCn )) || (( $startCn == 0 )) ; then
-        flag=0
-     fi
-}
 

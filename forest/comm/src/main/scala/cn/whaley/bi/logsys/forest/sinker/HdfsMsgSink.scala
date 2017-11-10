@@ -410,11 +410,11 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
 
     private val hdfsConf: Configuration = new Configuration()
     //错误数据根目录
-    private var errRootDir = "/data_warehouse/ods_origin.db/err_log_origin"
+    private var errRootDir = "/data_warehouse/ods_origin.db/err_log_origin2"
     //提交数据根目录
-    private var commitRootDir = "/data_warehouse/ods_origin.db/log_origin"
+    private var commitRootDir = "/data_warehouse/ods_origin.db/log_origin2"
     //临时数据根目录
-    private var tmpRootDir = "/data_warehouse/ods_origin.db/tmp_log_origin"
+    private var tmpRootDir = "/data_warehouse/ods_origin.db/tmp_log_origin2"
     //操作次数阈值
     private var commitOpCount: Int = 100000
     //操作字节数阈值
