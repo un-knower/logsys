@@ -11,6 +11,7 @@ public class WhiteTabInfo {
     private String pathRegex ; //路径正则，时间用*代替
     private String relateTabName ; //ods_view.db 中的表名称
     private String flag ; //0分区到11.1,   1：分区到当天
+    private Integer delayDay ; //path中时间比分区key_day多的天数
 
     public String getTabName() {
         return tabName;
@@ -68,6 +69,14 @@ public class WhiteTabInfo {
         this.flag = flag;
     }
 
+    public Integer getDelayDay() {
+        return delayDay;
+    }
+
+    public void setDelayDay(Integer delayDay) {
+        this.delayDay = delayDay;
+    }
+
     @Override
     public String toString() {
         return "WhiteTabInfo{" +
@@ -78,6 +87,7 @@ public class WhiteTabInfo {
                 ", pathRegex='" + pathRegex + '\'' +
                 ", relateTabName='" + relateTabName + '\'' +
                 ", flag='" + flag + '\'' +
+                ", delayDay='" + delayDay + '\'' +
                 '}';
     }
 }

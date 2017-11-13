@@ -41,11 +41,13 @@ public class Start {
             }
             String relateTabName = "" ;
             String flag = "";
+            Integer delayDay = 0;
             if(getRelateTabNameAndFlag(productLine,realLogType) == null){
 //                continue;
             }else{
                 relateTabName = getRelateTabNameAndFlag(productLine,realLogType).split(",")[0].replace("__","_");
                 flag = getRelateTabNameAndFlag(productLine,realLogType).split(",")[1];
+                delayDay = Integer.valueOf(getRelateTabNameAndFlag(productLine,realLogType).split(",")[2]);
             }
             WhiteTabInfo whiteTabInfo = new WhiteTabInfo();
             whiteTabInfo.setTabName(tabName);
@@ -55,6 +57,7 @@ public class Start {
             whiteTabInfo.setPathRegex(pathRegex);
             whiteTabInfo.setRelateTabName(relateTabName);
             whiteTabInfo.setFlag(flag);
+            whiteTabInfo.setDelayDay(delayDay);
             whiteTabInfos.add(whiteTabInfo);
 
         }
@@ -107,37 +110,37 @@ public class Start {
         realLogType = realLogType.toLowerCase().replace("-","_");
         switch (productLine) {
             case "medusa" :
-                relateTabNameAndFlag = "log_medusa_main3x_"+realLogType+",0";
+                relateTabNameAndFlag = "log_medusa_main3x_"+realLogType+",0,1";
                 break;
             case "whaley" :
-                relateTabNameAndFlag = "log_whaleytv_main_"+realLogType+",0";
+                relateTabNameAndFlag = "log_whaleytv_main_"+realLogType+",0,0";
                 break;
             case "eagle" :
-                relateTabNameAndFlag = "log_eagle_main_"+realLogType+",0";
+                relateTabNameAndFlag = "log_eagle_main_"+realLogType+",0,0";
                 break;
             case "dbsnapshot" :
-                relateTabNameAndFlag = "db_snapshot_mysql_"+realLogType+",1";
+                relateTabNameAndFlag = "db_snapshot_mysql_"+realLogType+",1,0";
                 break;
             case "medusaAndMoretvMerger" :
-                relateTabNameAndFlag = "log_medusa_merge_"+realLogType+",1";
+                relateTabNameAndFlag = "log_medusa_merge_"+realLogType+",1,1";
                 break;
             case "moretvloginlog" :
-                relateTabNameAndFlag = "log_medusa_main3x_"+realLogType+",1";
+                relateTabNameAndFlag = "log_medusa_main3x_"+realLogType+",1,1";
                 break;
             case "boikgpokn78sb95kjhfrendoepkseljn" :
-                relateTabNameAndFlag = "log_whaleytv_global_menu_2_"+realLogType+",0";
+                relateTabNameAndFlag = "log_whaleytv_global_menu_2_"+realLogType+",0,0";
                 break;
             case "boikgpokn78sb95kjhfrendoj8ilnoi7" :
-                relateTabNameAndFlag = "log_whaleytv_wui20_"+realLogType+",0";
+                relateTabNameAndFlag = "log_whaleytv_wui20_"+realLogType+",0,0";
                 break;
             case "boikgpokn78sb95kjhfrendobgjgjolq" :
-                relateTabNameAndFlag = "log_whaleytv_epop_"+realLogType+",0";
+                relateTabNameAndFlag = "log_whaleytv_epop_"+realLogType+",0,0";
                 break;
             case "boikgpokn78sb95kjhfrendojtihcg26" :
-                relateTabNameAndFlag = "log_whaleytv_mobilehelper_"+realLogType+",0";
+                relateTabNameAndFlag = "log_whaleytv_mobilehelper_"+realLogType+",0,0";
                 break;
             case "boikgpokn78sb95kjhfrendosesh6bmu" :
-                relateTabNameAndFlag = "log_whaleytv_webportal_"+realLogType+",0";
+                relateTabNameAndFlag = "log_whaleytv_webportal_"+realLogType+",0,0";
                 break;
             default: relateTabNameAndFlag = null;
         }
