@@ -195,6 +195,10 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                     //修复eagle,未打logType字段
                     if(realLogType == null){
                         realLogType = jsonObj.getString("eventId")
+                      //修复eagle打点play日志应该为live
+                        if("play".equals(realLogType)){
+                          realLogType = "live"
+                        }
                         jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
                     }
