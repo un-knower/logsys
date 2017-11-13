@@ -42,9 +42,10 @@ do
         startDate=${startTime:0:8}
         startHour=${startTime:8:2}
         flag=1
-        time=1
+        time=15
         while (( $time > 0 ))
         do
+          echo "time is ... $time"
           startCn=`hadoop fs -ls /run_log/ods_origin_logupload/${startTime}_bigdata-extsvr-log*_start | wc -l`
           endCn=`hadoop fs -ls /run_log/ods_origin_logupload/${startTime}_bigdata-extsvr-log*_end | wc -l`
           echo "startCn ... ${startCn}"
@@ -53,7 +54,7 @@ do
               flag=0
            fi
           if (( $flag != 1 )) ;then
-           sleep 300s
+           sleep 60s
            time=$(($time - 1))
           else
            time=0
