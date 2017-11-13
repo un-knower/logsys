@@ -14,6 +14,39 @@ import scala.util.matching.Regex
 
 /**
   * Created by guohao on 2017/11/6.
+  *
+  * loginlog args
+  * --path "/log/moretvloginlog/parquet/20171107/loginlog" --db_name ods_view --tab_prefix log --product_code "medusa" --app_code "main3x" --realLogType loginlog --key_day 20171106 --key_hour 00
+  *
+  * medusaAndMoretvMerger args
+  *--path "/log/medusaAndMoretvMerger/20171110/[realLogType]" --db_name ods_view --tab_prefix log --product_code "medusa" --app_code "merge" --realLogType null --key_day 20171109 --key_hour 00
+  *
+  * dbsnapshot
+  * --path "/data_warehouse/ods_view.db/db_snapshot_[realLogType]/key_day=20171106" --db_name ods_view --tab_prefix db --product_code snapshot --app_code mysql --realLogType null --key_day 20171106 --key_hour 00
+  *
+  * dbsnapshot merger
+  * --path "/log/dbsnapshot/parquet/20171112/[realLogType]" --db_name ods_view --tab_prefix db --product_code snapshot --app_code mysql --realLogType null --key_day 20171112 --key_hour 00
+  *
+  * medusa 白猫
+  * white_medusa_315_update_user
+  * --path "/log/medusa/parquet/20171110/white_medusa_315_update_user" --db_name ods_view --tab_prefix log --product_code "medusa" --app_code "main3x" --realLogType white_medusa_315_update_user --key_day 20171109 --key_hour 00
+  * white_medusa_316_update_user
+  * --path "/log/medusa/parquet/20171110/white_medusa_316_update_user" --db_name ods_view --tab_prefix log --product_code "medusa" --app_code "main3x" --realLogType white_medusa_316_update_user --key_day 20171109 --key_hour 00
+  * white_medusa_update_user_by_uid
+  * --path "/log/medusa/parquet/20171110/white_medusa_update_user_by_uid" --db_name ods_view --tab_prefix log --product_code "medusa" --app_code "main3x" --realLogType white_medusa_update_user_by_uid --key_day 20171109 --key_hour 00
+  * white_medusa_update_user
+  * --path "/log/medusa/parquet/20171110/white_medusa_update_user" --db_name ods_view --tab_prefix log --product_code "medusa" --app_code "main3x" --realLogType white_medusa_update_user --key_day 20171109 --key_hour 00
+  *
+  *
+  *
+  * whaley :buffer_middle_info
+  *  --path "/log/whaley/parquet/20171112/buffer_middle_info" --db_name ods_view --tab_prefix log --product_code whaleytv --app_code main --realLogType buffer_middle_info --key_day 20171112 --key_hour 00
+  * whaley:voiceusereal
+  * --path "/log/whaley/parquet/20171112/voiceusereal" --db_name ods_view --tab_prefix log --product_code whaleytv --app_code main --realLogType voiceusereal --key_day 20171112 --key_hour 00
+  *
+  *
+  *
+  *
   */
 object Start {
   val LOG=LoggerFactory.getLogger(this.getClass)
@@ -41,7 +74,11 @@ object Start {
     val config = new Configuration()
     val fs = FileSystem.get(config)
     val fileStatus = fs.globStatus(new Path(pathExp))
-
+    if(fileStatus == null){
+      println("no match path ......")
+      LOG.error("no match path ......")
+      System.exit(-1)
+    }
     fileStatus.foreach(fs=>{
       val path = fs.getPath.toString
       //解析缺失参数,补全parquet 参数
@@ -105,7 +142,13 @@ object Start {
         for(i<- 1 to defectParam.size){
           val value = p.group(i)
           val key = defectParam.getOrElseUpdate(i,"")
-          addParam.put(key,value)
+          //realLogType 中划线转换为下划线
+          if("realLogType".equalsIgnoreCase(key)){
+            addParam.put(key,value.replace("-","_"))
+          }else{
+            addParam.put(key,value)
+          }
+
         }
       }
       case None => println("regex match error ")
@@ -135,7 +178,7 @@ object Start {
         regExpPath = analysisPath(regExpPath,"([a-zA-Z-0-9]+)",TAB_PREFIX,tab_prefix)
         regExpPath = analysisPath(regExpPath,"([a-zA-Z-0-9]+)",PRODUCT_CODE,productCode)
         regExpPath = analysisPath(regExpPath,"(global_menu_2|[a-zA-Z-0-9]+)",APP_CODE,appCode)
-        regExpPath = analysisPath(regExpPath,"(\\w+)",REALLOGTYPE,realLogType)
+        regExpPath = analysisPath(regExpPath,"([\\w-]+)",REALLOGTYPE,realLogType)
         regExpPath = analysisPath(regExpPath,"([0-9]+)",KEY_DAY,key_day)
         regExpPath = analysisPath(regExpPath,"([0-9]+)",KEY_HOUR,key_hour)
         regExpPath
