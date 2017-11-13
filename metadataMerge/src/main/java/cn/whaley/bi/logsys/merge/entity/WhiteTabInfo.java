@@ -87,7 +87,7 @@ public class WhiteTabInfo {
                 ", pathRegex='" + pathRegex + '\'' +
                 ", relateTabName='" + relateTabName + '\'' +
                 ", flag='" + flag + '\'' +
-                ", delayDay='" + delayDay + '\'' +
+                ", delayDay=" + delayDay +
                 '}';
     }
 }

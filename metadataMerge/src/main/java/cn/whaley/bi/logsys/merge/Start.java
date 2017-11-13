@@ -13,6 +13,7 @@ import scala.io.Source;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by guohao on 2017/10/31.
@@ -93,14 +94,41 @@ public class Start {
 
         System.out.println("ods中在ods_view中 未匹配到的表");
         //ods中在ods_view中 未匹配到的表
-        whiteTabInfos.stream().filter(whiteTabInfo -> (!whiteTabInfo.getProductLine().equals("activity") && !whiteTabInfo.getProductLine().equals("dbsnapshot"))).
+        List<String> blackLogType = new ArrayList<String>();
+        blackLogType.add("liv");
+        blackLogType.add("liveq");
+        blackLogType.add("liveqo");
+        blackLogType.add("plax");
+        blackLogType.add("playqo");
+        blackLogType.add("action");
+
+        whiteTabInfos.stream().filter(whiteTabInfo -> (!whiteTabInfo.getProductLine().equals("activity")
+                && !whiteTabInfo.getLogType().startsWith("_")
+                && !whiteTabInfo.getLogType().equals("null")
+                && !blackLogType.contains(whiteTabInfo.getLogType())
+        )).
                 forEach(whiteTabInfo -> {
                     String relateTabName = whiteTabInfo.getRelateTabName();
                     if(!tables.contains(relateTabName)){
-//                        String tabName = whiteTabInfo.getTabName();
-                        System.out.println(whiteTabInfo.toString());
+                        System.out.println("productLine : "+whiteTabInfo.getProductLine()+"\t tableName : "+whiteTabInfo.getTabName()+"\t logype : "+whiteTabInfo.getLogType());
+//                        System.out.println(whiteTabInfo.toString());
                     }
                 });
+
+
+        System.out.println("白名单表 ....");
+
+        List<WhiteTabInfo> collect = whiteTabInfos.stream().filter(whiteTabInfo -> (!whiteTabInfo.getProductLine().equals("activity")
+                && !whiteTabInfo.getLogType().startsWith("_")
+                && !whiteTabInfo.getLogType().equals("null")
+                && !blackLogType.contains(whiteTabInfo.getLogType())
+        )).collect(Collectors.toList());
+        collect.forEach(whiteTabInfo -> {
+            System.out.println(whiteTabInfo.toString());
+        });
+
+
+
 
 
     }
@@ -113,13 +141,18 @@ public class Start {
                 relateTabNameAndFlag = "log_medusa_main3x_"+realLogType+",0,1";
                 break;
             case "whaley" :
-                relateTabNameAndFlag = "log_whaleytv_main_"+realLogType+",0,0";
+                if("buffer_middle_info".equals(realLogType) || "voiceusereal".equals(realLogType)){
+                    relateTabNameAndFlag = "log_whaleytv_main_"+realLogType+",0,1";
+                }else{
+                    relateTabNameAndFlag = "log_whaleytv_main_"+realLogType+",0,0";
+                }
+
                 break;
             case "eagle" :
                 relateTabNameAndFlag = "log_eagle_main_"+realLogType+",0,0";
                 break;
             case "dbsnapshot" :
-                relateTabNameAndFlag = "db_snapshot_mysql_"+realLogType+",1,0";
+                relateTabNameAndFlag = "db_snapshot_mysql_"+realLogType+",1,1";
                 break;
             case "medusaAndMoretvMerger" :
                 relateTabNameAndFlag = "log_medusa_merge_"+realLogType+",1,1";
