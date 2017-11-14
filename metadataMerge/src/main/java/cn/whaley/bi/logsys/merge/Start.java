@@ -1,5 +1,6 @@
 package cn.whaley.bi.logsys.merge;
 
+import cn.whaley.bi.logsys.merge.entity.HiveFieldInfo;
 import cn.whaley.bi.logsys.merge.entity.WhiteTabInfo;
 import cn.whaley.bi.logsys.merge.service.HiveService;
 import org.slf4j.Logger;
@@ -11,8 +12,8 @@ import scala.io.BufferedSource;
 import scala.io.Source;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -62,10 +63,7 @@ public class Start {
             whiteTabInfos.add(whiteTabInfo);
 
         }
-        whiteTabInfos.stream().forEach(whiteTabInfo -> {
-            System.out.println(whiteTabInfo.toString());
-        });
-
+/*
         System.out.println("+===================================");
         whiteTabInfos.stream().filter(whiteTabInfo -> (whiteTabInfo.getPathRegex()=="" && !whiteTabInfo.getProductLine().equals("activity") && !whiteTabInfo.getProductLine().equals("dbsnapshot")))
                 .forEach(whiteTabInfo -> {
@@ -77,6 +75,7 @@ public class Start {
                 .forEach(whiteTabInfo -> {
                     System.out.println(whiteTabInfo.toString());
                 });
+         */
         System.out.println("+===================================");
         long count = whiteTabInfos.stream().filter(whiteTabInfo -> (!whiteTabInfo.getProductLine().equals("activity") && !whiteTabInfo.getProductLine().equals("dbsnapshot"))).count();
         System.out.println("ods table size is "+count);
@@ -85,49 +84,154 @@ public class Start {
         List<String> tables = hiveService.getTables("ods_view", "*");
         System.out.println("ods_view table size is  "+tables.size());
 
-
-
-    /*    tables.forEach(table ->{
-            System.out.println("ods_view table is "+table);
-        });*/
-
-
         System.out.println("ods中在ods_view中 未匹配到的表");
         //ods中在ods_view中 未匹配到的表
-        List<String> blackLogType = new ArrayList<String>();
-        blackLogType.add("liv");
-        blackLogType.add("liveq");
-        blackLogType.add("liveqo");
-        blackLogType.add("plax");
-        blackLogType.add("playqo");
-        blackLogType.add("action");
-
+        List<String> blackTable = new ArrayList<String>();
+        blackTable.add("t_log_medusa_liv");
+        blackTable.add("t_log_medusa_liveq");
+        blackTable.add("t_log_medusa_plax");
+        blackTable.add("t_log_whaley_helios_orcauser_errorwarning");
+        blackTable.add("t_log_whaley_userduration");
+        blackTable.add("t_log_medusa_kandonghua_inputmethodusage");
+        blackTable.add("t_log_medusa_play_keyevent");
         whiteTabInfos.stream().filter(whiteTabInfo -> (!whiteTabInfo.getProductLine().equals("activity")
                 && !whiteTabInfo.getLogType().startsWith("_")
                 && !whiteTabInfo.getLogType().equals("null")
-                && !blackLogType.contains(whiteTabInfo.getLogType())
+                && !blackTable.contains(whiteTabInfo.getTabName())
         )).
                 forEach(whiteTabInfo -> {
                     String relateTabName = whiteTabInfo.getRelateTabName();
                     if(!tables.contains(relateTabName)){
-                        System.out.println("productLine : "+whiteTabInfo.getProductLine()+"\t tableName : "+whiteTabInfo.getTabName()+"\t logype : "+whiteTabInfo.getLogType());
-//                        System.out.println(whiteTabInfo.toString());
+//                        System.out.println("productLine : "+whiteTabInfo.getProductLine()+"\t tableName : "+whiteTabInfo.getTabName()+"\t logype : "+whiteTabInfo.getLogType());
+                        System.out.println(whiteTabInfo.getTabName());
                     }
                 });
 
 
         System.out.println("白名单表 ....");
 
-        List<WhiteTabInfo> collect = whiteTabInfos.stream().filter(whiteTabInfo -> (!whiteTabInfo.getProductLine().equals("activity")
+        List<WhiteTabInfo> finalWhiteTabInfos = whiteTabInfos.stream().filter(whiteTabInfo -> (!whiteTabInfo.getProductLine().equals("activity")
                 && !whiteTabInfo.getLogType().startsWith("_")
                 && !whiteTabInfo.getLogType().equals("null")
-                && !blackLogType.contains(whiteTabInfo.getLogType())
+                && !blackTable.contains(whiteTabInfo.getTabName())
         )).collect(Collectors.toList());
-        collect.forEach(whiteTabInfo -> {
-            System.out.println(whiteTabInfo.toString());
+
+
+
+        System.out.println("白名单表 size "+finalWhiteTabInfos.size());
+
+
+        HashMap<String, List<String>> addColumn = new HashMap<>();
+        HashMap<String, List<String>> changeColumn = new HashMap<>();
+
+        finalWhiteTabInfos.stream()
+                .filter(whiteTabInfo -> whiteTabInfo.getProductLine().equalsIgnoreCase("whaley"))
+                .forEach(whiteTabInfo -> {
+            String odsTabName = whiteTabInfo.getTabName();
+            String productLine = whiteTabInfo.getProductLine();
+            String odsViewTabName = whiteTabInfo.getRelateTabName();
+            List<HiveFieldInfo> odsTableFieldInfo = hiveService.getTabFieldInfo("ods", odsTabName);
+            List<HiveFieldInfo> odsViewTableFieldInfo = hiveService.getTabFieldInfo("ods_view", odsViewTabName);
+            //add column,在ods table 中有在ods_view中没有，并且不是分区字段
+            List<HiveFieldInfo> addColumns = odsTableFieldInfo.stream().filter(item -> {
+                String colName = item.getColName();
+                String dataType = item.getDataType();
+                Boolean partitionField = item.getPartitionField();
+                //true 有
+                boolean hasField = odsViewTableFieldInfo.stream().filter(fieldInfo ->
+                        fieldInfo.getColName().equalsIgnoreCase(colName) ).findAny().isPresent();
+                return (hasField == false
+                        && partitionField == false
+                        && !"msgversion".equalsIgnoreCase(colName)
+                        && !"msgsource".equalsIgnoreCase(colName)
+                        && !"msgsite".equalsIgnoreCase(colName)
+                        && !"msgsignflag".equalsIgnoreCase(colName)
+                        && !"msgid".equalsIgnoreCase(colName)
+                        && !"msgformat".equalsIgnoreCase(colName)
+                        && !"http_msg_time_local".equalsIgnoreCase(colName)
+                        && !"urlpath".equalsIgnoreCase(colName)
+                        && !"host".equalsIgnoreCase(colName)
+                        && !"hour".equalsIgnoreCase(colName)
+                        && !"jsonlog".equalsIgnoreCase(colName)
+                        //appid
+                        && !"contenttype".equalsIgnoreCase(colName)
+                        && !"day".equalsIgnoreCase(colName)
+                        && !"method".equalsIgnoreCase(colName)
+                        && !"receivetime".equalsIgnoreCase(colName)
+                        && !"url".equalsIgnoreCase(colName)
+
+                        && !"forwardedip".equalsIgnoreCase(colName)
+
+                );
+            }).collect(Collectors.toList());
+
+            if(addColumns.size()>0){
+                //拼接ADD COLUMNS
+                List<String> addColumnDDL = new ArrayList<>();
+                addColumns.stream().forEach(fieldInfo->{
+                    String colName = fieldInfo.getColName();
+                    String ddl = String.format("ALTER TABLE `%s` ADD COLUMNS(%s)", odsViewTabName, colName);
+                    addColumnDDL.add(ddl);
+                });
+                if(addColumnDDL.size()>0){
+                    addColumn.put(odsTabName+" column size "+(odsTableFieldInfo.size()-1)+"\t|"+odsViewTabName+" column size "+(odsViewTableFieldInfo.size()-2),addColumnDDL);
+                }
+            }
+
+            //change column
+            List<HiveFieldInfo> changeColumns =odsTableFieldInfo.stream().filter(item -> {
+                String colName = item.getColName();
+                String dataType = item.getDataType();
+                Boolean partitionField = item.getPartitionField();
+                //true 有
+                boolean hasChangedField = odsViewTableFieldInfo.stream().filter(fieldInfo ->
+                        fieldInfo.getColName().equalsIgnoreCase(colName) && !fieldInfo.getDataType().equalsIgnoreCase(dataType)).findAny().isPresent();
+                return (hasChangedField == true
+                        && partitionField == false
+                        && !"accountid".equalsIgnoreCase(colName)
+//                        && !"logid".equalsIgnoreCase(colName)
+//                        && !"carouselround".equalsIgnoreCase(colName)
+//                        && !"relatetime".equalsIgnoreCase(colName)
+//                        && !"happentime".equalsIgnoreCase(colName)
+//                        && !"date_code".equalsIgnoreCase(colName)
+                );
+            }).collect(Collectors.toList());
+
+            if(changeColumns.size()>0){
+                //拼接change COLUMNS
+                List<String> changeColumnDDL = new ArrayList<>();
+                changeColumns.stream().forEach(fieldInfo->{
+                    String colName = fieldInfo.getColName();
+                    String newFieldType = fieldInfo.getDataType();
+                    String ddl = String.format("ALTER TABLE `%s` CHANGE COLUMN `%s` `%s` %s"
+                            , odsViewTabName, colName, colName, newFieldType);
+                    changeColumnDDL.add(ddl);
+                });
+                if(changeColumnDDL.size()>0){
+                    changeColumn.put(odsTabName+"|"+odsViewTabName,changeColumnDDL);
+                }
+            }
+
+        });
+
+        System.out.println("新增字段 .....");
+        addColumn.entrySet().stream().forEach(entity->{
+            String key = entity.getKey();
+            System.out.println("table is ..."+key);
+            entity.getValue().forEach(ddl->{
+                System.out.println(ddl);
+            });
         });
 
 
+        System.out.println("字段类型不一致 .....");
+        changeColumn.entrySet().stream().forEach(entity->{
+            String key = entity.getKey();
+            System.out.println("table is ..."+key);
+            entity.getValue().forEach(ddl->{
+                System.out.println(ddl);
+            });
+        });
 
 
 

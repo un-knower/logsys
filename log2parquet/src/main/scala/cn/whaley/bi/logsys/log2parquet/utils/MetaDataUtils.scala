@@ -145,7 +145,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
 
 //        println(s"dbNameStr -> $dbNameStr ; tabNameStr -> $tabNameStr ; parStr-> $parStr")
-
+//      println(s"path -> $path")
         if(!isValid(parStr) || !isValid(tabNameStr) || !isValid(dbNameStr) ){
             myAccumulator.add("exceptionJsonAcc")
             path = null
@@ -200,6 +200,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                           realLogType = "live"
                         }
                         jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType)
+                        jsonObj.put(LogKeys.LOG_BODY_EVENT_ID,realLogType)
                         jsonObj.put(LogKeys.LOG_TYPE,"event")
                     }
                 }
@@ -236,8 +237,6 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
            if(isInValidLogType(realLogType)){
              return  ("",scala.collection.mutable.HashMap.empty[String,String])
            }
-
-
             jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType.toLowerCase)
             val fields = conf.get.map(field => {
                 val fieldName = field._2
