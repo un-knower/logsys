@@ -41,10 +41,12 @@ do
         echo "execute time ... is ${startTime}"
         startDate=${startTime:0:8}
         startHour=${startTime:8:2}
-        flag=1
-        time=15
+        echo "path is ... /run_log/ods_origin_logupload/${startTime}_bigdata-extsvr-log*_start "
+        echo "path is ... /run_log/ods_origin_logupload/${startTime}_bigdata-extsvr-log*_end "
+        time=20
         while (( $time > 0 ))
         do
+         flag=1
           echo "time is ... $time"
           startCn=`hadoop fs -ls /run_log/ods_origin_logupload/${startTime}_bigdata-extsvr-log*_start | wc -l`
           endCn=`hadoop fs -ls /run_log/ods_origin_logupload/${startTime}_bigdata-extsvr-log*_end | wc -l`
@@ -52,7 +54,7 @@ do
           echo "endCn ... ${endCn}"
           if (( $startCn != $endCn )) || (( $startCn == 0 )) ; then
               flag=0
-           fi
+          fi
           if (( $flag != 1 )) ;then
            sleep 60s
            time=$(($time - 1))
