@@ -29,8 +29,9 @@ object LogKeys {
     val LOG_HOST = "host"
     val LOG_PARAMS = "params"
     val LOG_PLAYQOS = "playqos"
-
-
+    val PRODUCT_LINE = "productLine"
+    val APP_VERSION_CODE = "APP_VERSION_CODE"
+    val DATE_CODE = "DATE_CODE"
 
     //---用来log2parquet使用,start
     //----------
@@ -110,4 +111,9 @@ object LogKeys {
   //修复mobilehelper 微鲸手机助手
   val MOBILEHELPER_APPID = "boikgpokn78sb95kjhfrendojtihcg26"
   val MOBILEHELPER = "mobilehelper"
+
+  val WHALEY_MAIN_APPID ="boikgpokn78sb95kjhfrendo8dc5mlsr"
+  val WHALEY_TV_PRODUCT ="boikgpokn78sb95kjhfrendo"
+  val MEDUSA_3X_MAIN_APPID ="boikgpokn78sb95ktmsc1bnkechpgj9l"
+  val MEDUSA_2X_MAIN_APPID ="boikgpokn78sb95ktmsc1bnken8tuboa"
 }

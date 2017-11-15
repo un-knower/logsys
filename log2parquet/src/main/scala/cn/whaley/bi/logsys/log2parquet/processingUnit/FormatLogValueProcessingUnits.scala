@@ -15,7 +15,7 @@ import com.alibaba.fastjson.JSONObject
   *
   */
 class FormatLogValueProcessingUnits extends LogProcessorTraitV2 with LogTrait {
-  private val longTypeKeyList = List(LogKeys.ACCOUNT_ID, LogKeys.DURATION, LogKeys.SPEED, LogKeys.SIZE, LogKeys.PRE_MEMORY, LogKeys.POST_MEMORY)
+  private val longTypeKeyList = List(LogKeys.DATE_CODE,LogKeys.APP_VERSION_CODE,LogKeys.ACCOUNT_ID, LogKeys.DURATION, LogKeys.SPEED, LogKeys.SIZE, LogKeys.PRE_MEMORY, LogKeys.POST_MEMORY)
 
   /**
     * 初始化
