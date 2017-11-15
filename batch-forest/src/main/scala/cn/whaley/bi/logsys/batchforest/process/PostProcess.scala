@@ -2,7 +2,7 @@ package cn.whaley.bi.logsys.batchforest.process
 
 import cn.whaley.bi.logsys.batchforest.process.LogFormat.translateProp
 import cn.whaley.bi.logsys.batchforest.traits.{LogTrait, NameTrait}
-import cn.whaley.bi.logsys.batchforest.util.{DigestUtil, MyAccumulator, StringUtil}
+import cn.whaley.bi.logsys.batchforest.util.{DigestUtil, JsonUtil, MyAccumulator, StringUtil}
 import com.alibaba.fastjson.{JSON, JSONArray, JSONObject}
 
 /**
@@ -24,6 +24,14 @@ object PostProcess extends NameTrait with LogTrait{
       myAccumulator.add("handlePostExc")
       return Array(None)
     }
+    //处理eagle日志
+    val appId = msgBody.getString("appId")
+    if("boikgpokn78sb95k7id7n8eb8dc5mlsr".equalsIgnoreCase(appId)){
+      myAccumulator.add("handleEagleRecord")
+      return EagleProcess.handleMessage(message)(myAccumulator)
+    }
+
+
     //消息体验证,方法内部将更新相关签名字段的值
     val flag= verify(message)(myAccumulator)
     if(!flag){
@@ -34,11 +42,13 @@ object PostProcess extends NameTrait with LogTrait{
     msgBody.remove("body")
     //baseInfo展开
     val baseInfo = if(body.get("baseInfo").isInstanceOf[String]){
-      parseObject(body.get("baseInfo").asInstanceOf[String])
+      JsonUtil.parseObject(body.get("baseInfo").asInstanceOf[String])
     }else{
       Some(body.get("baseInfo").asInstanceOf[JSONObject])
     }
     if(!baseInfo.isEmpty && baseInfo.get != null  ){
+      //移除happenTime
+      baseInfo.get.remove("happenTime")
       //baseInfo 合并到body
       body.remove("baseInfo")
       body.asInstanceOf[java.util.Map[String,Object]].putAll(baseInfo.get)
@@ -46,7 +56,7 @@ object PostProcess extends NameTrait with LogTrait{
     //logs展开
     val logs =
       if (body.get("logs").isInstanceOf[String]) {
-        parseArray(body.get("logs").asInstanceOf[String])
+        JsonUtil.parseArray(body.get("logs").asInstanceOf[String])
       } else {
         Some(body.get("logs").asInstanceOf[JSONArray])
       }
@@ -150,40 +160,5 @@ object PostProcess extends NameTrait with LogTrait{
     }
     return signed
   }
-
-
-
-  /**
-    * 解析字符串为JSONObject对象
-    * @param str
-    * @return ，如果失败返回None
-    */
-  private def parseObject(str: String): Option[JSONObject] = {
-    try {
-      Some(JSON.parseObject(str))
-    } catch {
-      case e: Throwable => {
-        LOG.error("", e)
-        None
-      }
-    }
-  }
-
-  /**
-    * 解析字符串为JSONArray对象
-    * @param str
-    * @return 如果失败返回None
-    */
-  private def parseArray(str: String): Option[JSONArray] = {
-    try {
-      Some(JSON.parseArray(str))
-    } catch {
-      case e: Throwable => {
-        LOG.debug("invalid jsonarray str:" + str, e)
-        None
-      }
-    }
-  }
-
 
 }

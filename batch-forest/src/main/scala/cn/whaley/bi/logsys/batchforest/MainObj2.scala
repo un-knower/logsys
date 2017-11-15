@@ -3,10 +3,11 @@ package cn.whaley.bi.logsys.batchforest
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import cn.whaley.bi.logsys.batchforest.process.{CrashProcess, GetProcess, LogFormat, PostProcess}
+import cn.whaley.bi.logsys.batchforest.process.LogFormat.translateProp
+import cn.whaley.bi.logsys.batchforest.process._
 import cn.whaley.bi.logsys.batchforest.traits.{LogTrait, NameTrait}
 import cn.whaley.bi.logsys.batchforest.util._
-import com.alibaba.fastjson.{JSON, JSONObject}
+import com.alibaba.fastjson.{JSON, JSONArray, JSONObject}
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -37,8 +38,12 @@ object MainObj2 extends NameTrait with LogTrait{
       val sparkContext = sparkSession.sparkContext
       val myAccumulator =  new MyAccumulator
       sparkContext.register(myAccumulator,"myAccumulator")
-//      val inputPath = "/data_warehouse/ods_origin.db/log_raw/key_day=20171115/key_hour=13/boikgpokn78sb95ktmsc1bnkechpgj9l.log-2017111513-bigdata-extsvr-log1"
-      val inputPath = "/data_warehouse/ods_origin.db/log_origin/crash.json"
+      //whaley main
+      val inputPath = "/data_warehouse/ods_origin.db/log_raw/key_day=20171115/key_hour=13/boikgpokn78sb95kjhfrendo8dc5mlsr.log-2017111513-bigdata-extsvr-log1"
+//      val inputPath = "/data_warehouse/ods_origin.db/log_origin/crash.json"
+      //eagle
+//      val inputPath = "/data_warehouse/ods_origin.db/log_raw/key_day=20171115/key_hour=15/boikgpokn78sb95k7id7n8eb8dc5mlsr.log-2017111515-bigdata-extsvr-log1"
+//      val inputPath = "/data_warehouse/ods_origin.db/log_origin/eagle.json"
       var inputRdd:RDD[String ] = sparkContext.textFile(inputPath)
       //1.日志解码
       val decodeRdd = inputRdd.map(line=>{
@@ -91,6 +96,12 @@ object MainObj2 extends NameTrait with LogTrait{
         log.put("datetime",datetime)
         log
       })
+//        .filter(f=>
+//        (
+//          f.getJSONObject("logBody").getString("apkVersion").equals("2.1.7")
+//        && f.getJSONObject("logBody").getString("eventId").equalsIgnoreCase("letter_search_click")
+//          )
+//      )
 
       println("---------------------")
       resultRdd.take(10).foreach(f=>{
@@ -159,6 +170,12 @@ object MainObj2 extends NameTrait with LogTrait{
     message.put("logSignFlag",0)
     val msgBody = message.getJSONObject("msgBody")
     val body = msgBody.getJSONObject("body")
+  /*  //处理小鹰的日志eagle
+    val appId = msgBody.getString("appId")
+    if("boikgpokn78sb95k7id7n8eb8dc5mlsr".equalsIgnoreCase(appId)){
+      myAccumulator.add("handleEagleRecord")
+     return EagleProcess.handleMessage(message)(myAccumulator)
+    }*/
     //针对crash日志处理
     if(body.containsKey("STACK_TRACE")){
       myAccumulator.add("handleCrashRecord")

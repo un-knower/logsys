@@ -7,6 +7,7 @@ import cn.whaley.bi.logsys.batchforest.process.{CrashProcess, GetProcess, LogFor
 import cn.whaley.bi.logsys.batchforest.traits.{LogTrait, NameTrait}
 import cn.whaley.bi.logsys.batchforest.util._
 import com.alibaba.fastjson.{JSON, JSONObject}
+import org.apache.commons.codec.digest.DigestUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkConf
@@ -135,6 +136,8 @@ object MainObj extends NameTrait with LogTrait{
         val date = dateFormat.format(new Date(logTime))
         val datetime = datetimeFormat.format(new Date(logTime))
         log.put("date",date)
+        log.put("day",date)
+        log.put("logTimestamp",logTime)
         log.put("datetime",datetime)
         log
       }).repartition(850)
@@ -209,6 +212,9 @@ object MainObj extends NameTrait with LogTrait{
     //针对crash日志处理
     if(body.containsKey("STACK_TRACE")){
       myAccumulator.add("handleCrashRecord")
+      val stackTraceStr = body.getString("STACK_TRACE")
+      val stackTraceMd5 = DigestUtils.md5Hex(stackTraceStr)
+      body.put("STACK_TRACE_MD5",stackTraceMd5)
       return CrashProcess.handleCrash(message)(myAccumulator)
     }
     val method = msgBody.getString("svr_req_method")
