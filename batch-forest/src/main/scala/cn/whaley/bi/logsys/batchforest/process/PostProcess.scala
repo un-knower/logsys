@@ -4,6 +4,7 @@ import cn.whaley.bi.logsys.batchforest.process.LogFormat.translateProp
 import cn.whaley.bi.logsys.batchforest.traits.{LogTrait, NameTrait}
 import cn.whaley.bi.logsys.batchforest.util.{DigestUtil, JsonUtil, MyAccumulator, StringUtil}
 import com.alibaba.fastjson.{JSON, JSONArray, JSONObject}
+import org.apache.commons.codec.digest.DigestUtils
 
 /**
   * Created by guohao on 2017/9/19.
@@ -24,11 +25,25 @@ object PostProcess extends NameTrait with LogTrait{
       myAccumulator.add("handlePostExc")
       return Array(None)
     }
+
+    message.remove("msgBody")
+    val body = msgBody.getJSONObject("body")
+    msgBody.remove("body")
+
     //处理eagle日志
     val appId = msgBody.getString("appId")
     if("boikgpokn78sb95k7id7n8eb8dc5mlsr".equalsIgnoreCase(appId)){
       myAccumulator.add("handleEagleRecord")
       return EagleProcess.handleMessage(message)(myAccumulator)
+    }
+
+    //针对crash日志处理
+    if(body.containsKey("STACK_TRACE")){
+      myAccumulator.add("handleCrashRecord")
+      val stackTraceStr = body.getString("STACK_TRACE")
+      val stackTraceMd5 = DigestUtils.md5Hex(stackTraceStr)
+      body.put("STACK_TRACE_MD5",stackTraceMd5)
+      return CrashProcess.handleCrash(message)(myAccumulator)
     }
 
 
@@ -37,9 +52,6 @@ object PostProcess extends NameTrait with LogTrait{
     if(!flag){
       return Array(None)
     }
-    message.remove("msgBody")
-    val body = msgBody.getJSONObject("body")
-    msgBody.remove("body")
     //baseInfo展开
     val baseInfo = if(body.get("baseInfo").isInstanceOf[String]){
       JsonUtil.parseObject(body.get("baseInfo").asInstanceOf[String])

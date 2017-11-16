@@ -4,6 +4,7 @@ import cn.whaley.bi.logsys.batchforest.process.LogFormat.translateProp
 import cn.whaley.bi.logsys.batchforest.traits.{LogTrait, NameTrait}
 import cn.whaley.bi.logsys.batchforest.util.{JsonUtil, MyAccumulator, StringUtil}
 import com.alibaba.fastjson.{JSON, JSONArray, JSONObject}
+import org.apache.commons.codec.digest.DigestUtils
 
 /**
   * Created by guohao on 2017/11/15.
@@ -11,12 +12,19 @@ import com.alibaba.fastjson.{JSON, JSONArray, JSONObject}
 object EagleProcess extends NameTrait with LogTrait{
   def handleMessage(message:JSONObject)
                (implicit myAccumulator:MyAccumulator=new MyAccumulator):Seq[Option[JSONObject]]={
+
     val msgBody = message.getJSONObject("msgBody")
     val logTime = msgBody.getLong("svr_receive_time")
     message.put("logTime",logTime)
     val msgId = message.getString("msgId")
     message.remove("msgBody")
     val body = msgBody.getJSONObject("body")
+    //md5校验
+    if(!checkMd5(body)){
+      myAccumulator.add("eagleMd5Exc")
+      return Array(None)
+    }
+
     //修正
     val md5 = body.getString("}d5")
     if(md5 != null ){
@@ -30,15 +38,22 @@ object EagleProcess extends NameTrait with LogTrait{
     }else{
       Some(body.get("baseInfo").asInstanceOf[JSONObject])
     }
+    var apkVersion = ""
     if(!baseInfo.isEmpty && baseInfo.get != null  ){
       //baseInfo 合并到body
+      apkVersion = baseInfo.get.getString("apkVersion")
       body.remove("baseInfo")
       body.asInstanceOf[java.util.Map[String,Object]].putAll(baseInfo.get)
     }
     //logs展开
     val logs =
       if (body.get("logs").isInstanceOf[String]) {
-        JsonUtil.parseArray(body.get("logs").asInstanceOf[String])
+        val logs = if("2.1.7".equals(apkVersion.trim)){
+          strFix(body.getString("logs"))
+        }else{
+          body.getString("logs")
+        }
+        JsonUtil.parseArray(logs)
       } else {
         Some(body.get("logs").asInstanceOf[JSONArray])
       }
@@ -109,34 +124,30 @@ object EagleProcess extends NameTrait with LogTrait{
 
   }
 
-
   /**
-    * 处理CurrentPageProp
-    * 修复bug
-    * @param logBody
-    * @param key
+    * 处理打点中的bug
+    *
+    * @param line
+    * @return
     */
-  def flatCurrentPageProp(logBody:JSONObject,key:String): Unit ={
-    val value = if(logBody.getString("apkVersion")!= null
-      && logBody.getString("apkVersion").equalsIgnoreCase("2.1.7")
-      && logBody.getString("eventId")!= null
-      && logBody.getString("eventId").equalsIgnoreCase("letter_search_click")
-    ){
-      var currentPageProp = logBody.getString("currentPageProp")
-      currentPageProp = currentPageProp.replace(",\\\"searchResultType\\\":", ",\\\"searchResultType\\\":\\\"") //217版本存在的bug，后续版本已修复
-      JsonUtil.parseObject(currentPageProp)
-    }else{
-        if (logBody.get(key).isInstanceOf[String]) {
-          JsonUtil.parseObject(logBody.get(key).asInstanceOf[String])
-        } else {
-          Some(logBody.get(key).asInstanceOf[JSONObject])
-        }
+  def strFix(line: String): String = {
+    if (line.contains("letter_search_click") ) {
+      val oldStr =""",\"searchResultType\":"""
+      val newStr =""",\"searchResultType\":\""""
+      val result = line
+        .replace(oldStr,newStr) //217版本存在的bug，后续版本已修复
+      return result
     }
-
-    logBody.remove(key)
-    if(value.get != null){
-      logBody.asInstanceOf[java.util.Map[String,Object]].putAll(value.get)
-    }
-
+    else return line
   }
+
+  def checkMd5(message:JSONObject): Boolean ={
+    val key = "naudfur894509@#$8ehu$hfuhuwerj9475jafh70!-748fhgt6"
+    val baseInfo = message.get("baseInfo")
+    val logs = message.getString("logs")
+    val ts = message.getString("ts")
+    DigestUtils.md5Hex(baseInfo + logs + ts + key) == message.getString("md5")
+  }
+
+
 }

@@ -3,14 +3,11 @@ package cn.whaley.bi.logsys.batchforest
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import cn.whaley.bi.logsys.batchforest.process.LogFormat.translateProp
 import cn.whaley.bi.logsys.batchforest.process._
 import cn.whaley.bi.logsys.batchforest.traits.{LogTrait, NameTrait}
 import cn.whaley.bi.logsys.batchforest.util._
 import com.alibaba.fastjson.{JSON, JSONArray, JSONObject}
 import org.apache.commons.codec.digest.DigestUtils
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
@@ -39,8 +36,8 @@ object MainObj2 extends NameTrait with LogTrait{
       val myAccumulator =  new MyAccumulator
       sparkContext.register(myAccumulator,"myAccumulator")
       //whaley main
-      val inputPath = "/data_warehouse/ods_origin.db/log_raw/key_day=20171115/key_hour=13/boikgpokn78sb95kjhfrendo8dc5mlsr.log-2017111513-bigdata-extsvr-log1"
-//      val inputPath = "/data_warehouse/ods_origin.db/log_origin/crash.json"
+//      val inputPath = "/data_warehouse/ods_origin.db/log_raw/key_day=20171115/key_hour=13/boikgpokn78sb95kjhfrendo8dc5mlsr.log-2017111513-bigdata-extsvr-log1"
+      val inputPath = "/data_warehouse/ods_origin.db/log_origin/crash.json"
       //eagle
 //      val inputPath = "/data_warehouse/ods_origin.db/log_raw/key_day=20171115/key_hour=15/boikgpokn78sb95k7id7n8eb8dc5mlsr.log-2017111515-bigdata-extsvr-log1"
 //      val inputPath = "/data_warehouse/ods_origin.db/log_origin/eagle.json"
@@ -48,7 +45,8 @@ object MainObj2 extends NameTrait with LogTrait{
       //1.日志解码
       val decodeRdd = inputRdd.map(line=>{
         myAccumulator.add("inputRecord")
-        LogFormat.decode(line)
+//        LogFormat.decode(line)
+        Some(line)
       })
       //2.验证日志格式
       val formatRdd = decodeRdd.filter(f=>{
@@ -169,13 +167,8 @@ object MainObj2 extends NameTrait with LogTrait{
     myAccumulator.add("handleRecord")
     message.put("logSignFlag",0)
     val msgBody = message.getJSONObject("msgBody")
-    val body = msgBody.getJSONObject("body")
-  /*  //处理小鹰的日志eagle
-    val appId = msgBody.getString("appId")
-    if("boikgpokn78sb95k7id7n8eb8dc5mlsr".equalsIgnoreCase(appId)){
-      myAccumulator.add("handleEagleRecord")
-     return EagleProcess.handleMessage(message)(myAccumulator)
-    }*/
+    /*val body = msgBody.getJSONObject("body")
+
     //针对crash日志处理
     if(body.containsKey("STACK_TRACE")){
       myAccumulator.add("handleCrashRecord")
@@ -183,7 +176,7 @@ object MainObj2 extends NameTrait with LogTrait{
       val stackTraceMd5 = DigestUtils.md5Hex(stackTraceStr)
       body.put("STACK_TRACE_MD5",stackTraceMd5)
       return CrashProcess.handleCrash(message)(myAccumulator)
-    }
+    }*/
     val method = msgBody.getString("svr_req_method")
     method match {
       case "POST" => {

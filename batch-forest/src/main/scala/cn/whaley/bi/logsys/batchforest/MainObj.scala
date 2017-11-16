@@ -208,15 +208,14 @@ object MainObj extends NameTrait with LogTrait{
     myAccumulator.add("handleRecord")
     message.put("logSignFlag",0)
     val msgBody = message.getJSONObject("msgBody")
-    val body = msgBody.getJSONObject("body")
-    //针对crash日志处理
+   /* //针对crash日志处理
     if(body.containsKey("STACK_TRACE")){
       myAccumulator.add("handleCrashRecord")
       val stackTraceStr = body.getString("STACK_TRACE")
       val stackTraceMd5 = DigestUtils.md5Hex(stackTraceStr)
       body.put("STACK_TRACE_MD5",stackTraceMd5)
       return CrashProcess.handleCrash(message)(myAccumulator)
-    }
+    }*/
     val method = msgBody.getString("svr_req_method")
       method match {
            case "POST" => {
