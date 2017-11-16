@@ -21,7 +21,12 @@ CREATE INDEX idx_logtab_ddl_taskId ON metadata.logtab_ddl(taskId) SALT_BUCKETS=2
 CREATE SEQUENCE metadata.seq_logtab_ddl;
 
 
+
+
+重新执行的表
+drop index idx_logfile_key_field_value_taskId ON metadata.logfile_key_field_value;
 drop table if exists metadata.logfile_key_field_value;
+
 create table metadata.logfile_key_field_value(
     logPath varchar(500) not null --日志文件路径 [key]
     ,fieldName varchar(100) not null --字段名 [key]
@@ -32,5 +37,80 @@ create table metadata.logfile_key_field_value(
     ,createTime date --记录创建时间
     ,updateTime date --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (logPath,fieldName)
-)SALT_BUCKETS = 20;
+);
 CREATE INDEX idx_logfile_key_field_value_taskId ON metadata.logfile_key_field_value(taskId);
+
+
+--日志文件字段信息表
+drop index idx_logfile_field_desc_taskId ON metadata.logfile_field_desc;
+drop table if exists metadata.logfile_field_desc;
+
+create table metadata.logfile_field_desc(
+    logPath varchar(500) not null --日志文件路径 [key]
+    ,fieldName varchar(100) not null --字段名 [key]
+    ,fieldType varchar(100) --hive字段类型
+    ,fieldSql varchar(500) --hive字段SQL声明子句
+    ,rawType varchar(100) --parquet字段类型
+    ,rawInfo varchar(500) --parquet字段类型信息
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,isDeleted boolean --记录是否删除
+    ,createTime date --记录创建时间
+    ,updateTime date --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (logPath,fieldName)
+);
+CREATE INDEX idx_logfile_field_desc_taskId ON metadata.logfile_field_desc(taskId);
+select * from metadata.logfile_field_desc limit 10;
+
+
+
+--DDL信息表
+drop index idx_logtab_ddl_taskId ON metadata.logtab_ddl;
+drop table if exists metadata.logtab_ddl;
+create table metadata.logtab_ddl(
+    dbName varchar(100) not null --[key]
+    ,tabName varchar(500) not null --[key]
+    ,seq integer not null --序号 [key]
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,ddlType varchar(100) --DDL类型, CHANGE_COLUMN/ADD_COLUMN/DROP_COLUMN/CREATE_TABLE/ALTER_TABLE/DROP_TABLE
+    ,ddlText varchar --DDL语句
+    ,commitTime timestamp --DDL提交时间
+    ,commitCode Integer --DDL提交结果
+    ,commitMsg varchar --DDL提交结果说明
+    ,isDeleted boolean --记录是否删除
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,seq)
+);
+CREATE INDEX idx_logtab_ddl_taskId ON metadata.logtab_ddl(taskId) ;
+CREATE SEQUENCE metadata.seq_logtab_ddl;
+
+
+
+--DML信息表
+drop table if exists metadata.logtab_dml;
+create table metadata.logtab_dml(
+    dbName varchar(100) not null --[key]
+    ,tabName varchar(500) not null --[key]
+    ,seq integer  not null --序号 [key]
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,dmlType varchar(100) --DML类型, ADD_PARTITION
+    ,dmlText varchar --DML语句
+    ,commitTime timestamp --DDL提交时间
+    ,commitCode Integer --DDL提交结果
+    ,commitMsg varchar --DDL提交结果说明
+    ,isDeleted boolean --记录是否删除
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,seq)
+) SALT_BUCKETS=40;
+CREATE INDEX idx_logtab_dml_taskId ON metadata.logtab_dml(taskId) SALT_BUCKETS=40;
+CREATE SEQUENCE metadata.seq_logtab_dml;
+
+
+------------------------
+select * from metadata.logfile_key_field_value where taskId = 'AAABX8S0IDGsEGkmAewAAAAA' limit 10;
+
+select * from metadata.logfile_field_desc where taskId = 'AAABX8S0IDGsEGkmAewAAAAA' limit 10;
+
+select * from metadata.logtab_ddl where taskId = 'AAABX8S0IDGsEGkmAewAAAAA' limit 10;
+select * from metadata.logtab_dml where taskId = 'AAABX8S0IDGsEGkmAewAAAAA' limit 10;

@@ -2,6 +2,7 @@ package cn.whaley.bi.logsys.metadata.service;
 
 import cn.whaley.bi.logsys.metadata.entity.*;
 import cn.whaley.bi.logsys.metadata.repository.*;
+import cn.whaley.bi.logsys.metadata.util.SendMail;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -384,7 +385,18 @@ public class ODSViewService {
                     ddlEntity.setTaskId(desc.taskId);
                     return ddlEntity;
                 }).collect(Collectors.toList());
-                entities.addAll(changedDDLs);
+                //取消直接执行changed语句，改为发送邮件
+                //entities.addAll(changedDDLs);
+                //拼接执行语句
+                StringBuffer context = new StringBuffer();
+                changedDDLs.stream().forEach(ddlEntity->{
+                    String tab = ddlEntity.getTabName();
+                    String ddlText = ddlEntity.getDdlText();
+                    context.append(tab+" -> "+ddlText+"\n");
+                });
+                //发邮件
+                String[] users = {"app-bigdata@whaley.cn"};
+                SendMail.post(context.toString(), "[ods-view-metadata][字段类型重命名]", users);
             }
         }
         return entities;
