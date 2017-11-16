@@ -187,6 +187,15 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
     ) {
       json.put(LOG_TYPE, "playqos")
     }
+
+    if (logType == "launcher") {
+      if (json.containsKey("accessArea")) {
+        val v = getStringValue(json,"accessArea")
+        json.put(ACCESS_AREA, v)
+        json.remove("accessArea")
+      }
+    }
+
   }
 
   def getStringValue(json: JSONObject, key: String, defValue: String = ""): String = {
