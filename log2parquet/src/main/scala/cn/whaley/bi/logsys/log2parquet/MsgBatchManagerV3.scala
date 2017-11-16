@@ -485,13 +485,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     })
 
-    println(s"baseInfoRenameMap size is ......  ${baseInfoRenameMap.size}")
-    baseInfoRenameMap.foreach(f=>{
-      println(s"productcode is ${f._1}")
-      println(s"baseInfoRename is ${f._2.toString()}")
-    })
-
-
     val myBroadcast = MyBroadcast(rowBlackFilterMap.toMap,fieldBlackFilterMap.toMap,renameMap.toMap,baseInfoRenameMap.toMap)
     val broadcast = sc.broadcast(myBroadcast)
     //TODO debug
@@ -525,6 +518,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
             }
           })
         }
+        //删除单字母，纯数字字段
+        jsonObject.keySet().toArray(new Array[String](0)).foreach(field=>{
+          if(field.length <=1 || isinValidKey(field)){
+            jsonObject.remove(field)
+          }
+        })
+
         //baseinfo 白名单处理
         if(baseInfoRenameMap.keySet.contains(path) && !baseInfoRenameMap.get(path).isEmpty){
           val map = baseInfoRenameMap.get(path).get
@@ -586,6 +586,16 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
   def isValid(s:String)={
     val regex = """[a-zA-Z0-9-_>]*"""
+    s.matches(regex)
+  }
+
+  /**
+    * json key 的正则
+    * @param s
+    * @return
+    */
+  def isinValidKey(s:String)={
+    val regex = "^[0-9]*$"
     s.matches(regex)
   }
 

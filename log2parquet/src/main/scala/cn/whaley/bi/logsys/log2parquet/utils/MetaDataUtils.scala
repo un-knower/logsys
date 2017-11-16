@@ -365,7 +365,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 val whiteList = fieldFilterList.filter(_._2)
                 val fieldBlackFilter = fieldFilterList.filter(item => {
                   val field = item._1
-                  !whiteList.exists(p => p._1 == field)  || field.length <=1 || isinValidKey(field)
+                  !whiteList.exists(p => p._1 == field)
                 }).map(item => item._1)
 
 
