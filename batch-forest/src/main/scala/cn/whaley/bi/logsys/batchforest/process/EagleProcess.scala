@@ -14,16 +14,14 @@ object EagleProcess extends NameTrait with LogTrait{
                (implicit myAccumulator:MyAccumulator=new MyAccumulator):Seq[Option[JSONObject]]={
 
     val msgBody = message.getJSONObject("msgBody")
-    val logTime = msgBody.getLong("svr_receive_time")
-    message.put("logTime",logTime)
-    val msgId = message.getString("msgId")
-    message.remove("msgBody")
     val body = msgBody.getJSONObject("body")
     //md5校验
     if(!checkMd5(body)){
       myAccumulator.add("eagleMd5Exc")
       return Array(None)
     }
+    val msgId = message.getString("msgId")
+    message.remove("msgBody")
 
     //修正
     val md5 = body.getString("}d5")

@@ -18,25 +18,21 @@ object PostProcess extends NameTrait with LogTrait{
   def handlePost(message:JSONObject)
                 (implicit myAccumulator:MyAccumulator=new MyAccumulator): Seq[Option[JSONObject]] ={
     val msgBody = message.getJSONObject("msgBody")
-    val logTime = msgBody.getLong("svr_receive_time")
-    message.put("logTime",logTime)
-    val msgId = message.getString("msgId")
+
     if(!msgBody.getString("svr_req_method").equalsIgnoreCase("POST")){
       myAccumulator.add("handlePostExc")
       return Array(None)
     }
-
-    message.remove("msgBody")
+    //post日志统一处理logTime
+    val logTime = msgBody.getLong("svr_receive_time")
+    message.put("logTime",logTime)
     val body = msgBody.getJSONObject("body")
-    msgBody.remove("body")
-
     //处理eagle日志
     val appId = msgBody.getString("appId")
     if("boikgpokn78sb95k7id7n8eb8dc5mlsr".equalsIgnoreCase(appId)){
       myAccumulator.add("handleEagleRecord")
       return EagleProcess.handleMessage(message)(myAccumulator)
     }
-
     //针对crash日志处理
     if(body.containsKey("STACK_TRACE")){
       myAccumulator.add("handleCrashRecord")
@@ -45,13 +41,16 @@ object PostProcess extends NameTrait with LogTrait{
       body.put("STACK_TRACE_MD5",stackTraceMd5)
       return CrashProcess.handleCrash(message)(myAccumulator)
     }
-
-
     //消息体验证,方法内部将更新相关签名字段的值
     val flag= verify(message)(myAccumulator)
     if(!flag){
       return Array(None)
     }
+
+    val msgId = message.getString("msgId")
+    message.remove("msgBody")
+    msgBody.remove("body")
+
     //baseInfo展开
     val baseInfo = if(body.get("baseInfo").isInstanceOf[String]){
       JsonUtil.parseObject(body.get("baseInfo").asInstanceOf[String])
