@@ -395,8 +395,8 @@ public class ODSViewService {
                     context.append(tab+" -> "+ddlText+"\n");
                 });
                 //发邮件
-                String[] users = {"app-bigdata@whaley.cn"};
-                SendMail.post(context.toString(), "[ods-view-metadata][字段类型重命名]", users);
+//                String[] users = {"app-bigdata@whaley.cn"};
+//                SendMail.post(context.toString(), "[ods-view-metadata][字段类型重命名]", users);
             }
         }
         return entities;
