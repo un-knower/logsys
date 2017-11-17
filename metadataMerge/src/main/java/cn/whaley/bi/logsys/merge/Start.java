@@ -94,6 +94,36 @@ public class Start {
         blackTable.add("t_log_whaley_userduration");
         blackTable.add("t_log_medusa_kandonghua_inputmethodusage");
         blackTable.add("t_log_medusa_play_keyevent");
+
+        blackTable.add("t_log_boikgpokn78sb95kjhfrendosesh6bmu_activity");
+        blackTable.add("t_log_medusa_comic_tabview");
+        blackTable.add("t_log_medusa_history_tabview");
+        blackTable.add("t_log_medusa_home_inputmethodusage");
+        blackTable.add("t_log_medusa_home_switchinputmethod");
+        blackTable.add("t_log_medusa_kandonghua_tabview");
+        blackTable.add("t_log_medusa_kids_home_tabview");
+        blackTable.add("t_log_medusa_play_startpage");
+        blackTable.add("t_log_medusa_retrieval_tabview");
+        blackTable.add("t_log_medusa_tv_inputmethodusage");
+        blackTable.add("t_log_whaley_bulletscreen");
+        blackTable.add("t_log_whaley_cmccconnected");
+        blackTable.add("t_log_whaley_danmuswitch");
+        blackTable.add("t_log_whaley_hdmiview");
+        blackTable.add("t_log_whaley_helios_facerecognition_interfacecall");
+        blackTable.add("t_log_whaley_helios_facerecognition_resultpage");
+        blackTable.add("t_log_whaley_helios_orcasystem_startglobalmenu");
+        blackTable.add("t_log_whaley_helios_rom_factorymenu");
+        blackTable.add("t_log_whaley_helios_sendmessage");
+        blackTable.add("t_log_whaley_helios_singer_activity");
+        blackTable.add("t_log_whaley_helios_smartbrick_interact");
+        blackTable.add("t_log_whaley_helios_smartbrick_playermenu");
+        blackTable.add("t_log_whaley_helios_starmatch_interfacecall");
+        blackTable.add("t_log_whaley_helios_starmatch_videopreview");
+        blackTable.add("t_log_whaley_helios_telecontroller_pairing");
+        blackTable.add("t_log_whaley_helios_voice_searchresultpreview");
+        blackTable.add("t_log_whaley_helios_whaleyfm_fmvideocollect");
+        blackTable.add("t_log_whaley_sdinout");
+        blackTable.add("t_log_whaley_teamclick");
         whiteTabInfos.stream().filter(whiteTabInfo -> (!whiteTabInfo.getProductLine().equals("activity")
                 && !whiteTabInfo.getLogType().startsWith("_")
                 && !whiteTabInfo.getLogType().equals("null")
@@ -161,6 +191,35 @@ public class Start {
                         && !"url".equalsIgnoreCase(colName)
 
                         && !"forwardedip".equalsIgnoreCase(colName)
+
+                        && !"remoteip".equalsIgnoreCase(colName)
+                        && !"datetime".equalsIgnoreCase(colName)
+                        && !"tags".equalsIgnoreCase(colName)
+                        && !"log_msgid".equalsIgnoreCase(colName)
+
+                        //20171116排查确定的脏字段 whaley
+                        && !"buffertype".equalsIgnoreCase(colName)
+                        && !"exittype".equalsIgnoreCase(colName)
+                        && !"sourcelist".equalsIgnoreCase(colName)
+                        && !"videotime".equalsIgnoreCase(colName)
+                        && !"autoswitch".equalsIgnoreCase(colName)
+                        && !"definition".equalsIgnoreCase(colName)
+                        && !"maxretrytimes".equalsIgnoreCase(colName)
+                        && !"playertype".equalsIgnoreCase(colName)
+                        && !"playurl".equalsIgnoreCase(colName)
+                        && !"retrytimes".equalsIgnoreCase(colName)
+                        && !"startplaysessionid".equalsIgnoreCase(colName)
+                        && !"userswitch".equalsIgnoreCase(colName)
+                        && !"_t".equalsIgnoreCase(colName)
+                        && !"eventdate".equalsIgnoreCase(colName)
+                        && !"eventhour".equalsIgnoreCase(colName)
+                        && !"eventtime".equalsIgnoreCase(colName)
+                        && !"forwardip".equalsIgnoreCase(colName)
+                        && !"nwpingdata".equalsIgnoreCase(colName)
+                        //20171117排查确定的脏字段 whaley
+                        && !"phrase".equalsIgnoreCase(colName)
+
+
 
                 );
             }).collect(Collectors.toList());
