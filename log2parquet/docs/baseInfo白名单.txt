@@ -62,7 +62,7 @@ upsert into METADATA.LOG_BASEINFO(id,productCode,productCodeId,fieldName,isDelet
 upsert into METADATA.LOG_BASEINFO(id,productCode,productCodeId,fieldName,isDeleted,createTime,updateTime) values('303','eagle','7id7n8eb','weatherCode',false,now(),now());
 upsert into METADATA.LOG_BASEINFO(id,productCode,productCodeId,fieldName,isDeleted,createTime,updateTime) values('304','eagle','7id7n8eb','promotionChannel',false,now(),now());
 upsert into METADATA.LOG_BASEINFO(id,productCode,productCodeId,fieldName,isDeleted,createTime,updateTime) values('305','eagle','7id7n8eb','productModel',false,now(),now());
-upsert into METADATA.LOG_BASEINFO(id,productCode,productCodeId,fieldName,isDeleted,createTime,updatetime) values('306','eagle','7id7n8eb','uploadTime',false,now(),now());
+upsert into METADATA.LOG_BASEINFO(id,productCode,productCodeId,fieldName,isDeleted,createTime,updateTime) values('306','eagle','7id7n8eb','uploadtime',false,now(),now());
 upsert into METADATA.LOG_BASEINFO(id,productCode,productCodeId,fieldName,isDeleted,createTime,updateTime) values('307','eagle','7id7n8eb','apkSeries',false,now(),now());
 upsert into METADATA.LOG_BASEINFO(id,productCode,productCodeId,fieldName,isDeleted,createTime,updateTime) values('308','eagle','7id7n8eb','apkVersion',false,now(),now());
 upsert into METADATA.LOG_BASEINFO(id,productCode,productCodeId,fieldName,isDeleted,createTime,updateTime) values('309','eagle','7id7n8eb','versionCode',false,now(),now());
