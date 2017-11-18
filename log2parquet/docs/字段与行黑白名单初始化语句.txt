@@ -3963,6 +3963,9 @@ upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,special
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5077','whaleytv','rename','DateTime_r',10,'^DateTime$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5078','eagle','rename','currentPageId',10,'^currenTPageId$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5079','eagle','rename','logVersion',10,'^logVersioN$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5080','whaleytv','fieldFilter','01',10,'^appid$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5081','eagle','fieldFilter','01',10,'^appid$',false,now(),now());
+
 
 
 
