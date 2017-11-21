@@ -37,7 +37,7 @@ public class GenerateDML {
         String relateTabName = whiteTabInfo.getRelateTabName();
         String flag = whiteTabInfo.getFlag();
         int delayDay = whiteTabInfo.getDelayDay();
-        String maxDay = "20171101";
+        String maxDay = "20171115";
         String key_hour = "00";
         String pattern = ".*/(\\d{8})/.*";
         Pattern r = Pattern.compile(pattern);
@@ -94,7 +94,7 @@ public class GenerateDML {
     }
 
     public static void assembeDML(String tableName, String path, String key_day, String key_hour,FileOutputStream outStream){
-        String dropPartition = "ALTER TABLE ods_view." + tableName + " DROP IF EXISTS PARTITION (key_day='" + key_day + "',key_hour='" + key_hour + "');" + "\n";
+        String dropPartition = "ALTER TABLE ods_view." + tableName + " DROP IF EXISTS PARTITION (key_day='" + key_day + "');" + "\n";
         String addPartition = "ALTER TABLE ods_view." + tableName + " ADD IF NOT EXISTS PARTITION (key_day='" + key_day + "',key_hour='" + key_hour + "') LOCATION '"+path+"';" + "\n";
 //        logger.info("log path: "+path);
 //        logger.info("key_day: " + key_day);

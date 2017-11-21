@@ -3,6 +3,7 @@ package cn.whaley.bi.logsys.merge;
 import cn.whaley.bi.logsys.merge.entity.HiveFieldInfo;
 import cn.whaley.bi.logsys.merge.entity.WhiteTabInfo;
 import cn.whaley.bi.logsys.merge.service.HiveService;
+import cn.whaley.bi.logsys.merge.util.GenerateDML;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -95,35 +96,9 @@ public class Start {
         blackTable.add("t_log_medusa_kandonghua_inputmethodusage");
         blackTable.add("t_log_medusa_play_keyevent");
 
-        blackTable.add("t_log_boikgpokn78sb95kjhfrendosesh6bmu_activity");
-        blackTable.add("t_log_medusa_comic_tabview");
-        blackTable.add("t_log_medusa_history_tabview");
-        blackTable.add("t_log_medusa_home_inputmethodusage");
-        blackTable.add("t_log_medusa_home_switchinputmethod");
-        blackTable.add("t_log_medusa_kandonghua_tabview");
-        blackTable.add("t_log_medusa_kids_home_tabview");
-        blackTable.add("t_log_medusa_play_startpage");
-        blackTable.add("t_log_medusa_retrieval_tabview");
-        blackTable.add("t_log_medusa_tv_inputmethodusage");
-        blackTable.add("t_log_whaley_bulletscreen");
-        blackTable.add("t_log_whaley_cmccconnected");
-        blackTable.add("t_log_whaley_danmuswitch");
-        blackTable.add("t_log_whaley_hdmiview");
-        blackTable.add("t_log_whaley_helios_facerecognition_interfacecall");
-        blackTable.add("t_log_whaley_helios_facerecognition_resultpage");
-        blackTable.add("t_log_whaley_helios_orcasystem_startglobalmenu");
-        blackTable.add("t_log_whaley_helios_rom_factorymenu");
-        blackTable.add("t_log_whaley_helios_sendmessage");
-        blackTable.add("t_log_whaley_helios_singer_activity");
-        blackTable.add("t_log_whaley_helios_smartbrick_interact");
-        blackTable.add("t_log_whaley_helios_smartbrick_playermenu");
-        blackTable.add("t_log_whaley_helios_starmatch_interfacecall");
-        blackTable.add("t_log_whaley_helios_starmatch_videopreview");
-        blackTable.add("t_log_whaley_helios_telecontroller_pairing");
-        blackTable.add("t_log_whaley_helios_voice_searchresultpreview");
-        blackTable.add("t_log_whaley_helios_whaleyfm_fmvideocollect");
-        blackTable.add("t_log_whaley_sdinout");
-        blackTable.add("t_log_whaley_teamclick");
+        blackTable.add("t_log_medusa_comic_switchinputmethod");
+        blackTable.add("t_log_medusa_player_sdk_stastplay");
+
         whiteTabInfos.stream().filter(whiteTabInfo -> (!whiteTabInfo.getProductLine().equals("activity")
                 && !whiteTabInfo.getLogType().startsWith("_")
                 && !whiteTabInfo.getLogType().equals("null")
@@ -149,13 +124,16 @@ public class Start {
 
 
         System.out.println("白名单表 size "+finalWhiteTabInfos.size());
+        finalWhiteTabInfos.forEach(whiteTabInfo -> {
+            GenerateDML.generateDML(whiteTabInfo);
+        });
 
 
         HashMap<String, List<String>> addColumn = new HashMap<>();
         HashMap<String, List<String>> changeColumn = new HashMap<>();
 
         finalWhiteTabInfos.stream()
-                .filter(whiteTabInfo -> whiteTabInfo.getProductLine().equalsIgnoreCase("whaley"))
+                .filter(whiteTabInfo -> whiteTabInfo.getProductLine().equalsIgnoreCase("eagle"))
                 .forEach(whiteTabInfo -> {
             String odsTabName = whiteTabInfo.getTabName();
             String productLine = whiteTabInfo.getProductLine();
@@ -218,6 +196,105 @@ public class Start {
                         && !"nwpingdata".equalsIgnoreCase(colName)
                         //20171117排查确定的脏字段 whaley
                         && !"phrase".equalsIgnoreCase(colName)
+                        && !"errorcode".equalsIgnoreCase(colName)
+                        && !"usertype".equalsIgnoreCase(colName)
+                        && !"videotype".equalsIgnoreCase(colName)
+                        && !"10000skip".equalsIgnoreCase(colName)
+                        && !"_r".equalsIgnoreCase(colName)
+                        && !"activityid".equalsIgnoreCase(colName)
+                        && !"currenviptlevel".equalsIgnoreCase(colName)
+                        && !"dcwpf0dc4".equalsIgnoreCase(colName)
+                        && !"from".equalsIgnoreCase(colName)
+                        && !"ip".equalsIgnoreCase(colName)
+                        && !"scanner".equalsIgnoreCase(colName)
+                        && !"set".equalsIgnoreCase(colName)
+                        && !"t".equalsIgnoreCase(colName)
+                        && !"sid".equalsIgnoreCase(colName)
+                        //20171116排查确定的脏字段 medusa
+                        && !"ap".equalsIgnoreCase(colName)
+                        && !"app".equalsIgnoreCase(colName)
+                        && !"appe".equalsIgnoreCase(colName)
+                        && !"appen".equalsIgnoreCase(colName)
+                        && !"appent".equalsIgnoreCase(colName)
+                        && !"appente".equalsIgnoreCase(colName)
+                        && !"appenter".equalsIgnoreCase(colName)
+                        && !"we".equalsIgnoreCase(colName)
+                        && !"wea".equalsIgnoreCase(colName)
+                        && !"weat".equalsIgnoreCase(colName)
+                        && !"weath".equalsIgnoreCase(colName)
+                        && !"weathe".equalsIgnoreCase(colName)
+                        && !"weather".equalsIgnoreCase(colName)
+                        && !"weatherc".equalsIgnoreCase(colName)
+                        && !"weatherco".equalsIgnoreCase(colName)
+                        && !"weathercod".equalsIgnoreCase(colName)
+                        && !"_t".equalsIgnoreCase(colName)
+                        && !"pro".equalsIgnoreCase(colName)
+                        && !"promotionc".equalsIgnoreCase(colName)
+                        //20171117排查确定的脏字段 medusa
+                        && !"ram".equalsIgnoreCase(colName)
+                        && !"cpu".equalsIgnoreCase(colName)
+                        && !"androidversion".equalsIgnoreCase(colName)
+                        && !"contentpype".equalsIgnoreCase(colName)
+                        && !"retrieva".equalsIgnoreCase(colName)
+                        && !"i1m".equalsIgnoreCase(colName)
+                        //20171117排查确定的脏字段 eagle
+                        && !"product".equalsIgnoreCase(colName)
+                        && !"dialogtype".equalsIgnoreCase(colName)
+                        && !"apkvursion".equalsIgnoreCase(colName)
+                        && !"condition".equalsIgnoreCase(colName)
+                        && !"contentid".equalsIgnoreCase(colName)
+                        && !"contentname".equalsIgnoreCase(colName)
+                        && !"duration".equalsIgnoreCase(colName)
+                        && !"endtype".equalsIgnoreCase(colName)
+                        && !"episodesid".equalsIgnoreCase(colName)
+                        && !"keyword".equalsIgnoreCase(colName)
+                        && !"livchannelsid".equalsIgnoreCase(colName)
+                        && !"livechanelnale".equalsIgnoreCase(colName)
+                        && !"locationindex".equalsIgnoreCase(colName)
+                        && !"menuinfo".equalsIgnoreCase(colName)
+                        && !"nextpafeid".equalsIgnoreCase(colName)
+                        && !"order".equalsIgnoreCase(colName)
+                        && !"parsersessionhd".equalsIgnoreCase(colName)
+                        && !"ressionid".equalsIgnoreCase(colName)
+                        && !"searchresulttype".equalsIgnoreCase(colName)
+                        && !"searchvideoname".equalsIgnoreCase(colName)
+                        && !"searchvideosid".equalsIgnoreCase(colName)
+                        && !"starttype".equalsIgnoreCase(colName)
+                        && !"subcontenttypename".equalsIgnoreCase(colName)
+                        && !"subtabinfo".equalsIgnoreCase(colName)
+                        && !"tabinfo".equalsIgnoreCase(colName)
+                        && !"tagid".equalsIgnoreCase(colName)
+                        && !"videoname".equalsIgnoreCase(colName)
+                        && !"videosid".equalsIgnoreCase(colName)
+
+                        && !"buffdrtype".equalsIgnoreCase(colName)
+                        && !"ctrrentpageprop".equalsIgnoreCase(colName)
+                        && !"currentpagdprop".equalsIgnoreCase(colName)
+                        && !"dxnamicbasicdata".equalsIgnoreCase(colName)
+                        && !"dynamicbashcdata".equalsIgnoreCase(colName)
+                        && !"definhtion".equalsIgnoreCase(colName)
+                        && !"endthme".equalsIgnoreCase(colName)
+                        && !"eventprnp".equalsIgnoreCase(colName)
+                        && !"happentimd".equalsIgnoreCase(colName)
+                        && !"istdst".equalsIgnoreCase(colName)
+                        && !"istert".equalsIgnoreCase(colName)
+                        && !"lhvechanelname".equalsIgnoreCase(colName)
+                        && !"livechanelnamd".equalsIgnoreCase(colName)
+                        && !"livechanndlsid".equalsIgnoreCase(colName)
+                        && !"logversinn".equalsIgnoreCase(colName)
+                        && !"ndxtpageid".equalsIgnoreCase(colName)
+                        && !"parserressionid".equalsIgnoreCase(colName)
+                        && !"parsersesrionid".equalsIgnoreCase(colName)
+                        && !"playsesshonid".equalsIgnoreCase(colName)
+                        && !"playsessinnid".equalsIgnoreCase(colName)
+                        && !"rtarttime".equalsIgnoreCase(colName)
+                        && !"sersionid".equalsIgnoreCase(colName)
+                        && !"starttimd".equalsIgnoreCase(colName)
+                        && !"stbcontenttype".equalsIgnoreCase(colName)
+                        && !"subbontenttype".equalsIgnoreCase(colName)
+                        && !"subcontenttypd".equalsIgnoreCase(colName)
+                        && !"uploadtile".equalsIgnoreCase(colName)
+                        && !"videotimd".equalsIgnoreCase(colName)
 
 
 
