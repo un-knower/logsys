@@ -267,7 +267,7 @@ public class ODSViewService {
                 .map(par -> String.format("%s='%s'", par[0], par[1]))
                 .collect(Collectors.joining(","));
 
-        String dmlText = String.format("ALTER TABLE `%s.%s` DROP IF EXISTS PARTITION (%s)", desc.getDbName(), desc.getTabName(), partInfo);
+        String dmlText = String.format("ALTER TABLE `%s`.`%s` DROP IF EXISTS PARTITION (%s)", desc.getDbName(), desc.getTabName(), partInfo);
         LogTabDMLEntity dropEntity = new LogTabDMLEntity();
         dropEntity.setDbName(desc.getDbName());
         dropEntity.setTabName(desc.getTabName());
@@ -275,7 +275,7 @@ public class ODSViewService {
         dropEntity.setDmlText(dmlText);
         dropEntity.setTaskId(desc.getTaskId());
 
-        dmlText = String.format("ALTER TABLE `%s.%s` ADD PARTITION(%s) location '%s' "
+        dmlText = String.format("ALTER TABLE `%s`.`%s` ADD PARTITION(%s) location '%s' "
                 , desc.getDbName(), desc.getTabName(), partInfo, desc.getLogPath());
         LogTabDMLEntity addEntity = new LogTabDMLEntity();
         addEntity.setDbName(desc.getDbName());
@@ -316,8 +316,8 @@ public class ODSViewService {
                     })
                     .map(entity -> entity.getFieldSql())
                     .collect(Collectors.toList()), ",");
-            String ddlText = String.format("CREATE EXTERNAL TABLE IF NOT EXISTS `%s` (%s) PARTITIONED BY (%s) STORED AS " + desc.getStored()
-                    , tabFullName, fieldDesc, partDesc
+            String ddlText = String.format("CREATE EXTERNAL TABLE IF NOT EXISTS `%s`.`%s` (%s) PARTITIONED BY (%s) STORED AS " + desc.getStored()+" location '/data_warehouse/%s.db/%s'"
+                    , dbName,tabName, fieldDesc, partDesc,dbName,tabName
             );
             LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
             ddlEntity.setDbName(dbName);
@@ -354,29 +354,48 @@ public class ODSViewService {
                 String fieldName = item.getFieldName();
                 String fieldType = item.getFieldType();
                 Boolean hasChangedField = fieldInfos.stream()
-                        .filter(fieldInfo -> fieldInfo.getColName().equalsIgnoreCase(fieldName)
-                                && !fieldInfo.getDataType().equalsIgnoreCase(fieldType))
+                        .filter(fieldInfo ->
+                                fieldInfo.getColName().equalsIgnoreCase(fieldName)
+                                && !fieldInfo.getDataType().equalsIgnoreCase(fieldType)
+                                && !fieldInfo.getColName().equalsIgnoreCase("_msg")
+                                        && !fieldInfo.getDataType().contains("struct")
+                        )
                         .findAny().isPresent();
                 return hasChangedField == true;
             }).collect(Collectors.toList());
             if (changed.size() > 0) {
-                List<LogTabDDLEntity> changedDDLs = changed.stream().map(change -> {
+                LOG.info("changed size is .... "+changed.size());
+                List<LogTabDDLEntity> changedDDLs = changed.stream().filter(change->{
+                    //修复 array 类型存在的问题
                     String fieldName = change.getFieldName();
                     String newFieldType = change.getFieldSql().split(" ")[1].trim();
                     String oldFieldType = fieldInfos.stream()
-                            .filter(fieldInfo -> fieldInfo.getColName().equalsIgnoreCase(fieldName))
+                            .filter(fieldInfo -> fieldInfo.getColName().equalsIgnoreCase(fieldName) )
+                            .map(fieldInfo -> fieldInfo.getDataType())
+                            .findFirst().get();
+                    return  !newFieldType.equalsIgnoreCase(oldFieldType) ;
+
+                }).map(change -> {
+                    String fieldName = change.getFieldName();
+                    String newFieldType = change.getFieldSql().split(" ")[1].trim();
+                    String oldFieldType = fieldInfos.stream()
+                            .filter(fieldInfo -> fieldInfo.getColName().equalsIgnoreCase(fieldName) )
                             .map(fieldInfo -> fieldInfo.getDataType())
                             .findFirst().get();
                     String targetFieldType = newFieldType;
-                    if (!oldFieldType.replace("`", "").replace(" ", "").equalsIgnoreCase(newFieldType.replace("`", "").replace(" ", ""))) {
+
+                   /* if (!oldFieldType.replace("`", "").replace(" ", "").equalsIgnoreCase(newFieldType.replace("`", "").replace(" ", ""))) {
                         boolean isConvertible = HiveUtil.implicitConvertible(oldFieldType, newFieldType);
                         if (!isConvertible) {
                             targetFieldType = "string";
                             LOG.info("{} : {} -> {} implicitConvertible=false, targetFieldType={}", new Object[]{fieldName, oldFieldType, newFieldType, targetFieldType});
                         }
-                    }
+                    }*/
+
+                    LOG.info ("table is ->"+tabFullName +  ",fieldName ->" +fieldName + " , oldFieldType-> "+oldFieldType +", newFieldType-> "+newFieldType +" ,targetFieldType-> "+targetFieldType);
                     String ddlText = String.format("ALTER TABLE `%s` CHANGE COLUMN `%s` `%s` %s"
                             , tabFullName, fieldName, fieldName, targetFieldType);
+                    LOG.info ("ddlText->"+ddlText);
                     LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
                     ddlEntity.setDbName(dbName);
                     ddlEntity.setTabName(tabName);
@@ -385,8 +404,8 @@ public class ODSViewService {
                     ddlEntity.setTaskId(desc.taskId);
                     return ddlEntity;
                 }).collect(Collectors.toList());
+//                entities.addAll(changedDDLs);
                 //取消直接执行changed语句，改为发送邮件
-                //entities.addAll(changedDDLs);
                 //拼接执行语句
                 StringBuffer context = new StringBuffer();
                 changedDDLs.stream().forEach(ddlEntity->{
@@ -395,10 +414,15 @@ public class ODSViewService {
                     context.append(tab+" -> "+ddlText+"\n");
                 });
                 //发邮件
-//                String[] users = {"app-bigdata@whaley.cn"};
-//                SendMail.post(context.toString(), "[ods-view-metadata][字段类型重命名]", users);
+                if(!context.toString().trim().isEmpty()){
+                    String[] users = {"app-bigdata@whaley.cn"};
+//                    SendMail.post(context.toString(), "[ods-view-metadata][字段类型重命名]", users);
+                }
             }
         }
+
+
+
         return entities;
     }
 
