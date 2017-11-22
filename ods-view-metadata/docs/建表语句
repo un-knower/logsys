@@ -49,9 +49,9 @@ create table metadata.logfile_field_desc(
     logPath varchar(500) not null --日志文件路径 [key]
     ,fieldName varchar(100) not null --字段名 [key]
     ,fieldType varchar(100) --hive字段类型
-    ,fieldSql varchar(500) --hive字段SQL声明子句
+    ,fieldSql varchar(1000) --hive字段SQL声明子句
     ,rawType varchar(100) --parquet字段类型
-    ,rawInfo varchar(500) --parquet字段类型信息
+    ,rawInfo varchar(1000) --parquet字段类型信息
     ,taskId varchar(100) --产生该批数据的任务ID
     ,isDeleted boolean --记录是否删除
     ,createTime date --记录创建时间
@@ -114,3 +114,46 @@ select * from metadata.logfile_field_desc where taskId = 'AAABX8S0IDGsEGkmAewAAA
 
 select * from metadata.logtab_ddl where taskId = 'AAABX8S0IDGsEGkmAewAAAAA' limit 10;
 select * from metadata.logtab_dml where taskId = 'AAABX8S0IDGsEGkmAewAAAAA' limit 10;
+
+
+
+--日志文件中baseinfo白名单字段表
+drop table if exists metadata.log_baseinfo;
+create table metadata.log_baseinfo(
+    id varchar(100) not null --唯一性ID [key]
+    ,productCode varchar(100) --产品线code
+    ,productCodeId varchar(100) --产品线加密后的id
+    ,fieldName varchar(100) --字段名称
+    ,isDeleted boolean --记录是否删除
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (id)
+)
+;
+
+
+
+--元数据管理的黑名单表black_table_info
+drop table if exists metadata.black_table_info;
+create table metadata.black_table_info(
+    id varchar(100) not null --唯一性ID [key]
+    ,tableName varchar(100) --表名称
+    ,isDeleted boolean --记录是否删除
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (id)
+);
+
+--日志文件中字段的类型log_field_type_info
+drop table if exists metadata.log_field_type_info;
+create table metadata.log_field_type_info(
+    id varchar(100) not null --唯一性ID [key]
+    ,fieldName varchar(20) --字段名称
+    ,fieldType varchar(10) --字段类型
+    ,typeFlag varchar(2) --字段类型标识 1:String 2:Long 3:Double
+    ,isDeleted boolean --记录是否删除
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (id)
+);
+

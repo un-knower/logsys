@@ -43,6 +43,28 @@ public class MetadataController {
 
     @Autowired
     LogBaseInfoRepo logBaseInfoRepo;
+    @Autowired
+    LogFieldTypeInfoRepo logFieldTypeInfoRepo;
+    @Autowired
+    BlackTableInfoRepo blackTableInfoRepo;
+
+    //-------------------metadata.black_table_info--------------------------
+    //查询黑名单表
+    @RequestMapping(value = "/black_table_info/all", method = RequestMethod.GET, produces = {"application/json"})
+    public List<BlackTableInfoEntity> getAllBlackTableInfo() {
+        List<BlackTableInfoEntity> all = blackTableInfoRepo.findAll();
+        return all;
+    }
+
+    //-------------------log_field_type_info--------------------------
+    //查询所有 字段类型
+    @RequestMapping(value = "/log_field_type_info/all", method = RequestMethod.GET, produces = {"application/json"})
+    public List<LogFieldTypeInfoEntity> getAllFiledTypeInfo() {
+        List<LogFieldTypeInfoEntity> all = logFieldTypeInfoRepo.findAll();
+        return all;
+    }
+
+
 
     //-------------------log_baseInfo--------------------------
     //查询所有
