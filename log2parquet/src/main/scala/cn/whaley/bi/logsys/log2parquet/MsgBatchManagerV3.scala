@@ -106,7 +106,15 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //将经过处理器处理后，正常状态的记录使用规则库过滤【字段黑名单、重命名、行过滤】
     val okRowsRdd = processedRdd.filter(row => !row.hasErr).map(row=>row.result.get)
     //解析出输出目录
-    val rddSchema = metaDataUtils.parseLogObjRddPath(okRowsRdd,startDate,startHour)(myAccumulator)
+    var rddSchema = metaDataUtils.parseLogObjRddPath(okRowsRdd,startDate,startHour)(myAccumulator)
+
+    //添加执行过滤某个日志类型逻辑
+    val realLogType = confManager.getConf("realLogType")
+    if(!("null").equals(realLogType)){
+      rddSchema = rddSchema.filter(f=>{
+        f._2.getString("realLogType").replace("-","_").equals(realLogType)
+      })
+    }
 
     val pathRdd = rddSchema.map(row=>{
       val path = row._1
@@ -115,19 +123,22 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     })
 
     val afterRuleRdd = ruleHandle(sc,pathRdd)(myAccumulator,renameFiledMyAcc,baseInfoRenameFiledMyAcc,removeFiledMyAcc)
+
+
     //输出正常记录到HDFS文件
     println("-------Json2ParquetUtil.saveAsParquet start at "+new Date())
-
     Json2ParquetUtil.saveAsParquet(afterRuleRdd,time,sparkSession)
+//    afterRuleRdd.foreach(f=>{
+//      println(f._2)
+//    })
 //    println(s"afterRuleRdd count : ${afterRuleRdd.count()}")
 //    System.exit(1)
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
     //删除输入数据源
-   if(fs.exists(new Path(inputPath))){
+ /*  if(fs.exists(new Path(inputPath))){
      fs.delete(new Path(inputPath),true)
-//      fs.delete(new Path(inputPath.split("/key_hour")(0)),true)
     }
-
+*/
     println("=============== 规则处理移除字段 =============== ：")
     removeFiledMyAcc.value.toList.sortBy(_._2).foreach(r=>{
       if(isValid(r._1)){

@@ -30,6 +30,19 @@ class MetadataService(metadataServer: String, readTimeOut: Int = 900000) {
     JSON.parseArray(response.body, classOf[LogBaseInfoEntity]).toList
   }
 
+  /**
+    * 查询所有 字段类型
+    */
+  def getAllLogFieldTypeInfo(): List[LogFieldTypeInfoEntity] = {
+    val response = Http(metadataServer + "/metadata/log_field_type_info/all")
+      .option(HttpOptions.readTimeout(readTimeOut))
+      .method("GET").asString
+    if (!response.isSuccess) {
+      throw new RuntimeException(response.body)
+    }
+    JSON.parseArray(response.body, classOf[LogFieldTypeInfoEntity]).toList
+  }
+
 
   /**
      * 查询所有applog_key_field_desc记录
