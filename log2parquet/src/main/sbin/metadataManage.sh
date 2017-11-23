@@ -67,7 +67,7 @@ while [[ ${startTime}  -le  ${endTime} ]]
     echo "execute time ... is ${startTime}"
     startDate=${startTime:0:8}
     startHour=${startTime:8:2}
-    sh ./curl.sh metadataManage start ${username} ${password} path ${path} dbName ${dbName} tabPrefix ${tabPrefix} productCode ${productCode} appCode ${appCode} realLogType ${realLogType} keyDay ${startDate} keyHour ${startHour}
+    sh ./curl.sh metadataManage metadataManage ${username} ${password} path ${path} dbName ${dbName} tabPrefix ${tabPrefix} productCode ${productCode} appCode ${appCode} realLogType ${realLogType} keyDay ${startDate} keyHour ${startHour}
     if [ $? -ne 0 ];then
             echo "batch forest ${startTime} is fail ..."
             exit 1

@@ -6,10 +6,12 @@ if [ $# -lt 2 ]; then
 fi
 project=$1
 flow=$2
+username=$3
+password=$4
 ##获取sessionid
 echo "================getssionid====================="
 echo 'getssionid : curl -k -X POST --data "action=login&username=azkaban&password=azkaban" ' $weburl 
-sessionid=`curl -k -X POST --data "action=login&username=azkaban&password=azkaban@whaley" $weburl | jq '."session.id"'  `
+sessionid=`curl -k -X POST --data "action=login&username=$username&password=$password" $weburl | jq '."session.id"' `
 sessionid=${sessionid//\"/""}
 echo "================sessionid is $sessionid =============="
 if [[ ${#sessionid} < 30 ]]; then
@@ -20,7 +22,7 @@ fi
 echo "=================拼接执行一个flow 的参数======================="
 Params=($@)
 args=""
-i=0
+i=4
 while [ $i -lt $# ]
 do
   key=${Params[$i]}

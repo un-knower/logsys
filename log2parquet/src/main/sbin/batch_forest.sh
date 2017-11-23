@@ -3,7 +3,7 @@
 cd `dirname $0`
 pwd=`pwd`
 
-ARGS=`getopt -o m:a:s:e:b:h --long mainClass:,appId:,startDate:,endDate:,startHour:,endHour: -- "$@"`
+ARGS=`getopt -o m:a:s:e:b:h:f --long mainClass:,appId:,startDate:,endDate:,startHour:,endHour:,filterContext: -- "$@"`
 
 #将规范化后的命令行参数分配至位置参数（$1,$2,...)
 eval set -- "${ARGS}"
@@ -29,6 +29,9 @@ do
         -h|--endHour)
             endHour=$2;
             shift 2;;
+        -f|--filterContext)
+            filterContext=$2;
+            shift 2;;
         --)
             shift;
             break;;
@@ -42,12 +45,14 @@ done
 startTime=`date -d "$startDate $startHour -1 hour" +"%Y%m%d%H"`
 endTime=`date -d "$endDate $endHour -1 hour" +"%Y%m%d%H"`
 
+echo "filterContext ... ${filterContext}"
+
 while [[ ${startTime}  -le  ${endTime} ]]
    do
     echo "execute time ... is ${startTime}"
     startDate=${startTime:0:8}
     startHour=${startTime:8:2}
-    sh  ./submit_batch.sh  --mainClass ${mainClass} --appId ${appId} --startDate ${startDate} --startHour ${startHour}
+    sh  ./submit_batch.sh  --mainClass ${mainClass} --appId ${appId} --startDate ${startDate} --startHour ${startHour} --filterContext ${filterContext}
     if [ $? -ne 0 ];then
             echo "batch forest ${startTime} is fail ..."
             exit 1

@@ -8,7 +8,7 @@ source ./envFn.sh
 load_properties ../conf/spark_batch.properties
 load_args $*
 
-ARGS=`getopt -o m:a:d:h --long mainClass:,appId:,startDate:,startHour: -- "$@"`
+ARGS=`getopt -o m:a:d:h:f --long mainClass:,appId:,startDate:,startHour:,filterContext: -- "$@"`
 
 #将规范化后的命令行参数分配至位置参数（$1,$2,...)
 eval set -- "${ARGS}"
@@ -27,6 +27,9 @@ do
             shift 2;;
         -h|--startHour)
             startHour=$2;
+            shift 2;;
+        -f|--filterContext)
+            filterContext=$2;
             shift 2;;
         --)
             shift;
@@ -47,6 +50,7 @@ echo "key_day is ${key_day}"
 echo "appId is ${appId}"
 echo "key_hour is ${key_hour}"
 echo "inputPath is ${inputPath}"
+echo "filterContext is ${filterContext}"
 #params: $1 className, $2 propName
 getSparkProp(){
     className=$1
@@ -127,4 +131,4 @@ ${spark_home}/bin/spark-submit -v \
  --conf spark.default.parallelism=${spark_default_parallelism} \
  --conf spark.yarn.queue=${spark_yarn_queue} \
  --conf spark.executor.cores=${spark_executor_cores} \
- --class $mainClass ${spark_mainJar} ${inputPath} ${appId} ${key_day} ${key_hour}
+ --class $mainClass ${spark_mainJar} ${inputPath} ${appId} ${key_day} ${key_hour} ${filterContext}
