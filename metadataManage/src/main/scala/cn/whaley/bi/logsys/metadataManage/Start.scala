@@ -22,7 +22,7 @@ import scala.util.matching.Regex
   *--path "/log/medusaAndMoretvMerger/20171110/[realLogType]" --db_name ods_view --tab_prefix log --product_code "medusa" --app_code "merge" --realLogType null --key_day 20171109 --key_hour 00
   *
   * dbsnapshot
-  * --path "/data_warehouse/ods_view.db/db_snapshot_[realLogType]/key_day=20171106" --db_name ods_view --tab_prefix db --product_code snapshot --app_code mysql --realLogType null --key_day 20171106 --key_hour 00
+  *  --path "/data_warehouse/ods_view.db/db_snapshot_[realLogType]/key_day=20171106" --db_name ods_view --tab_prefix db --product_code snapshot --app_code mysql --realLogType null --key_day 20171106 --key_hour 00
   *
   * dbsnapshot merger
   * --path "/log/dbsnapshot/parquet/20171112/[realLogType]" --db_name ods_view --tab_prefix db --product_code snapshot --app_code mysql --realLogType null --key_day 20171112 --key_hour 00
@@ -44,7 +44,26 @@ import scala.util.matching.Regex
   * whaley:voiceusereal
   * --path "/log/whaley/parquet/20171112/voiceusereal" --db_name ods_view --tab_prefix log --product_code whaleytv --app_code main --realLogType voiceusereal --key_day 20171112 --key_hour 00
   *
+  * whaley:helios-smartbrick-playermenu
+  * --path "/log/whaley/parquet/20171111/helios-smartbrick-playermenu" --db_name ods_view --tab_prefix log --product_code whaleytv --app_code main --realLogType helios-smartbrick-playermenu --key_day 20171111 --key_hour 00
   *
+  * whaley:helios_smartbrick_interact
+  * --path "/log/whaley/parquet/20171111/helios-smartbrick-interact" --db_name ods_view --tab_prefix log --product_code whaleytv --app_code main --realLogType helios-smartbrick-interact --key_day 20171111 --key_hour 00
+  *
+  * whaley:helios-singer-activity
+  * --path "/log/whaley/parquet/20171115/helios-singer-activity" --db_name ods_view --tab_prefix log --product_code whaleytv --app_code main --realLogType helios-singer-activity --key_day 20171115 --key_hour 00
+  *
+  * whaley:bulletscreen
+  * --path "/log/whaley/parquet/20171115/bulletscreen" --db_name ods_view --tab_prefix log --product_code whaleytv --app_code main --realLogType bulletscreen --key_day 20171115 --key_hour 00
+  *
+  * medusa:medusa-tv-inputmethodusage
+  * --path "/log/medusa/parquet/20171115/medusa-tv-inputmethodusage" --db_name ods_view --tab_prefix log --product_code medusa --app_code main3x --realLogType medusa-tv-inputmethodusage --key_day 20171114 --key_hour 00
+  *
+  *medusa:medusa-retrieval-tabview
+  * --path "/log/medusa/parquet/20171030/medusa-retrieval-tabview" --db_name ods_view --tab_prefix log --product_code medusa --app_code main3x --realLogType medusa-retrieval-tabview --key_day 20171029 --key_hour 00
+  *
+  * medusa:medusa-home-switchinputmethod
+  * --path "/log/medusa/parquet/20171109/medusa-home-switchinputmethod" --db_name ods_view --tab_prefix log --product_code medusa --app_code main3x --realLogType medusa-home-switchinputmethod --key_day 20171108 --key_hour 00
   *
   *
   */
