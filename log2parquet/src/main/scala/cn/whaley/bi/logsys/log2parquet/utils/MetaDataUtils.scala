@@ -143,13 +143,14 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         val parMap = parTuple._2
         var path = (tabNameStr :: parStr :: Nil).filter(item => item != "").mkString("/").replace("-", "_").replace(".", "")
         if (dbNameStr != "") path = dbNameStr.replace("-", "_").replace(".", "") + ".db/" + path
-
 //        println(s"dbNameStr -> $dbNameStr ; tabNameStr -> $tabNameStr ; parStr-> $parStr")
 //      println(s"path -> $path")
+
         if(!isValid(parStr) || !isValid(tabNameStr) || !isValid(dbNameStr) ){
             myAccumulator.add("exceptionJsonAcc")
             path = null
         }
+        logObj.put("tableName",tabNameStr.replace("-","_"))
         (path, logObj,dbMap++tableMap++parMap+(LogKeys.LOG_APP_ID->appId))
     }
 
