@@ -1,32 +1,32 @@
 添加字段:
-ALTER TABLE `ods_view.log_medusa_main3x_medusa_p2pvod_runtimestate` ADD COLUMNS(holepunchsuccess bigint)
-ALTER TABLE `ods_view.log_medusa_main3x_medusa_p2pvod_init` ADD COLUMNS(portmap string)
-ALTER TABLE `ods_view.log_whaleytv_main_whaley_rom_usbinfo` ADD COLUMNS(checked string)
-ALTER TABLE `ods_view.log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(dhcpduration string)
-ALTER TABLE `ods_view.log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(disconnect_reason string)
-ALTER TABLE `ods_view.log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(disconnect_time string)
-ALTER TABLE `ods_view.log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(dns string)
-ALTER TABLE `ods_view.log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(freq string)
-ALTER TABLE `ods_view.log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(mrssi string)
-ALTER TABLE `ods_view.log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(wificonnecttime string)
-ALTER TABLE `ods_view.log_whaleytv_main_crashlog` ADD COLUMNS(mac string)
-ALTER TABLE `ods_view.log_whaleytv_main_whaley_rom_dlna_info` ADD COLUMNS(user_agent string)
-ALTER TABLE `ods_view.log_whaleytv_main_whaley_rom_multimedia_bi` ADD COLUMNS(model string)
-ALTER TABLE `ods_view.log_medusa_main3x_crashlog` ADD COLUMNS(android_version string)
-ALTER TABLE `ods_view.log_medusa_main3x_crashlog` ADD COLUMNS(mac string)
-ALTER TABLE `ods_view.log_medusa_main3x_crashlog` ADD COLUMNS(user_crash_date string)
-ALTER TABLE `ods_view.log_eagle_main_liveendplay` ADD COLUMNS(status string)
-ALTER TABLE `ods_view.log_eagle_main_liveendplay` ADD COLUMNS(typename string)
-ALTER TABLE `ods_view.log_eagle_main_livebuffer` ADD COLUMNS(typename string)
+ALTER TABLE `ods_view`.`log_medusa_main3x_medusa_p2pvod_runtimestate` ADD COLUMNS(holepunchsuccess bigint);
+ALTER TABLE `ods_view`.`log_medusa_main3x_medusa_p2pvod_init` ADD COLUMNS(portmap string);
+ALTER TABLE `ods_view`.`log_whaleytv_main_whaley_rom_usbinfo` ADD COLUMNS(checked string);
+ALTER TABLE `ods_view`.`log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(dhcpduration string);
+ALTER TABLE `ods_view`.`log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(disconnect_reason string);
+ALTER TABLE `ods_view`.`log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(disconnect_time string);
+ALTER TABLE `ods_view`.`log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(dns string);
+ALTER TABLE `ods_view`.`log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(freq string);
+ALTER TABLE `ods_view`.`log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(mrssi string);
+ALTER TABLE `ods_view`.`log_whaleytv_main_whaley_rom_wifi_info` ADD COLUMNS(wificonnecttime string);
+ALTER TABLE `ods_view`.`log_whaleytv_main_crashlog` ADD COLUMNS(mac string);
+ALTER TABLE `ods_view`.`log_whaleytv_main_whaley_rom_dlna_info` ADD COLUMNS(user_agent string);
+ALTER TABLE `ods_view`.`log_whaleytv_main_whaley_rom_multimedia_bi` ADD COLUMNS(model string);
+ALTER TABLE `ods_view`.`log_medusa_main3x_crashlog` ADD COLUMNS(android_version string);
+ALTER TABLE `ods_view`.`log_medusa_main3x_crashlog` ADD COLUMNS(mac string);
+ALTER TABLE `ods_view`.`log_medusa_main3x_crashlog` ADD COLUMNS(user_crash_date string);
+ALTER TABLE `ods_view`.`log_eagle_main_liveendplay` ADD COLUMNS(status string);
+ALTER TABLE `ods_view`.`log_eagle_main_liveendplay` ADD COLUMNS(typename string);
+ALTER TABLE `ods_view`.`log_eagle_main_livebuffer` ADD COLUMNS(typename string);
 
 修改字段类型:
-ALTER TABLE ods_view.`log_whaleytv_main_buffer_middle_info` CHANGE COLUMN `bufferrate` `bufferrate` double
-ALTER TABLE ods_view.`log_whaleytv_main_buffer_middle_info` CHANGE COLUMN `defeatrate` `defeatrate` double
-ALTER TABLE ods_view.`log_whaleytv_main_buffer_middle_info` CHANGE COLUMN `nobufferrate` `nobufferrate` double
-ALTER TABLE `log_whaleytv_main_pageview` CHANGE COLUMN `logtimestamp` `logtimestamp` string
-ALTER TABLE `log_whaleytv_main_helios_setting_manualfocus` CHANGE COLUMN `temperature` `temperature` double
-ALTER TABLE `log_whaleytv_main_ad_vod_tencent_sdk_pre_play` CHANGE COLUMN `isplayall` `isplayall` string
-ALTER TABLE `log_medusa_main3x_medusa_player_sdk_startplay` CHANGE COLUMN `countid` `countid` string
-ALTER TABLE `log_medusa_main3x_medusa_p2pvod_runtimestate` CHANGE COLUMN `httpdlspeed` `httpdlspeed` bigint
-ALTER TABLE `log_eagle_main_letter_search_click` CHANGE COLUMN `locationindex` `locationindex` string
-ALTER TABLE `log_eagle_main_majority_search_click` CHANGE COLUMN `locationindex` `locationindex` string
+ALTER TABLE `ods_view`.`log_whaleytv_main_buffer_middle_info` CHANGE COLUMN `bufferrate` `bufferrate` double;
+ALTER TABLE `ods_view`.`log_whaleytv_main_buffer_middle_info` CHANGE COLUMN `defeatrate` `defeatrate` double;
+ALTER TABLE `ods_view`.`log_whaleytv_main_buffer_middle_info` CHANGE COLUMN `nobufferrate` `nobufferrate` double;
+ALTER TABLE `log_whaleytv_main_pageview` CHANGE COLUMN `logtimestamp` `logtimestamp` string;
+ALTER TABLE `log_whaleytv_main_helios_setting_manualfocus` CHANGE COLUMN `temperature` `temperature` double;
+ALTER TABLE `log_whaleytv_main_ad_vod_tencent_sdk_pre_play` CHANGE COLUMN `isplayall` `isplayall` string;
+ALTER TABLE `log_medusa_main3x_medusa_player_sdk_startplay` CHANGE COLUMN `countid` `countid` string;
+ALTER TABLE `log_medusa_main3x_medusa_p2pvod_runtimestate` CHANGE COLUMN `httpdlspeed` `httpdlspeed` bigint;
+ALTER TABLE `log_eagle_main_letter_search_click` CHANGE COLUMN `locationindex` `locationindex` string;
+ALTER TABLE `log_eagle_main_majority_search_click` CHANGE COLUMN `locationindex` `locationindex` string;

@@ -35,6 +35,10 @@ public class GenerateDML {
     public static void generateDML(WhiteTabInfo whiteTabInfo){
         String pathRegex = whiteTabInfo.getPathRegex();
         String relateTabName = whiteTabInfo.getRelateTabName();
+        String partitionSql = "";
+        String resultSql = "";
+        String dropSqlPrefix = "ALTER TABLE ods_view." + relateTabName + " DROP IF EXISTS " + "\n";
+        String addSqlPrefix = "ALTER TABLE ods_view." + relateTabName + " ADD IF NOT EXISTS " + "\n";
         String flag = whiteTabInfo.getFlag();
         int delayDay = whiteTabInfo.getDelayDay();
         String maxDay = "20171115";
@@ -74,12 +78,14 @@ public class GenerateDML {
                             key_day = sdf.format(rightNow.getTime());
                         }
 
-                        if( flag.equals("0") ){//0:分区到11.1, 1:分区到当天
-                            if(Long.valueOf(key_day) < Long.valueOf(maxDay)){
-                                assembeDML(relateTabName,path.toString(),key_day,key_hour,outStream);
+                        if( flag.equals("0") ){
+                            if(Long.valueOf(key_day) <= Long.valueOf(maxDay)){
+//                                assembeDML(partitionSql,path.toString(),key_day,key_hour,outStream);
+                                partitionSql = partitionSql + " PARTITION (key_day='" + key_day + "',key_hour='" + key_hour + "') LOCATION '"+path+"'" + "\n";
                             }
                         }else {
-                            assembeDML(relateTabName,path.toString(),key_day,key_hour,outStream);
+//                            assembeDML(partitionSql,path.toString(),key_day,key_hour,outStream);
+                            partitionSql = partitionSql + " PARTITION (key_day='" + key_day + "',key_hour='" + key_hour + "') LOCATION '"+path+"'" + "\n";
                         }
 
                     } catch (ParseException e) {
@@ -87,26 +93,37 @@ public class GenerateDML {
                     }
                 }
             }
+            partitionSql = addSqlPrefix + partitionSql + ";";
+//            logger.info(partitionSql);
+            byte[] partitionByte = partitionSql.getBytes();
+            try {
+                outStream.write(partitionByte);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             outStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void assembeDML(String tableName, String path, String key_day, String key_hour,FileOutputStream outStream){
-        String dropPartition = "ALTER TABLE ods_view." + tableName + " DROP IF EXISTS PARTITION (key_day='" + key_day + "');" + "\n";
-        String addPartition = "ALTER TABLE ods_view." + tableName + " ADD IF NOT EXISTS PARTITION (key_day='" + key_day + "',key_hour='" + key_hour + "') LOCATION '"+path+"';" + "\n";
+//    public static String assembeDML(String partitionSql, String path, String key_day, String key_hour,FileOutputStream outStream){
+//        String dropPartition = "ALTER TABLE ods_view." + tableName + " DROP IF EXISTS PARTITION (key_day='" + key_day + "');" + "\n";
+//        String addPartition = "ALTER TABLE ods_view." + tableName + " ADD IF NOT EXISTS PARTITION (key_day='" + key_day + "',key_hour='" + key_hour + "') LOCATION '"+path+"';" + "\n";
+//        partitionSql = partitionSql + " PARTITION (key_day='" + key_day + "',key_hour='" + key_hour + "') LOCATION '"+path+"'" + "\n";
+//        logger.info(partitionSql);
+//        return partitionSql;
 //        logger.info("log path: "+path);
 //        logger.info("key_day: " + key_day);
 //        logger.info("dropPartition: "+dropPartition);
 //        logger.info("addPartition: "+addPartition);
-        byte[] dropPartitionByte = dropPartition.getBytes();
-        byte[] addPartitionByte = addPartition.getBytes();
-        try {
-            outStream.write(dropPartitionByte);
-            outStream.write(addPartitionByte);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//        byte[] dropPartitionByte = dropPartition.getBytes();
+//        byte[] addPartitionByte = addPartition.getBytes();
+//        try {
+//            outStream.write(dropPartitionByte);
+//            outStream.write(addPartitionByte);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }
