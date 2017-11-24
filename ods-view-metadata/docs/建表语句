@@ -148,9 +148,12 @@ create table metadata.black_table_info(
 drop table if exists metadata.log_field_type_info;
 create table metadata.log_field_type_info(
     id varchar(100) not null --唯一性ID [key]
+    ,tableName varchar(20) --表名称
+    ,realLogType varchar(20) --日志类型名称
     ,fieldName varchar(20) --字段名称
     ,fieldType varchar(10) --字段类型
     ,typeFlag varchar(2) --字段类型标识 1:String 2:Long 3:Double
+    ,ruleType varchar(10) --规则类型 1.table:表规则 2.realLogType:日志类型级别 3.field:字段级别
     ,isDeleted boolean --记录是否删除
     ,createTime timestamp --记录创建时间
     ,updateTime timestamp --记录更新时间

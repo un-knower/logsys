@@ -41,6 +41,8 @@ object MainObj extends NameTrait with LogTrait{
       val appId = args(1)
       val key_day =args(2)
       val key_hour = args(3)
+      //过滤的内容
+      val filterContext = args(4)
       val config = new Configuration()
       val fs = FileSystem.get(config)
       val fileStatus = fs.listStatus(new Path(s"$inputPath/key_day=${key_day}/key_hour=${key_hour}"))
@@ -91,10 +93,18 @@ object MainObj extends NameTrait with LogTrait{
         inputRdd = inputRdd.union(rdd)
       }
       //1.日志解码
-      val decodeRdd = inputRdd.map(line=>{
+      var decodeRdd = inputRdd.map(line=>{
         myAccumulator.add("inputRecord")
         LogFormat.decode(line)
       })
+
+      if(!"null".equals(filterContext)){
+        //需要过滤内容
+        decodeRdd = decodeRdd.filter(f=>{
+          f.toString.contains(filterContext)
+        })
+      }
+
       //2.验证日志格式
       val formatRdd = decodeRdd.filter(f=>{
         if(f.isEmpty){

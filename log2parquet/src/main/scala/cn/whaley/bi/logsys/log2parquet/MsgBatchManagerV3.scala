@@ -8,7 +8,7 @@ import cn.whaley.bi.logsys.log2parquet.constant.{Constants, LogKeys}
 import cn.whaley.bi.logsys.log2parquet.moretv2x.{LogPreProcess, LogUtils}
 import cn.whaley.bi.logsys.log2parquet.traits._
 import cn.whaley.bi.logsys.log2parquet.utils._
-import cn.whaley.bi.logsys.metadata.entity.{LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
+import cn.whaley.bi.logsys.metadata.entity.{LogFieldTypeInfoEntity, LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
 import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -115,6 +115,18 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         f._2.getString("realLogType").replace("-","_").equals(realLogType)
       })
     }
+
+    //数据类型处理
+//    val logFieldTypeInfoEntitys = metaDataUtils.metadataService().getAllLogFieldTypeInfo()
+//    val tableRule = getFieldTypeMap(logFieldTypeInfoEntitys,"table")
+//    val realLogTypeRule = getFieldTypeMap(logFieldTypeInfoEntitys,"realLogType")
+//    val fieldRule = getFieldTypeMap(logFieldTypeInfoEntitys,"field")
+
+    rddSchema.foreach(f=>{
+      println(f._2)
+    })
+
+
 
     val pathRdd = rddSchema.map(row=>{
       val path = row._1
@@ -608,6 +620,24 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   def isinValidKey(s:String)={
     val regex = "^[0-9]*$"
     s.matches(regex)
+  }
+
+  /**
+    *
+    * @param logFieldTypeInfoEntitys
+    * @param ruleType table,realLogType,field
+    */
+  def getFieldTypeMap(logFieldTypeInfoEntitys : List[LogFieldTypeInfoEntity],ruleType:String): Map[String,String] ={
+    val fieldTypeMap = mutable.Map[String,String]()
+    logFieldTypeInfoEntitys
+      .filter(entity=>{
+        entity.getRuleType.equals(ruleType)
+    }).foreach(entity=>{
+      val fieldName = entity.getFieldName
+      val typeFlag = entity.getTypeFlag
+      fieldTypeMap.put(fieldName,typeFlag)
+    })
+    fieldTypeMap.toMap
   }
 
 }
