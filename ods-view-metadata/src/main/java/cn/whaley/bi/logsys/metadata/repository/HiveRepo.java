@@ -285,12 +285,145 @@ public class HiveRepo {
         return ret;
     }
 
+
     /**
      * 执行DML语句
      *
      * @param entities
      * @return
      */
+    public Integer executeDML3(List<LogTabDMLEntity> entities) {
+        Integer ret = 0;
+        Long fromTs = System.currentTimeMillis();
+        Connection conn = null;
+        Statement statement = null;
+        try{
+            conn = jdbcTemplate.getDataSource().getConnection();
+            statement = conn.createStatement();
+            Map<String, List<LogTabDMLEntity>> groups = entities.stream().collect(Collectors.groupingBy(item -> item.getDbName()));
+            for (Map.Entry<String, List<LogTabDMLEntity>> entry : groups.entrySet()) {
+                String dbName = entry.getKey();
+                statement.execute("use " + dbName);
+                List<LogTabDMLEntity> group = entry.getValue();
+                //多表并行执行
+                Map<String, List<LogTabDMLEntity>> tabGroups = group.stream().collect(Collectors.groupingBy(item -> item.getTabName()));
+                List<Future<Integer>> futures = new ArrayList<>();
+                for (Map.Entry<String, List<LogTabDMLEntity>> tabGroup : tabGroups.entrySet()) {
+                    String tabName = tabGroup.getKey();
+                    Collection<LogTabDMLEntity> tabDMLEntities = tabGroup.getValue().stream()
+                            .sorted(Comparator.comparing(LogTabDMLEntity::getSeq))
+                            .collect(Collectors.toList());
+                    Long fromTs1 = System.currentTimeMillis();
+                    for (LogTabDMLEntity ddlEntity : tabDMLEntities) {
+                        try {
+                            ddlEntity.setCommitTime(new Date());
+                            statement.execute(ddlEntity.getDmlText());
+                            ddlEntity.setCommitCode(1);
+                            ddlEntity.setCommitMsg("SUCCESS");
+                            ret++;
+                        } catch (Exception ex) {
+                            LOG.error(ddlEntity.getDmlText(), ex);
+                            ddlEntity.setCommitCode(-1);
+                            ddlEntity.setCommitMsg(ex.getMessage());
+                        }
+                    }
+                    LOG.info("tabDML[{}.{}]: ret={}/{}, ts={}", dbName, tabName, ret, tabDMLEntities.size(), System.currentTimeMillis() - fromTs1);
+                }
+
+            }
+            LOG.info("executeDML: ret={}/{},ts={}", ret, entities.size(), System.currentTimeMillis() - fromTs);
+            statement.close();
+            conn.close();
+        }catch (Exception e){
+            LOG.error("executeDML error ...");
+            e.printStackTrace();
+        }
+        return ret;
+    }
+
+
+    public Integer executeDML2(List<LogTabDMLEntity> entities) {
+        Integer ret = 0;
+        Long fromTs = System.currentTimeMillis();
+
+        int batchSize = 50;
+        int totalSize = entities.size() ;
+        if (totalSize > batchSize) {
+           int times = (totalSize / batchSize) ;
+           int start = 0;
+            for(int i=1;i <= times ;i++){
+                int end = batchSize * i -1;
+                LOG.info("batch i={} times,{}->{}  " ,i,start,end);
+                List<LogTabDMLEntity> logTabDMLEntities = entities.subList(start, end);
+                //执行
+                ret += processDML(logTabDMLEntities);
+                start = batchSize * i;
+            }
+            int remain = totalSize - times * batchSize ;
+            if (remain > 0) {
+                LOG.info("batch i={} times,{}->{}  " ,times+1,times * batchSize,totalSize-1);
+                List<LogTabDMLEntity> logTabDMLEntities = entities.subList(times * batchSize, totalSize-1);
+                //执行
+                ret += processDML(logTabDMLEntities);
+            }
+
+        }else{
+           //执行
+            ret += processDML(entities);
+            LOG.info("batch i={} times,{}->{}  " ,1,0,totalSize-1);
+        }
+
+        LOG.info("executeDML end : ret={}/{},ts={}", ret, entities.size(), System.currentTimeMillis() - fromTs);
+        return ret;
+    }
+
+
+    public Integer processDML(List<LogTabDMLEntity> tabDMLEntities){
+        List<Future<Integer>> futures = new ArrayList<>();
+        Integer ret = 0;
+        Long fromTs = System.currentTimeMillis();
+
+        Future<Integer> future = executorService.submit(new Callable<Integer>() {
+            @Override
+            public Integer call() throws Exception {
+                Integer ret = 0;
+                Long fromTs = System.currentTimeMillis();
+                for (LogTabDMLEntity ddlEntity : tabDMLEntities) {
+                    String dbName = ddlEntity.getDbName();
+                    String tabName = ddlEntity.getTabName();
+                    try {
+                        ddlEntity.setCommitTime(new Date());
+                        jdbcTemplate.execute(ddlEntity.getDmlText());
+                        ddlEntity.setCommitCode(1);
+                        ddlEntity.setCommitMsg("SUCCESS");
+                        ret++;
+                    } catch (Exception ex) {
+                        LOG.error(ddlEntity.getDmlText(), ex);
+                        ddlEntity.setCommitCode(-1);
+                        ddlEntity.setCommitMsg(ex.getMessage());
+                    }
+                    LOG.info("tabDML[{}.{}]: ret={}/{}, ts={}", dbName, tabName, ret, tabDMLEntities.size(), System.currentTimeMillis() - fromTs);
+                }
+                return ret;
+            }
+        });
+        futures.add(future);
+
+        Integer sumRet = futures.stream().map(fu -> {
+            try {
+                return fu.get();
+            } catch (Exception ex) {
+                LOG.error("", ex);
+                return 0;
+            }
+        }).collect(Collectors.summingInt(item -> item));
+        ret += sumRet;
+        LOG.info("executeDML: ret={}/{},ts={}", ret, tabDMLEntities.size(), System.currentTimeMillis() - fromTs);
+        return ret;
+    }
+
+
+
     public Integer executeDML(List<LogTabDMLEntity> entities) {
         Integer ret = 0;
         Long fromTs = System.currentTimeMillis();
@@ -347,6 +480,4 @@ public class HiveRepo {
         LOG.info("executeDML: ret={}/{},ts={}", ret, entities.size(), System.currentTimeMillis() - fromTs);
         return ret;
     }
-
-
 }
