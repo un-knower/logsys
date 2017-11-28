@@ -1,6 +1,6 @@
 package cn.whaley.bi.logsys.metadataManage.util
 
-import cn.whaley.bi.logsys.metadataManage.entity.{AppLogKeyFieldDescEntity, LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
+import cn.whaley.bi.logsys.metadataManage.entity.{AppLogKeyFieldDescEntity, BlackTableInfoEntity, LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
 import com.alibaba.fastjson.{JSON, JSONObject}
 
 import scalaj.http.{Http, HttpOptions}
@@ -24,6 +24,16 @@ class PhoenixUtil(metadataService:String="http://bigdata-appsvr-130-5:8084",read
       throw new RuntimeException(response.body)
     }
     JSON.parseArray(response.body,classOf[AppLogKeyFieldDescEntity]).iterator()
+  }
+
+  def getAllBlackTableDesc() = {
+    val response = Http(metadataService + "/metadata/black_table_info/all")
+      .option(HttpOptions.readTimeout(readTimeOut))
+      .method("GET").asString
+    if (!response.isSuccess) {
+      throw new RuntimeException(response.body)
+    }
+    JSON.parseArray(response.body,classOf[BlackTableInfoEntity]).iterator()
   }
 
   /**

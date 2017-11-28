@@ -103,6 +103,13 @@ object Start {
       LOG.error("no match path ......")
       System.exit(-1)
     }
+    //获取黑名单表
+    val blackTableList = new ArrayBuffer[String]()
+    val blackTableIter = phoenixUtil.getAllBlackTableDesc()
+    while (blackTableIter.hasNext){
+      val blackTableEntity = blackTableIter.next()
+      blackTableList.+=(blackTableEntity.getTableName)
+    }
 
     fileStatus.foreach(fs=>{
       val path = fs.getPath.toString
@@ -124,7 +131,13 @@ object Start {
         val appCode = allParam.getOrElseUpdate(APP_CODE,"")
         val appId = getAppId(appCode,productCode,appIdInfoMap)
         allParam.put(APPID,appId)
-        arrayBuffer.+=((path,allParam))
+        val taPrefix = allParam.getOrElseUpdate("tab_prefix","")
+        val realLogType = allParam.getOrElseUpdate("realLogType","")
+        val tableName = s"${taPrefix}_${productCode}_${appCode}_${realLogType}"
+        //过滤黑名单表
+        if(!blackTableList.contains(tableName)){
+          arrayBuffer.+=((path,allParam))
+        }
       }
 
     })
@@ -134,12 +147,11 @@ object Start {
       LOG.error("no match path ...... ")
       System.exit(-1)
     }
-//    arrayBuffer.toStream.foreach(f=>{
-//      println(f._1)
-//      println(f._2)
-//    })
+    arrayBuffer.toStream.foreach(f=>{
+      println(f._1)
+      println(f._2)
+    })
     println(s"arrayBuffer size is ${arrayBuffer.size}")
-
     //生成parquet的schema
     val msgManager = new MsgManager
     msgManager.generateMetaDataToTable(phoenixUtil,arrayBuffer.toArray,deleteOld)
