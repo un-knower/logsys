@@ -178,13 +178,13 @@ public class MetadataController {
 
     //-------------------processTask--------------------------
     //处理某批任务
-    @RequestMapping(value = "/processTask/{taskId}/{taskFlag}", method = RequestMethod.POST, produces = {"application/json"})
+    @RequestMapping(value = "/processTask/{taskId}/{deleteOld}", method = RequestMethod.POST, produces = {"application/json"})
     @ResponseBody
-    public ResponseEntity processTask(@PathVariable("taskId") String taskId, @PathVariable("taskFlag") String taskFlag) {
+    public ResponseEntity processTask(@PathVariable("taskId") String taskId, @PathVariable("deleteOld") String deleteOld) {
 
-        Boolean disableGenerateDDLAndDML = taskFlag.charAt(0) == '0';
-        Boolean disableExecuteDDL = taskFlag.charAt(1) == '0';
-        Boolean disableExecuteDML = taskFlag.charAt(2) == '0';
+        Boolean disableGenerateDDLAndDML = false ;// taskFlag.charAt(0) == '0';
+        Boolean disableExecuteDDL = false ; // taskFlag.charAt(1) == '0';
+        Boolean disableExecuteDML = false ; //taskFlag.charAt(2) == '0';
 
         ResponseEntity<JSONObject> retEntity = new ResponseEntity();
         JSONObject result = new JSONObject();
@@ -196,7 +196,7 @@ public class MetadataController {
             retEntity.setMessage("taskId required!");
             return retEntity;
         }
-        LOG.info("task started.taskId={},taskFlag={}", taskId, taskFlag);
+        LOG.info("task started.deleteOld={},taskFlag={}", taskId, deleteOld);
         Long fromTs = System.currentTimeMillis();
         try {
 
@@ -210,7 +210,7 @@ public class MetadataController {
                 result.put("executeDDL", ddlRet);
             }
             if (!disableExecuteDML) {
-                Integer dmlRet = odsViewService.executeDML(taskId);
+                Integer dmlRet = odsViewService.executeDML(taskId,deleteOld);
                 result.put("executeDML", dmlRet);
             }
             retEntity.setCode(0);
@@ -220,7 +220,7 @@ public class MetadataController {
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
         }
-        LOG.info("task end.taskId={},taskFlag={}.ts={}", taskId, taskFlag, System.currentTimeMillis() - fromTs);
+        LOG.info("task end.taskId={},deleteOld={}.ts={}", taskId, deleteOld, System.currentTimeMillis() - fromTs);
         return retEntity;
 
     }

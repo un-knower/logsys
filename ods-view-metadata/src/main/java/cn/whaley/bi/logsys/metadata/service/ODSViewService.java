@@ -191,14 +191,15 @@ public class ODSViewService {
      *
      * @param taskId
      */
-    public Integer executeDML(String taskId) {
+    public Integer executeDML(String taskId,String deleteOld) {
         Integer ret = 0;
         List<LogTabDMLEntity> dmlEntities = logTabDMLRepo.queryForTaskId(taskId, false);
         //过滤不执行的 drop 语句
-        dmlEntities = dmlEntities.stream().filter(dmlEntity->{
-            return dmlEntity.getDmlText().contains("location");
-        }).collect(Collectors.toList());
-
+        if(!"true".equalsIgnoreCase(deleteOld.trim())){
+            dmlEntities = dmlEntities.stream().filter(dmlEntity->{
+                return dmlEntity.getDmlText().contains("location");
+            }).collect(Collectors.toList());
+        }
         if (dmlEntities.size() > 0) {
             ret += hiveRepo.executeDML(dmlEntities);
             dmlEntities.forEach(entity -> {
@@ -207,6 +208,7 @@ public class ODSViewService {
         }
         return ret;
     }
+
 
     /**
      * 产生表字段定义描述

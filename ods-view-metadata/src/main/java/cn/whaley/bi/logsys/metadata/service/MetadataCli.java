@@ -52,6 +52,7 @@ public class MetadataCli implements CommandLineRunner {
         Map<String, String> params = parseArgs(strings);
 
         String taskId = params.get("taskId");
+        String deleteOld = params.get("deleteOld");
         Boolean disableGenerateDDLAndDML = Boolean.parseBoolean(params.getOrDefault("disableGenerateDDLAndDML", "false"));
         Boolean disableExecuteDDL = Boolean.parseBoolean(params.getOrDefault("disableExecuteDDL", "false"));
         Boolean disableExecuteDML = Boolean.parseBoolean(params.getOrDefault("disableExecuteDML", "false"));
@@ -69,7 +70,7 @@ public class MetadataCli implements CommandLineRunner {
             LOG.info("executeDDL:" + ddlRet);
         }
         if (!disableExecuteDML) {
-            Integer dmlRet = odsViewService.executeDML(taskId);
+            Integer dmlRet = odsViewService.executeDML(taskId,deleteOld);
             LOG.info("executeDML:" + dmlRet);
         }
 
