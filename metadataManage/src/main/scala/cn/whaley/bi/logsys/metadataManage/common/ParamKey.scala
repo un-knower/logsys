@@ -13,4 +13,6 @@ object ParamKey {
   val KEY_DAY = "key_day"
   val KEY_HOUR = "key_hour"
   val APPID = "appId"
+  val OFFSET ="offset"
+  val DELETEOLD = "deleteOld"
 }

@@ -15,7 +15,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 class MsgManager {
   val LOG = LoggerFactory.getLogger(this.getClass)
-  def generateMetaDataToTable(phoenixUtil: PhoenixUtil, pathSchema:Array[(String,scala.collection.mutable.Map[String,String])],taskFlag:String): Unit = {
+  def generateMetaDataToTable(phoenixUtil: PhoenixUtil,pathSchema:Array[(String,scala.collection.mutable.Map[String,String])],deleteOld:String): Unit = {
     //生成taskId
     val generator = IdGenerator.defaultInstance
     val taskId = generator.nextId().replace("/", "")
@@ -48,7 +48,7 @@ class MsgManager {
 
     //发送taskId给元数据模块
     println("-------发送taskId给元数据模块 start at "+new Date())
-    val responseTaskIdResponse = phoenixUtil.postTaskId2MetaModel(taskId, taskFlag)
+    val responseTaskIdResponse = phoenixUtil.postTaskId2MetaModel(taskId, deleteOld)
     LOG.info(s"responseTaskIdResponse : " + responseTaskIdResponse.toJSONString)
     println(s"----responseTaskIdResponse : " + responseTaskIdResponse.toJSONString)
     println("-------发送taskId给元数据模块 end at "+new Date())

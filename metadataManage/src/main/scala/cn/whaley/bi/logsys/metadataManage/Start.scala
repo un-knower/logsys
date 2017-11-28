@@ -1,5 +1,9 @@
 package cn.whaley.bi.logsys.metadataManage
 
+
+import java.text.SimpleDateFormat
+import java.util.Calendar
+
 import cn.whaley.bi.logsys.metadataManage.util.{ConfigurationManager, ParamsParseUtil, PhoenixUtil}
 import cn.whaley.bi.logsys.metadataManage.common.ParamKey._
 import cn.whaley.bi.logsys.metadataManage.entity.AppLogKeyFieldDescEntity
@@ -9,6 +13,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.util.control.Breaks
 import scala.util.matching.Regex
 
 
@@ -78,7 +83,7 @@ object Start {
   var i= 0
   def main(args: Array[String]): Unit = {
     //获取路径表达式PathExp和路径正则PathReg
-    val exp = getPathExpAndPathReg(args)
+    val (exp,offset,deleteOld) = getPathExpAndPathReg(args)
     val pathExp = exp._1
     pathReg =  new Regex(exp._2)
     //通过配置获取phoenix服务url和链接返回超时时间
@@ -98,26 +103,30 @@ object Start {
       LOG.error("no match path ......")
       System.exit(-1)
     }
+
     fileStatus.foreach(fs=>{
       val path = fs.getPath.toString
       //解析缺失参数,补全parquet 参数
 
       //1.通过路径path和路径正则pathReg解析出缺失参数
-      val addParam = getDefectParam(path)
+      val addParam = getDefectParam(path)(offset)
       //2.补全parquet 参数
       val allParam = defalutParam ++ addParam
       //校验parquet需要的参数allParam
-      if(!isValidParam(allParam)){
-        println("param check exception .... ")
-        LOG.error("param check exception ....")
-        System.exit(-1)
+      Breaks.breakable {
+        if(!isValidParam(allParam)){
+          println("path -> "+path +" param check exception ....")
+          LOG.error("path -> "+path +" param check exception ....")
+          Breaks.break()
+        }
+        //根据productCode和appCode获取appId
+        val productCode = allParam.getOrElseUpdate(PRODUCT_CODE,"")
+        val appCode = allParam.getOrElseUpdate(APP_CODE,"")
+        val appId = getAppId(appCode,productCode,appIdInfoMap)
+        allParam.put(APPID,appId)
+        arrayBuffer.+=((path,allParam))
       }
-      //根据productCode和appCode获取appId
-      val productCode = allParam.getOrElseUpdate(PRODUCT_CODE,"")
-      val appCode = allParam.getOrElseUpdate(APP_CODE,"")
-      val appId = getAppId(appCode,productCode,appIdInfoMap)
-      allParam.put(APPID,appId)
-      arrayBuffer.+=((path,allParam))
+
     })
 
     if(arrayBuffer.toArray.size == 0){
@@ -125,15 +134,15 @@ object Start {
       LOG.error("no match path ...... ")
       System.exit(-1)
     }
-    arrayBuffer.toStream.foreach(f=>{
-      println(f._1)
-      println(f._2)
-    })
-
+//    arrayBuffer.toStream.foreach(f=>{
+//      println(f._1)
+//      println(f._2)
+//    })
+    println(s"arrayBuffer size is ${arrayBuffer.size}")
 
     //生成parquet的schema
     val msgManager = new MsgManager
-    msgManager.generateMetaDataToTable(phoenixUtil,arrayBuffer.toArray,"111")
+    msgManager.generateMetaDataToTable(phoenixUtil,arrayBuffer.toArray,deleteOld)
   }
 
   def isValidParam(allParam:mutable.Map[String,String]): Boolean ={
@@ -154,7 +163,7 @@ object Start {
     return  true
   }
 
-  def getDefectParam(path:String): mutable.Map[String, String] ={
+  def getDefectParam(path:String)(implicit offset:String="0"): mutable.Map[String, String] ={
     val addParam = mutable.Map[String, String]()
     pathReg findFirstMatchIn path match {
       case Some(p)=>{
@@ -162,12 +171,11 @@ object Start {
           val value = p.group(i)
           val key = defectParam.getOrElseUpdate(i,"")
           //realLogType 中划线转换为下划线
-          if("realLogType".equalsIgnoreCase(key)){
-            addParam.put(key,value.replace("-","_"))
-          }else{
-            addParam.put(key,value)
+          key match {
+            case "realLogType" => addParam.put(key,value.replace("-","_"))
+            case "key_day" => addParam.put(key,dateProcess(value,offset,"-"))
+            case _ => addParam.put(key,value)
           }
-
         }
       }
       case None => println("regex match error ")
@@ -180,7 +188,7 @@ object Start {
     * @param args
     * @return
     */
-  def getPathExpAndPathReg(args:Seq[String]):(String,String) = {
+  def getPathExpAndPathReg(args:Seq[String]):((String,String),String,String) = {
     ParamsParseUtil.parse(args) match {
       case Some(p) => {
         val path = p.path
@@ -191,16 +199,18 @@ object Start {
         val realLogType = p.realLogType
         val key_day = p.key_day
         val key_hour = p.key_hour
+        val offset = p.offset
+        val deleteOld = p.deleteOld
 
         //解析路径规则->路径表达式pathExp、路径正则pathReg、缺失的参数、部分parquet参数
-        var regExpPath = analysisPath((path,path),"(\\w+)",DB_NAME,dbname)
-        regExpPath = analysisPath(regExpPath,"([a-zA-Z-0-9]+)",TAB_PREFIX,tab_prefix)
-        regExpPath = analysisPath(regExpPath,"([a-zA-Z-0-9]+)",PRODUCT_CODE,productCode)
-        regExpPath = analysisPath(regExpPath,"(global_menu_2|[a-zA-Z-0-9]+)",APP_CODE,appCode)
-        regExpPath = analysisPath(regExpPath,"([\\w-]+)",REALLOGTYPE,realLogType)
-        regExpPath = analysisPath(regExpPath,"([0-9]+)",KEY_DAY,key_day)
-        regExpPath = analysisPath(regExpPath,"([0-9]+)",KEY_HOUR,key_hour)
-        regExpPath
+        var regExpPath = analysisPath(path,(path,path),"(\\w+)",DB_NAME,dbname)
+        regExpPath = analysisPath(path,regExpPath,"([a-zA-Z-0-9]+)",TAB_PREFIX,tab_prefix)
+        regExpPath = analysisPath(path,regExpPath,"([a-zA-Z-0-9]+)",PRODUCT_CODE,productCode)
+        regExpPath = analysisPath(path,regExpPath,"(global_menu_2|[a-zA-Z-0-9]+)",APP_CODE,appCode)
+        regExpPath = analysisPath(path,regExpPath,"([\\w-]+)",REALLOGTYPE,realLogType)
+        regExpPath = analysisPath(path,regExpPath,"([0-9]+)",KEY_DAY,key_day)(offset)
+        regExpPath = analysisPath(path,regExpPath,"([0-9]+)",KEY_HOUR,key_hour)
+        (regExpPath,offset,deleteOld)
       }
       case None => {
         throw new RuntimeException("parameters error ... ")
@@ -211,30 +221,72 @@ object Start {
 
   /**
     *
+    * @param path 用于获取缺失字段的角标位，来确认正则group(n)
     * @param pathExpAndPathReg 路径的表达式和路径的正则
-    * @param regExp key 的正则表达式
+    * @param regExp  key 的正则表达式
     * @param key
     * @param value
+    * @param offset
     * @return
     */
-  def analysisPath(pathExpAndPathReg:(String,String),regExp:String,key:String,value:String): (String,String) ={
+  def analysisPath(path:String,pathExpAndPathReg:(String,String),regExp:String,key:String,value:String)
+                  (implicit offset:String="0"): (String,String) ={
     var pathExp:String = pathExpAndPathReg._1
     var pathReg:String = pathExpAndPathReg._2
     val oldValue = s"[$key]"
-
     if(value.isEmpty || value == "null" ){
       pathExp = pathExp.replace(oldValue,"*")
       pathReg = pathReg.replace(oldValue,regExp)
-      i=i+1
-      defectParam.put(i,key)
+      val str = path.split(key)(0)
+//      i=i+1
+      defectParam.put(containsNum(str),key)
     }else{
       defalutParam.put(key,value)
-      pathExp = pathExp.replace(oldValue,value)
-      pathReg = pathReg.replace(oldValue,value)
+      //特殊处理key_day 与 location 时间不一致问题
+      if("key_day".equals(key)){
+        pathExp = pathExp.replace(oldValue,dateProcess(value,offset,"+"))
+        pathReg = pathReg.replace(oldValue,dateProcess(value,offset,"+"))
+      }else{
+        pathExp = pathExp.replace(oldValue,value)
+        pathReg = pathReg.replace(oldValue,value)
+      }
     }
     (pathExp,pathReg)
   }
 
+  /**
+    * 处理缺失字段的角标位
+    * @param str
+    * @return
+    */
+  def containsNum(str:String): Integer ={
+    var s = str
+    var num:Integer = 0
+    while (s.contains("[")){
+      num = num + 1
+      s = s.substring(0,s.lastIndexOf("[")-1)
+    }
+    num
+  }
+
+  /**
+    * 处理key_day  的 offset时间
+    * @param date
+    * @param offset
+    * @param tag 从key_day->path offset为正， path->key_day offset 为负值
+    * @return
+    */
+  def dateProcess(date:String ,offset:String,tag:String): String ={
+    val  df:SimpleDateFormat = new SimpleDateFormat("yyyyMMdd")
+    val cal:Calendar=Calendar.getInstance()
+    cal.setTime(df.parse(date))
+    tag match {
+      case "+" =>cal.add(Calendar.DATE,Integer.valueOf(offset))
+      case "-" => cal.add(Calendar.DATE,-Integer.valueOf(offset))
+      case _  =>
+    }
+    df.format(cal.getTime)
+  }
 
   /**
     * map

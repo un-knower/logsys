@@ -61,22 +61,21 @@ class PhoenixUtil(metadataService:String="http://bigdata-appsvr-130-5:8084",read
 
   /**
     *
-    * taskFlag:111
-    * 第一段表示期望生成DDL和DML
-    * 第二段表示执行成DDL
-    * 第三段表示执行成DML
-    *
-    * */
-  def postTaskId2MetaModel(taskId: String,taskFlag:String,isDebug:Boolean=false): JSONObject = {
-    assert(taskFlag!=null&&taskFlag.length==3)
-    var reallyTaskFlag=""
-    if(isDebug){
-      reallyTaskFlag=taskFlag.substring(0,2)+"0"
-    }else{
-      reallyTaskFlag=taskFlag
-    }
-    println(metadataService + s"/metadata/processTask/${taskId}/${reallyTaskFlag}")
-    val response = Http(metadataService + s"/metadata/processTask/${taskId}/${reallyTaskFlag}")
+    * @param taskId
+    * @param deleteOld drop partition 是否执行 true 执行
+    * @param isDebug
+    * @return
+    */
+  def postTaskId2MetaModel(taskId: String,deleteOld:String,isDebug:Boolean=false): JSONObject = {
+//    assert(taskFlag!=null&&taskFlag.length==3)
+//    var reallyTaskFlag=""
+//    if(isDebug){
+//      reallyTaskFlag=taskFlag.substring(0,2)+"0"
+//    }else{
+//      reallyTaskFlag=taskFlag
+//    }
+    println(metadataService + s"/metadata/processTask/${taskId}/${deleteOld}")
+    val response = Http(metadataService + s"/metadata/processTask/${taskId}/${deleteOld}")
       .option(HttpOptions.readTimeout(readTimeOut))
       .method("POST")
       .header("Content-Type","text/plain")

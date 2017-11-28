@@ -1,3 +1,3 @@
 type=command
 mainClass=cn.whaley.bi.logsys.metadataManage.Start
-command=sh ${working.dir}/../bin/submit.sh  ${mainClass} --path ${path} --db_name ${dbName} --tab_prefix ${tabPrefix} --product_code ${productCode} --app_code ${appCode} --realLogType ${realLogType} --key_day ${keyDay} --key_hour ${keyHour}
+command=sh ${working.dir}/../bin/submit.sh  ${mainClass} --path ${path} --db_name ${dbName} --tab_prefix ${tabPrefix} --product_code ${productCode} --app_code ${appCode} --realLogType ${realLogType} --key_day ${keyDay} --key_hour ${keyHour} --deleteOld ${deleteOld} --offset ${offset}

@@ -22,6 +22,8 @@ object ParamsParseUtil {
         opt[String](ParamKey.REALLOGTYPE).action((x, c) => c.copy(realLogType = x))
         opt[String](ParamKey.KEY_DAY).action((x, c) => c.copy(key_day = x))
         opt[String](ParamKey.KEY_HOUR).action((x, c) => c.copy(key_hour = x))
+        opt[String](ParamKey.OFFSET).action((x, c) => c.copy(offset = x))
+        opt[String](ParamKey.DELETEOLD).action((x, c) => c.copy(deleteOld = x))
       }
       parser.parse(args,default) match {
         case Some(p) => Some(p)

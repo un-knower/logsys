@@ -11,6 +11,8 @@ case class Params(path:String="",
                   realLogType:String="",
                   key_day:String="",
                   key_hour:String="",
+                  offset:String="",
+                  deleteOld:String="",
                   paramMap:Map[String,String] =  Map[String,String]()) {
 
 }
