@@ -69,7 +69,7 @@ object DateFormatUtils {
         val date = new Date(ts)
         val formate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val str = formate.format(date)
-        Array(str.substring(0, 11), str.substring(11))
+        Array(str.substring(0, 11), str)
     }
 
     def toCNDateArray(enFormat: String) = {
