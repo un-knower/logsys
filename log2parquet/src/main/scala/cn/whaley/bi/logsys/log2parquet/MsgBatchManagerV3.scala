@@ -67,7 +67,23 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     //读取原始文件
     val inputPath = confManager.getConf("inputPath")
-    val rdd_original = sc.textFile(inputPath).map(line => {
+    var rdd_original = sc.textFile(inputPath)
+
+    //添加执行过滤某个appId
+    val appId = confManager.getConf("appId")
+    if(!("all").equals(appId)){
+      rdd_original = rdd_original.filter(line=>{
+        try{
+          JSON.parseObject(line).getString("appId").equals(appId)
+        } catch {
+          case _: Throwable => {
+            true
+          }
+        }
+      })
+    }
+
+    val original = rdd_original.map(line => {
       try {
         //如果是medusa2x日志，首先做规范化处理
         if (line.indexOf("\"appId\":\"" + Constants.MEDUSA2X_APP_ID + "\"") > 0) {
@@ -90,10 +106,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }
     }).filter(row => row.isDefined).map(row => row.get)
 
+
+
+
     //经过处理器链处理
     val logProcessGroupName = confManager.getConf(this.name, "LogProcessGroup")
     val processGroupInstance = instanceFrom(confManager, logProcessGroupName).asInstanceOf[ProcessGroupTraitV2]
-    val processedRdd = rdd_original.map(e => {
+    val processedRdd = original.map(e => {
       processGroupInstance.process(e)
     })
 
@@ -110,7 +129,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
     //添加执行过滤某个日志类型逻辑
     val realLogType = confManager.getConf("realLogType")
-    if(!("null").equals(realLogType)){
+    if(!("all").equals(realLogType)){
       rddSchema = rddSchema.filter(f=>{
         f._2.getString("realLogType").replace("-","_").equals(realLogType)
       })
@@ -122,9 +141,9 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 //    val realLogTypeRule = getFieldTypeMap(logFieldTypeInfoEntitys,"realLogType")
 //    val fieldRule = getFieldTypeMap(logFieldTypeInfoEntitys,"field")
 
-    rddSchema.foreach(f=>{
+  /*  rddSchema.foreach(f=>{
       println(f._2)
-    })
+    })*/
 
 
 
