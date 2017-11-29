@@ -8,7 +8,7 @@ import scalaj.http.{Http, HttpOptions}
 /**
   * Created by guohao on 2017/11/7.
   */
-class PhoenixUtil(metadataService:String="http://bigdata-appsvr-130-5:8084",readTimeOut:Int=900000) {
+class PhoenixUtil(metadataService:String="http://odsviewmd.whaleybigdata.com",readTimeOut:Int=900000) {
 
   def getJSONString[T](entities: Seq[T]): String = {
     "[" + entities.map(entity => JSON.toJSONString(entity, false)).mkString(",") + "]"
