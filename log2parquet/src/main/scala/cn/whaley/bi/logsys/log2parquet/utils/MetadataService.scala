@@ -1,10 +1,10 @@
 package cn.whaley.bi.logsys.log2parquet.utils
 
 import cn.whaley.bi.logsys.metadata.entity._
-import com.alibaba.fastjson.{JSONObject, JSON, JSONArray}
-import scala.collection.JavaConversions._
+import com.alibaba.fastjson.{JSON, JSONObject}
 
-import scalaj.http.{HttpOptions, Http}
+import scala.collection.JavaConversions._
+import scalaj.http.{Http, HttpOptions}
 
 /**
  *
@@ -28,6 +28,19 @@ class MetadataService(metadataServer: String, readTimeOut: Int = 900000) {
       throw new RuntimeException(response.body)
     }
     JSON.parseArray(response.body, classOf[LogBaseInfoEntity]).toList
+  }
+
+  /**
+    * 查询所有表的黑名单,过滤黑名单表无需转parquet
+    */
+  def getAllBlackTableDesc(): List[BlackTableInfoEntity] = {
+    val response = Http(metadataServer + "/metadata/black_table_info/all")
+      .option(HttpOptions.readTimeout(readTimeOut))
+      .method("GET").asString
+    if (!response.isSuccess) {
+      throw new RuntimeException(response.body)
+    }
+    JSON.parseArray(response.body, classOf[BlackTableInfoEntity]).toList
   }
 
   /**

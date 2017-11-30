@@ -68,7 +68,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     //读取原始文件
     val inputPath = confManager.getConf("inputPath")
     var rdd_original = sc.textFile(inputPath)
-
     //添加执行过滤某个appId
     val appId = confManager.getConf("appId")
     if(!("all").equals(appId)){
@@ -133,7 +132,22 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         f._2.getString("realLogType").replace("-","_").equals(realLogType)
       })
     }
-
+    //处理过滤黑名单表
+    val blackTableInfoEntitys = metaDataUtils.metadataService().getAllBlackTableDesc()
+    if(blackTableInfoEntitys.size != 0 ){
+      //获取黑名单表明
+      val blackTableList = blackTableInfoEntitys.map(entity=>{
+        entity.getTableName
+      })
+      rddSchema = rddSchema.filter(f=>{
+        val tableName = f._2.getString("tableName")
+        if(blackTableList.contains(tableName)){
+          false
+        }else{
+          true
+        }
+      })
+    }
     //数据类型处理
     val logFieldTypeInfoEntitys = metaDataUtils.metadataService().getAllLogFieldTypeInfo()
     val fieldLevel = getFieldTypeMap(logFieldTypeInfoEntitys,"field")
@@ -163,6 +177,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 //    pathRdd.foreach(f=>{
 //     println(f._2)
 //   })
+//    System.exit(-1)
+//
 //    val pathRdd = rddSchema.map(row=>{
 //      val path = row._1
 //      val jSONObject = row._2
