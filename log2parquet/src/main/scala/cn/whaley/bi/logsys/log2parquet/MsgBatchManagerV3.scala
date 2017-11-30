@@ -82,7 +82,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         }
       })
     }
-
     val original = rdd_original.map(line => {
       try {
         //如果是medusa2x日志，首先做规范化处理
@@ -136,26 +135,40 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     }
 
     //数据类型处理
-//    val logFieldTypeInfoEntitys = metaDataUtils.metadataService().getAllLogFieldTypeInfo()
-//    val tableRule = getFieldTypeMap(logFieldTypeInfoEntitys,"table")
-//    val realLogTypeRule = getFieldTypeMap(logFieldTypeInfoEntitys,"realLogType")
-//    val fieldRule = getFieldTypeMap(logFieldTypeInfoEntitys,"field")
-
-  /*  rddSchema.foreach(f=>{
-      println(f._2)
-    })*/
-
-
-
+    val logFieldTypeInfoEntitys = metaDataUtils.metadataService().getAllLogFieldTypeInfo()
+    val fieldLevel = getFieldTypeMap(logFieldTypeInfoEntitys,"field")
+    val realLogTypeLevel = getFieldTypeMap(logFieldTypeInfoEntitys,"realLogType")
+    val tableLevel = getFieldTypeMap(logFieldTypeInfoEntitys,"table")
     val pathRdd = rddSchema.map(row=>{
       val path = row._1
       val jSONObject = row._2
+      //tableName
+      val realLogType = jSONObject.getString("realLogType")
+      val tableName = jSONObject.getString("tableName")
+      //1.field level
+     if(fieldLevel.size != 0){
+       processFiledType(jSONObject,fieldLevel.get("ALL").get.toMap)
+     }
+      //2.realLogType level
+      if(realLogTypeLevel.size != 0 && realLogTypeLevel.keySet.contains(realLogType)){
+        processFiledType(jSONObject,realLogTypeLevel.get(realLogType).get.toMap)
+      }
+      //3.table level
+      if(tableLevel.size != 0 && tableLevel.keySet.contains(tableName)){
+        processFiledType(jSONObject,tableLevel.get(tableName).get.toMap)
+      }
+      jSONObject.remove("tableName")
       (path,jSONObject)
     })
-
+//    pathRdd.foreach(f=>{
+//     println(f._2)
+//   })
+//    val pathRdd = rddSchema.map(row=>{
+//      val path = row._1
+//      val jSONObject = row._2
+//      (path,jSONObject)
+//    })
     val afterRuleRdd = ruleHandle(sc,pathRdd)(myAccumulator,renameFiledMyAcc,baseInfoRenameFiledMyAcc,removeFiledMyAcc)
-
-
     //输出正常记录到HDFS文件
     println("-------Json2ParquetUtil.saveAsParquet start at "+new Date())
     Json2ParquetUtil.saveAsParquet(afterRuleRdd,time,sparkSession)
@@ -166,10 +179,10 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 //    System.exit(1)
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
     //删除输入数据源
- /*  if(fs.exists(new Path(inputPath))){
+    if(fs.exists(new Path(inputPath))){
      fs.delete(new Path(inputPath),true)
     }
-*/
+
     println("=============== 规则处理移除字段 =============== ：")
     removeFiledMyAcc.value.toList.sortBy(_._2).foreach(r=>{
       if(isValid(r._1)){
@@ -642,21 +655,101 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   }
 
   /**
-    *
+    *获取字段对应的类型
     * @param logFieldTypeInfoEntitys
-    * @param ruleType table,realLogType,field
+    * @param ruleLevel table 表级别,realLogType 日志类型级别,field字段级别
     */
-  def getFieldTypeMap(logFieldTypeInfoEntitys : List[LogFieldTypeInfoEntity],ruleType:String): Map[String,String] ={
+  def getFieldTypeMap(logFieldTypeInfoEntitys : List[LogFieldTypeInfoEntity],ruleLevel:String): Map[String,Map[String,String]] ={
+    val map =  mutable.Map[String,Map[String,String]]()
     val fieldTypeMap = mutable.Map[String,String]()
-    logFieldTypeInfoEntitys
+   logFieldTypeInfoEntitys
       .filter(entity=>{
-        entity.getRuleType.equals(ruleType)
-    }).foreach(entity=>{
-      val fieldName = entity.getFieldName
-      val typeFlag = entity.getTypeFlag
-      fieldTypeMap.put(fieldName,typeFlag)
+        entity.getRuleLevel.equals(ruleLevel)
+    }).groupBy(entity=>{
+     //以name 分组
+      entity.getName
+    }).foreach(e=>{
+      val name = e._1
+      val entities = e._2
+      entities.foreach(entitiy=>{
+        val filedName = entitiy.getFieldName
+        val typeFlag = entitiy.getTypeFlag
+        fieldTypeMap.put(filedName,typeFlag)
+      })
+      map.put(name,fieldTypeMap.toMap)
     })
-    fieldTypeMap.toMap
+    map.toMap
+  }
+  def processFiledType(jsonObject:JSONObject,fieldTypeMap:Map[String,String]): Unit ={
+    val it = jsonObject.keySet().iterator()
+    while (it.hasNext){
+      val key=it.next()
+      //判断是否在类型转换名单中
+      if(fieldTypeMap.keySet.contains(key.trim)){
+        val value = jsonObject.getString(key).trim
+        //字段类型标识 1:String 2:Long 3:Double
+        val typeFlag = fieldTypeMap.get(key.trim).get
+        typeFlag match {
+          case "1" => jsonObject.put(key,value)
+          case "2" => switchLong(key,jsonObject)
+          case "3" => switchDouble(key,jsonObject)
+          case _ =>
+        }
+      }
+    }
+  }
+
+
+  /**
+    * 转换成Long
+    * @param key
+    * @param json
+    */
+  def switchLong(key:String,json:JSONObject): Unit ={
+    try {
+      val value = json.getString(key).trim
+      if(filedIsValid(value)){
+        json.put(key,value.toLong)
+      }else{
+        json.put(key,0)
+      }
+    }catch {
+      case e:Exception=>{
+        e.printStackTrace()
+        json.put(key,0)
+      }
+    }
+  }
+
+  /**
+    * 转换成double
+    * @param key
+    * @param json
+    */
+  private def switchDouble(key:String,json:JSONObject):Unit = {
+    try {
+      val value = json.getString(key).trim
+      if(filedIsValid(value)){
+        json.put(key,value.toDouble)
+      }else{
+        json.put(key,0.0)
+      }
+    }catch {
+      case e:Exception=>{
+        e.printStackTrace()
+        json.put(key,0.0)
+      }
+    }
+  }
+
+  /**
+    * 判读字段类型转换是否合法
+    * @param s
+    * @return
+    */
+  def filedIsValid(s:String)={
+    val regex = "^([0-9]+)|([0-9]+.[0-9]+)$"
+    s.matches(regex)
   }
 
 }
