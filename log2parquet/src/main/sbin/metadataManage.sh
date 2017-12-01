@@ -3,7 +3,7 @@
 cd `dirname $0`
 pwd=`pwd`
 
-ARGS=`getopt -o u:p:i:d:t:c:a:r:s:e:b:h --long username:,password:,path:,dbName:,tabPrefix:,productCode:,appCode:,realLogType:,startDate:,endDate:,startHour:,endHour: -- "$@"`
+ARGS=`getopt -o u:p:i:d:t:c:a:r:s:e:b:h:o --long username:,password:,path:,dbName:,tabPrefix:,productCode:,appCode:,realLogType:,startDate:,endDate:,startHour:,endHour:,deleteOld: -- "$@"`
 
 #将规范化后的命令行参数分配至位置参数（$1,$2,...)
 eval set -- "${ARGS}"
@@ -47,6 +47,9 @@ do
         -h|--endHour)
             endHour=$2;
             shift 2;;
+        -o|--deleteOld)
+            deleteOld=$2;
+            shift 2;;
         --)
             shift;
             break;;
@@ -67,7 +70,7 @@ while [[ ${startTime}  -le  ${endTime} ]]
     echo "execute time ... is ${startTime}"
     startDate=${startTime:0:8}
     startHour=${startTime:8:2}
-    sh ./curl.sh metadataManage metadataManage ${username} ${password} path ${path} dbName ${dbName} tabPrefix ${tabPrefix} productCode ${productCode} appCode ${appCode} realLogType ${realLogType} keyDay ${startDate} keyHour ${startHour}
+    sh ./curl.sh metadataManage metadataManage ${username} ${password} path ${path} dbName ${dbName} tabPrefix ${tabPrefix} productCode ${productCode} appCode ${appCode} realLogType ${realLogType} keyDay ${startDate} keyHour ${startHour} deleteOld ${deleteOld}
     if [ $? -ne 0 ];then
             echo "batch forest ${startTime} is fail ..."
             exit 1
