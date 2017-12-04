@@ -3,7 +3,7 @@
 cd `dirname $0`
 pwd=`pwd`
 
-ARGS=`getopt -o s:e:b:h --long startDate:,endDate:,startHour:,endHour: -- "$@"`
+ARGS=`getopt -o s:e:b:h: --long startDate:,endDate:,startHour:,endHour: -- "$@"`
 
 #将规范化后的命令行参数分配至位置参数（$1,$2,...)
 eval set -- "${ARGS}"
