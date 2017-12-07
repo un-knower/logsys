@@ -44,8 +44,8 @@ getSparkProp(){
 spark_home=${spark_home:-$SPARK_HOME}
 spark_master=${spark_master}
 spark_mainJar="../lib/${spark_mainJarName}"
-spark_driver_memory=$(getSparkProp $MainClass "spark.driver-memory")
-spark_executor_memory=$(getSparkProp $MainClass "spark.executor-memory")
+spark_driver_memory=$(getSparkProp $MainClass "spark.driver.memory")
+spark_executor_memory=$(getSparkProp $MainClass "spark.executor.memory")
 spark_cores_max=$(getSparkProp $MainClass "spark.cores.max")
 spark_shuffle_service_enabled=$(getSparkProp $MainClass "spark.shuffle.service.enabled")
 spark_dynamicAllocation_enabled=$(getSparkProp $MainClass "spark.dynamicAllocation.enabled")

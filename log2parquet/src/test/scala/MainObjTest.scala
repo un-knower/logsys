@@ -6,7 +6,7 @@ import cn.whaley.bi.logsys.log2parquet.MainObj
 import cn.whaley.bi.logsys.log2parquet.constant.Constants
 import cn.whaley.bi.logsys.log2parquet.processingUnit.JsonFormatProcessingUnits
 import cn.whaley.bi.logsys.log2parquet.traits.LogTrait
-import cn.whaley.bi.logsys.log2parquet.utils.{MetaDataUtils, ParquetHiveUtils}
+import cn.whaley.bi.logsys.log2parquet.utils.{MetaDataUtils, ParquetHiveUtils, SendMail}
 import cn.whaley.bi.logsys.metadata.entity.LogFileFieldDescEntity
 import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.hadoop.fs.{FileStatus, Path}
@@ -183,6 +183,7 @@ class MainObjTest extends LogTrait{
   @Test
   def test5(): Unit ={
 //    val input = "/data_warehouse/ods_origin.db/log_origin/key_day=20171121/key_hour=20/part-00849"
+    println(5/4)
     val input ="/data_warehouse/ods_origin.db/log_origin/test.json"
     val conf = new SparkConf()
     conf.setMaster("local[2]")
@@ -197,22 +198,19 @@ class MainObjTest extends LogTrait{
     val list = df.schema.map(f=>{
       f.name
     }).toList
-    println(list)
-    val fields = testAppLogSpecialField_desc(list)
-//    df.selectExpr(fields).toDF().write.parquet("")
-  }
+//    getDfSchema(list,"log_whaleytv_main_play111","whaleytv")
 
-//  @Test
-  def testAppLogSpecialField_desc(list:List[String]): List[String] ={
+  }
+  def getDfSchema(list:List[String],tableName:String,productCode:String): List[String] ={
     //先rename 在filter
-    var fields = list//List("useid","retcode","appid","vipLevel","abc","productSn","1","23","1","a","b","c","cc")
-    val productCode = "whaleytv"
-    val tableName = "log_whaleytv_main_play111"
+    println(s"tableName $tableName")
+    println(s"productCode $productCode")
+    println(s"fields 初始值 $list")
+    var fields = list
     val metaDataUtils = new MetaDataUtils("http://odsviewmd.whaleybigdata.com", 100000)
     val entities = metaDataUtils.queryAppLogSpecialFieldDescConf()
     //该产品下或者全日志或者表级别
     val appLogSpecialFieldEntities = entities.filter(entity=>entity._1 == productCode || entity._1 == "log" || entity._1 == tableName )
-
     //字段重命名: Seq[(源字段名,字段目标名)]
     //1.baseinfo 白名单 重命名
     val baseInfoFieldMap = mutable.Map[String,String]()
@@ -227,7 +225,6 @@ class MainObjTest extends LogTrait{
         }
       })
     })
-
     fields = fields.filter(field => !baseInfoFieldMap.keySet.contains(field))
     //2.黑名单重命名
     //2.1表级别
@@ -242,9 +239,8 @@ class MainObjTest extends LogTrait{
     val logRenameMap= handleRename(appLogSpecialFieldEntities,fields,"log")
     fields = fields.filter(field => !productRenameMap.keySet.contains(field))
     println(s"logRenameMap ${logRenameMap}")
-    val allRenameMap = baseInfoFieldMap.toMap ++ tabRenameMap ++ productRenameMap ++ logRenameMap
-    println(s"allRenameMap ${allRenameMap}")
-
+    val whiteRenameMap = baseInfoFieldMap.toMap ++ tabRenameMap ++ productRenameMap ++ logRenameMap
+    println(s"whiteRenameMap ${whiteRenameMap}")
     //字段过滤器: Seq[源字段名]
     //字段删除黑名单
     val fieldFilterList = appLogSpecialFieldEntities.filter(conf => conf._3 == "fieldFilter").flatMap(conf => {
@@ -258,27 +254,61 @@ class MainObjTest extends LogTrait{
       val isReserve = specialValue.charAt(1) == '0'
       fields.filter(field => fieldPattern.matcher(field).find()).map(field => (field, isReserve))
     })
-
     //剔除白名单字段
     val whiteList = fieldFilterList.filter(_._2)
     val fieldBlackFilter = fieldFilterList.filter(item => {
       val field = item._1
       !whiteList.exists(p => p._1 == field)
     }).map(item => item._1)
-
-     println("字段删除 :"+fieldBlackFilter)
-     fields = fields.filter(field=> !fieldBlackFilter.contains(field))
-     println("fields........."+fields)
+    if(fieldBlackFilter.size> 0){
+      println("字段删除 :"+fieldBlackFilter)
+    }
+    fields = fields.filter(field=> !fieldBlackFilter.contains(field))
+    //        println("fields...为重命名之前......"+fields)
     //处理fields中相同的字段
     //to do ...
 
+    val set = fields.toStream.map(field=>field.toLowerCase).toSet
+    //字段列表中含有字段模糊，需要重命名
+    val renameMap = mutable.Map[String,String]()
+    if(fields.size != set.size){
+      val dealRenameList =  fields
+      var i = 1
+      dealRenameList.foreach(dealField=>{
+        fields = fields.filter(field=>{
+          val flag = !field.equals(dealField) && field.equalsIgnoreCase(dealField)
+          if(flag && !whiteRenameMap.values.toSet.contains(field)){
+            renameMap.put(field,s"${field}_${i}")
+            i=i+1
+            false
+          }else{
+            true
+          }
+        })
+      })
+    }
+    if(renameMap.size !=0 ){
+      val e = new RuntimeException(renameMap.toString())
+      SendMail.post(e, s"[Log2Parquet new][Json2ParquetUtil][] field rename", Array("app-bigdata@whaley.cn"))
+    }
+    println(s"renameMap ${renameMap.toMap}")
+    println(s"whiteRenameMap ${whiteRenameMap.values.toSet}")
+
+    val allRenameMap = whiteRenameMap ++ renameMap.toMap
     //把重命名字段做到field list中
     allRenameMap.foreach(f=>{
       val oldName = f._1
       val newName = f._2
-      fields = fields.::(s"$oldName as $newName")
+      //newName如存在原始的list中需要特殊处理
+      if(!fields.contains(newName)){
+        fields = fields.::(s"`$oldName` as `$newName`")
+      }else{
+        println(s"fields $fields")
+        fields = fields.filter(field=>field !=newName)
+        fields = fields.::(s"(case when `$newName` is null or `$newName` == '' then `$oldName` else `$newName` end ) as `$newName`")
+      }
     })
-    println("fields "+fields)
+    println("fields 最终直"+fields)
     fields
   }
 
@@ -299,7 +329,7 @@ class MainObjTest extends LogTrait{
   @Test
   def test1111(): Unit ={
     //先rename 在filter
-    var fields = List("useid","retcode","appid","vipLevel","productSn","abc","ABC","ddd","_msg","Ddd")
+    var fields = List("useid","retcode","appid","vipLevel","productSn","Abc","abc","ABC","ddd","_msg","Ddd")
     val productCode = "whaleytv"
     val tableName = "log_whaleytv_main_play111"
     val metaDataUtils = new MetaDataUtils("http://odsviewmd.whaleybigdata.com", 100000)
@@ -336,8 +366,9 @@ class MainObjTest extends LogTrait{
     val logRenameMap= handleRename(appLogSpecialFieldEntities,fields,"log")
     fields = fields.filter(field => !productRenameMap.keySet.contains(field))
     println(s"logRenameMap ${logRenameMap}")
-    val allRenameMap = baseInfoFieldMap.toMap ++ tabRenameMap ++ productRenameMap ++ logRenameMap
-    println(s"allRenameMap ${allRenameMap}")
+
+    val whiteRenameMap = baseInfoFieldMap.toMap ++ tabRenameMap ++ productRenameMap ++ logRenameMap
+
 
     //字段过滤器: Seq[源字段名]
     //字段删除黑名单
@@ -369,25 +400,43 @@ class MainObjTest extends LogTrait{
     //to do ...
     val set = fields.toStream.map(field=>field.toLowerCase).toSet
     //字段列表中含有字段模糊，需要重命名
-
-//    if(fields.size != set.size){
-//      val newFields = fields
-//      newFields.foreach(newField=>{
-////        fields.forall(field=>)
-//      })
-//
-//    }
-
+    val renameMap = mutable.Map[String,String]()
+    if(fields.size != set.size){
+      //邮件发送
+      val dealRenameList =  fields
+      println(s"fields ${fields}")
+      var i = 1
+      dealRenameList.foreach(dealField=>{
+        fields = fields.filter(field=>{
+          val flag = !field.equals(dealField) && field.equalsIgnoreCase(dealField)
+          if(flag && !whiteRenameMap.values.toSet.contains(field)){
+            renameMap.put(field,s"${field}_${i}")
+            i=i+1
+            false
+          }else{
+            true
+          }
+        })
+      })
+    }
+    if(renameMap.size !=0 ){
+      val e = new RuntimeException(renameMap.toString())
+      SendMail.post(e, s"[Log2Parquet new][Json2ParquetUtil] field rename", Array("app-bigdata@whaley.cn"))
+    }
+    println(s"whiteRenameMap ${whiteRenameMap.values.toSet}")
+    println(s"renameMap ${renameMap.toMap}")
+    println("fields "+fields)
+    val allRenameMap = whiteRenameMap ++ renameMap.toMap
+    println(s"allRenameMap ${allRenameMap}")
     //把重命名字段做到field list中
     allRenameMap.foreach(f=>{
       val oldName = f._1
       val newName = f._2
       if(!fields.contains(newName)){
-        fields = fields.::(s"$oldName as $newName")
+        fields = fields.::(s"`$oldName` as `$newName`")
       }else{
-        println(s"fields $fields")
         fields = fields.filter(field=>field !=newName)
-        fields = fields.::(s"if( $newName is null ,$oldName,$newName ) as $newName")
+        fields = fields.::(s"(case when `$newName` is null or `$newName` == '' then `$oldName` else `$newName` end ) as `$newName`")
       }
 
     })

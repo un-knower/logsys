@@ -47,6 +47,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     */
   def start(confManager: ConfManager): Unit = {
     val config = new SparkConf()
+    //区分大小写，方能处理SSID，ssid同时存在于一条记录的情况
+    config.set("spark.sql.caseSensitive", "true")
     //本地化测试使用,MainObjTests
     if (confManager.getConf("masterURL") != null) {
       config.setMaster(confManager.getConf("masterURL"))
@@ -55,6 +57,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val sparkSession: SparkSession = SparkSession.builder().config(config).getOrCreate()
 
     val sc = sparkSession.sparkContext
+
     //创建累加器
     val renameFiledMyAcc = new MyAccumulator
     val baseInfoRenameFiledMyAcc = new MyAccumulator
@@ -196,7 +199,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
     //删除输入数据源
     if(fs.exists(new Path(inputPath))){
-     fs.delete(new Path(inputPath),true)
+//     fs.delete(new Path(inputPath),true)
     }
 
     println("=============== 规则处理移除字段 =============== ：")
@@ -578,7 +581,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
           }
         })
       }
-      if(!jsonObject.isEmpty){
+/*      if(!jsonObject.isEmpty){
         //删除字段
         if(fieldBlackFilterMap.keySet.contains(path) && !fieldBlackFilterMap.get(path).isEmpty){
           val array = fieldBlackFilterMap.get(path).get
@@ -620,7 +623,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
             }
           })
         }
-      }
+      }*/
       //累加器影响的行数
       if(!jsonObject.isEmpty){
         if(jsonObject.size()!=compareJson.size()){
@@ -767,6 +770,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val regex = "^([0-9]+)|([0-9]+.[0-9]+)$"
     s.matches(regex)
   }
+
 
 }
 

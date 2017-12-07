@@ -3,6 +3,7 @@ package cn.whaley.bi.logsys.log2parquet.utils
 import java.io.File
 import java.util.{Date, UUID}
 import java.util.concurrent.{Callable, Executors, TimeUnit}
+import java.util.regex.Pattern
 
 import cn.whaley.bi.logsys.log2parquet.constant.Constants
 import com.alibaba.fastjson.JSONObject
@@ -155,17 +156,26 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
         try {
             //json文件分片计算
            // val jsonSplitSize = paramMap.getOrElse("jsonSplitSize", (128 * 1024 * 1024).toString).toLong
-            val jsonSplitSize = (128 * 1024 * 1024).toLong
+            val jsonSplitSize = (1000 * 1024 * 1024).toLong
             val jsonSplitNum = Math.ceil(inputSize.toDouble / jsonSplitSize.toDouble).toInt
             //jons转parquet
+//            val outputPath2 = outputPath.replace("ods_view.db","ods_view.db2")
             println(s"process file[${jsonSplitNum},${jsonSplitSize}]: $inputPath -> $outputPath")
-            sparkSession.read.json(inputPath).coalesce(jsonSplitNum).write.mode(SaveMode.Overwrite).parquet(outputPath)
+//            sparkSession.read.json(inputPath).coalesce(jsonSplitNum).write.mode(SaveMode.Overwrite).parquet(outputPath)
+            val tabName = outputPath.split("/")(3)
+            val productCode = tabName.split("_")(1)
+            val df = sparkSession.read.json(inputPath)
+            val fieldList = df.schema.map(schema=>schema.name).toList
+            val fieldSchema = getDfSchema(fieldList,tabName,productCode)
+
+            df.selectExpr(fieldSchema:_*)
+              .coalesce(jsonSplitNum)
+              .write.mode(SaveMode.Overwrite).parquet(outputPath)
             println(s"write file: $outputPath")
             //删除输入目录
             fs.delete(new Path(inputPath), true)
             val outputSize = fs.getContentSummary(new Path(outputPath)).getLength
             s"convert file: $inputPath(${inputSize / 1024}k) -> $outputPath(${outputSize / 1024}k),ts:${System.currentTimeMillis() - tsFrom}"
-
         }
         catch {
             case e: Throwable => {
@@ -177,4 +187,131 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
         }
 
     }
+    def getDfSchema(list:List[String],tableName:String,productCode:String): List[String] ={
+        //先rename 在filter
+        println(s"tableName $tableName")
+        println(s"productCode $productCode")
+        println(s"fields 初始值 $list")
+        var fields = list
+        val metaDataUtils = new MetaDataUtils("http://odsviewmd.whaleybigdata.com", 100000)
+        val entities = metaDataUtils.queryAppLogSpecialFieldDescConf()
+        //该产品下或者全日志或者表级别
+        val appLogSpecialFieldEntities = entities.filter(entity=>entity._1 == productCode || entity._1 == "log" || entity._1 == tableName )
+        //字段重命名: Seq[(源字段名,字段目标名)]
+        //1.baseinfo 白名单 重命名
+        val baseInfoFieldMap = mutable.Map[String,String]()
+        val baseInfoFields = metaDataUtils.metadataService().getAllLogBaseInfo().filter(item=>{
+            item.isDeleted == false && item.getProductCode == productCode
+        }).map(item => item.getFieldName)
+        baseInfoFields.foreach(baseInfoField=>{
+            fields.foreach(field=>{
+                //字段只有忽略忽略大小写在baseInfo中，需要重命名
+                if(!baseInfoField.equals(field) && baseInfoField.equalsIgnoreCase(field)){
+                    baseInfoFieldMap.put(field,field+"_r")
+                }
+            })
+        })
+        fields = fields.filter(field => !baseInfoFieldMap.keySet.contains(field))
+        println(s"baseInfoFieldMap ${baseInfoFieldMap}")
+        //2.黑名单重命名
+        //2.1表级别
+        val tabRenameMap= handleRename(appLogSpecialFieldEntities,fields,tableName)
+        fields = fields.filter(field => !tabRenameMap.keySet.contains(field))
+        println(s"tabRenameMap ${tabRenameMap}")
+        //2.2产品线级别
+        val productRenameMap= handleRename(appLogSpecialFieldEntities,fields,productCode)
+        fields = fields.filter(field => !productRenameMap.keySet.contains(field))
+        println(s"productRenameMap ${productRenameMap}")
+        //2.3全局级别
+        val logRenameMap= handleRename(appLogSpecialFieldEntities,fields,"log")
+        fields = fields.filter(field => !productRenameMap.keySet.contains(field))
+        println(s"logRenameMap ${logRenameMap}")
+        val whiteRenameMap = baseInfoFieldMap.toMap ++ tabRenameMap ++ productRenameMap ++ logRenameMap
+        println(s"whiteRenameMap ${whiteRenameMap}")
+        //字段过滤器: Seq[源字段名]
+        //字段删除黑名单
+        val fieldFilterList = appLogSpecialFieldEntities.filter(conf => conf._3 == "fieldFilter").flatMap(conf => {
+            val specialValue = conf._4
+            val fieldPattern = if (specialValue.charAt(0) == '1') {
+                Pattern.compile(conf._2, Pattern.CASE_INSENSITIVE)
+            }
+            else {
+                Pattern.compile(conf._2)
+            }
+            val isReserve = specialValue.charAt(1) == '0'
+            fields.filter(field => fieldPattern.matcher(field).find()).map(field => (field, isReserve))
+        })
+        //剔除白名单字段
+        val whiteList = fieldFilterList.filter(_._2)
+        val fieldBlackFilter = fieldFilterList.filter(item => {
+            val field = item._1
+            !whiteList.exists(p => p._1 == field)
+        }).map(item => item._1)
+      if(fieldBlackFilter.size> 0){
+        println("字段删除 :"+fieldBlackFilter)
+      }
+        fields = fields.filter(field=> !fieldBlackFilter.contains(field))
+//        println("fields...为重命名之前......"+fields)
+        //处理fields中相同的字段
+        //to do ...
+
+        val set = fields.toStream.map(field=>field.toLowerCase).toSet
+        //字段列表中含有字段模糊，需要重命名
+        val renameMap = mutable.Map[String,String]()
+        if(fields.size != set.size){
+            val dealRenameList =  fields
+            var i = 1
+            dealRenameList.foreach(dealField=>{
+                fields = fields.filter(field=>{
+                    val flag = !field.equals(dealField) && field.equalsIgnoreCase(dealField)
+                    if(flag && !whiteRenameMap.values.toSet.contains(field)){
+                        renameMap.put(field,s"${field}_${i}")
+                        i=i+1
+                        false
+                    }else{
+                        true
+                    }
+                })
+            })
+        }
+        if(renameMap.size !=0 ){
+            val e = new RuntimeException(renameMap.toString())
+            SendMail.post(e, s"[Log2Parquet new][Json2ParquetUtil][${inputPath}] field rename", Array("app-bigdata@whaley.cn"))
+        }
+        println(s"renameMap ${renameMap.toMap}")
+        println(s"whiteRenameMap.values ${whiteRenameMap.values.toSet}")
+
+        val allRenameMap = whiteRenameMap ++ renameMap.toMap
+        //把重命名字段做到field list中
+        allRenameMap.foreach(f=>{
+            val oldName = f._1
+            val newName = f._2
+          //newName如存在原始的list中需要特殊处理
+          if(!fields.contains(newName)){
+            fields = fields.::(s"`$oldName` as `$newName`")
+          }else{
+            println(s"fields $fields")
+            fields = fields.filter(field=>field !=newName)
+            fields = fields.::(s"(case when `$newName` is null or `$newName` == '' then `$oldName` else `$newName` end ) as `$newName`")
+          }
+        })
+        println("fields 最终直"+fields)
+        fields
+    }
+
+
+    /**
+      * 处理重命名
+      * @param appLogSpecialFieldEntities
+      * @param fields
+      * @param logPathReg
+      * @return renameMap 处理重命名，leftFields剩下的字段
+      */
+    def handleRename(appLogSpecialFieldEntities:Seq[(String, String, String, String, Int)],fields:List[String],logPathReg:String): Map[String,String] ={
+        val renameMap = appLogSpecialFieldEntities.filter(conf => conf._3 == "rename" && conf._1 == logPathReg).flatMap(conf => {
+            fields.filter(field => conf._2.r.findFirstMatchIn(field).isDefined).map(field => (field, conf._4))
+        }).toMap
+        renameMap
+    }
+
 }

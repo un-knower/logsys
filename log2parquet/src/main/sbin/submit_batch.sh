@@ -77,8 +77,8 @@ getSparkProp(){
 
 spark_home=${spark_home:-$SPARK_HOME}
 spark_mainJar="../lib/${spark_mainJarName}"
-spark_driver_memory=$(getSparkProp $mainClass "spark.driver-memory")
-spark_executor_memory=$(getSparkProp $mainClass "spark.executor-memory")
+spark_driver_memory=$(getSparkProp $mainClass "spark.driver.memory")
+spark_executor_memory=$(getSparkProp $mainClass "spark.executor.memory")
 spark_cores_max=$(getSparkProp $mainClass "spark.cores.max")
 spark_master=$(getSparkProp $mainClass "spark.master")
 spark_executor_cores=$(getSparkProp $mainClass "spark.executor.cores")
