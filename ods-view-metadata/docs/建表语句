@@ -1,3 +1,24 @@
+--表字段信息表
+DROP INDEX IF EXISTS idx_logtab_field_desc_taskId ON metadata.logtab_field_desc ;
+DROP SEQUENCE IF EXISTS metadata.seq_logtab_field_desc;
+drop table if exists metadata.logtab_field_desc;
+create table metadata.logtab_field_desc(
+    dbName varchar(100) not null --[key]
+    ,tabName varchar(100) not null --表名 [key]
+    ,fieldName varchar(200) not null --字段名 [key]
+    ,seq integer not null --序号 [key]
+    ,taskId varchar(100) --产生该批数据的任务ID
+    ,fieldType varchar(100) --hive字段类型
+    ,fieldSql varchar(1000) --hive字段SQL声明子句
+    ,isDeleted boolean --记录是否删除
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,fieldName,seq)
+)  ;
+CREATE INDEX idx_logtab_field_desc_taskId ON metadata.logtab_field_desc(taskId);
+CREATE SEQUENCE metadata.seq_logtab_field_desc;
+
+
 
 最新线上建表信息
 --DDL信息表
@@ -148,12 +169,11 @@ create table metadata.black_table_info(
 drop table if exists metadata.log_field_type_info;
 create table metadata.log_field_type_info(
     id varchar(100) not null --唯一性ID [key]
-    ,tableName varchar(20) --表名称
-    ,realLogType varchar(20) --日志类型名称
+    ,name varchar(80) --ruleLevel 为table则为表名，为realLogType 则为realLogType，为field 则为 ALL
     ,fieldName varchar(20) --字段名称
     ,fieldType varchar(10) --字段类型
     ,typeFlag varchar(2) --字段类型标识 1:String 2:Long 3:Double
-    ,ruleType varchar(10) --规则类型 1.table:表规则 2.realLogType:日志类型级别 3.field:字段级别
+    ,ruleLevel varchar(15) --规则类型 1.table:表级别 2.realLogType:日志类型级别 3.field:字段级别
     ,isDeleted boolean --记录是否删除
     ,createTime timestamp --记录创建时间
     ,updateTime timestamp --记录更新时间

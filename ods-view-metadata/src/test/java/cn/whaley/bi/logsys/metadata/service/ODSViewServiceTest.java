@@ -73,7 +73,7 @@ public class ODSViewServiceTest {
     @Test
     public void testExecuteDML() {
         String taskId = "task1";
-        service.executeDML(taskId);
+        service.executeDML(taskId,"false");
     }
 
 
