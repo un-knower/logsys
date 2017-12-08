@@ -6,4 +6,4 @@ tabPrefix=log
 productCode=null
 appCode=null
 realLogType=null
-command=sh ${working.dir}/../sbin/metadataManage.sh --username ${username} --password ${password} --path ${path} --dbName ${dbName} --tabPrefix ${tabPrefix} --productCode ${productCode} --appCode ${appCode} --realLogType ${realLogType}   --startDate ${startDate} --endDate ${endDate} --startHour ${startHour} --endHour ${endHour} --deleteOld {deleteOld}
+command=sh ${working.dir}/../sbin/metadataManage.sh --username ${username} --password ${password} --path ${path} --dbName ${dbName} --tabPrefix ${tabPrefix} --productCode ${productCode} --appCode ${appCode} --realLogType ${realLogType}   --startDate ${startDate} --endDate ${endDate} --startHour ${startHour} --endHour ${endHour} --deleteOld ${deleteOld}
