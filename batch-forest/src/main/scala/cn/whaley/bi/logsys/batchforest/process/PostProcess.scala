@@ -18,11 +18,6 @@ object PostProcess extends NameTrait with LogTrait{
   def handlePost(message:JSONObject)
                 (implicit myAccumulator:MyAccumulator=new MyAccumulator): Seq[Option[JSONObject]] ={
     val msgBody = message.getJSONObject("msgBody")
-
-    if(!msgBody.getString("svr_req_method").equalsIgnoreCase("POST")){
-      myAccumulator.add("handlePostExc")
-      return Array(None)
-    }
     //post日志统一处理logTime
     val logTime = msgBody.getLong("svr_receive_time")
     message.put("logTime",logTime)

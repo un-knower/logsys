@@ -3,11 +3,10 @@ package cn.whaley.bi.logsys.batchforest
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import cn.whaley.bi.logsys.batchforest.process.{CrashProcess, GetProcess, LogFormat, PostProcess}
+import cn.whaley.bi.logsys.batchforest.process.{ GetProcess, LogFormat, PostProcess}
 import cn.whaley.bi.logsys.batchforest.traits.{LogTrait, NameTrait}
 import cn.whaley.bi.logsys.batchforest.util._
 import com.alibaba.fastjson.{JSON, JSONObject}
-import org.apache.commons.codec.digest.DigestUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkConf
@@ -44,6 +43,7 @@ object MainObj extends NameTrait with LogTrait{
       //过滤的内容
       val filterContext = args(4)
       val config = new Configuration()
+      config.setBoolean("fs.hdfs.impl.disable.cache", true)
       val fs = FileSystem.get(config)
       val fileStatus = fs.listStatus(new Path(s"$inputPath/key_day=${key_day}/key_hour=${key_hour}"))
       var paths = new ArrayBuffer[String]()
@@ -87,6 +87,19 @@ object MainObj extends NameTrait with LogTrait{
         }
 
       }
+      //计算输入文件大小
+      var inputsize:Long = 0
+      paths.foreach(path=>{
+        val size = fs.getContentSummary(new Path(path)).getLength
+        inputsize = inputsize + size
+      })
+      inputsize = inputsize/(1024*1024)
+      val times = 1.1 //膨胀系数
+      //block大小256
+      val partitionNum = (inputsize*times/256).toInt
+      println(s"inputsize is ${inputsize}")
+      println(s"partitionNum is ${partitionNum}")
+
       var inputRdd:RDD[String ] = sparkContext.textFile(paths(0))
       for(i<- 1 to paths.size -1){
         val rdd = sparkContext.textFile(paths(i))
@@ -97,14 +110,12 @@ object MainObj extends NameTrait with LogTrait{
         myAccumulator.add("inputRecord")
         LogFormat.decode(line)
       })
-
       if(!"null".equals(filterContext)){
         //需要过滤内容
         decodeRdd = decodeRdd.filter(f=>{
           f.toString.contains(filterContext)
         })
       }
-
       //2.验证日志格式
       val formatRdd = decodeRdd.filter(f=>{
         if(f.isEmpty){
@@ -150,12 +161,13 @@ object MainObj extends NameTrait with LogTrait{
         log.put("logTimestamp",logTime)
         log.put("datetime",datetime)
         log
-      }).repartition(850)
+      }).repartition(partitionNum)
 
       val outputPath = s"/data_warehouse/ods_origin.db/log_origin/key_day=${key_day}/key_hour=${key_hour}"
       if(fs.exists(new Path(outputPath))){
         fs.delete(new Path(outputPath),true)
       }
+
       resultRdd.saveAsTextFile(outputPath)
       myAccumulator.value.keys.foreach(key=>{
         val value = myAccumulator.value.getOrElseUpdate(key,0)
