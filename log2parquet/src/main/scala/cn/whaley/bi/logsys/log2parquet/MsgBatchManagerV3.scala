@@ -190,7 +190,11 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val afterRuleRdd = ruleHandle(sc,pathRdd)(myAccumulator,renameFiledMyAcc,baseInfoRenameFiledMyAcc,removeFiledMyAcc)
     //输出正常记录到HDFS文件
     println("-------Json2ParquetUtil.saveAsParquet start at "+new Date())
-    Json2ParquetUtil.saveAsParquet(afterRuleRdd,time,sparkSession)
+    val appLogSecialEntities = metaDataUtils.queryAppLogSpecialFieldDescConf()
+    //baseInfo信息
+    val baseInfoEntities = metaDataUtils.metadataService().getAllLogBaseInfo()
+
+    Json2ParquetUtil.saveAsParquet(afterRuleRdd,time,sparkSession,appLogSecialEntities,baseInfoEntities)
 //    afterRuleRdd.foreach(f=>{
 //      println(f._2)
 //    })
@@ -199,7 +203,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
     //删除输入数据源
     if(fs.exists(new Path(inputPath))){
-//     fs.delete(new Path(inputPath),true)
+     fs.delete(new Path(inputPath),true)
     }
 
     println("=============== 规则处理移除字段 =============== ：")
@@ -387,38 +391,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * 通过makeRDD方式,并发生成FieldDescEntity，但是发现原有方式这段耗时1分钟
     * Seq[(fieldName:String,fieldType:String,fieldSql:String,rowType:String,rowInfo:String)]
     **/
-  /* def generateFieldDescEntityArrayBuffer(sparkSession:SparkSession,taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
-     sparkSession.sparkContext.makeRDD(distinctOutputArray,Math.min(1000,distinctOutputArray.length)).flatMap(dir => {
-       val list = ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE + File.separator + dir)
-       val fieldInfos = if (list.size > 0) {
-         val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(list.head.getPath)
-         parquetMetaData.map(meta => {
-           val fieldName = meta._1
-           val fieldType = meta._2
-           val fieldSql = meta._3
-           val rowType = meta._4
-           val rowInfo = meta._5
-           val logFileFieldDescEntity = new LogFileFieldDescEntity
-           logFileFieldDescEntity.setTaskId(taskId)
-           logFileFieldDescEntity.setLogPath(Constants.DATA_WAREHOUSE + File.separator + dir)
-           logFileFieldDescEntity.setFieldName(fieldName)
-           logFileFieldDescEntity.setFieldType(fieldType)
-           logFileFieldDescEntity.setFieldSql(fieldSql)
-           logFileFieldDescEntity.setRawType(rowType)
-           logFileFieldDescEntity.setRawInfo(rowInfo)
-           logFileFieldDescEntity.setIsDeleted(false)
-           logFileFieldDescEntity.setCreateTime(new Date())
-           logFileFieldDescEntity.setUpdateTime(new Date())
-           logFileFieldDescEntity
-         })
-       } else {
-         Nil
-       }
-       LOG.info(s"FieldInfos: $dir -> ${fieldInfos.size} ")
-       fieldInfos
-     }).collect()
-   }*/
-
   def generateFieldDescEntityArrayBuffer(sparkSession: SparkSession, taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
     distinctOutputArray.flatMap(dir => {
       val list = ParquetHiveUtils.getParquetFilesFromHDFS(Constants.DATA_WAREHOUSE + File.separator + dir)

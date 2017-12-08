@@ -6,6 +6,7 @@ import java.util.concurrent.{Callable, Executors, TimeUnit}
 import java.util.regex.Pattern
 
 import cn.whaley.bi.logsys.log2parquet.constant.Constants
+import cn.whaley.bi.logsys.metadata.entity.LogBaseInfoEntity
 import com.alibaba.fastjson.JSONObject
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
@@ -20,7 +21,7 @@ import scala.collection.mutable
  */
 object Json2ParquetUtil {
 
-    def saveAsParquet(logRdd: RDD[(String, JSONObject)],time:String,sparkSession: SparkSession) = {
+    def saveAsParquet(logRdd: RDD[(String, JSONObject)],time:String,sparkSession: SparkSession, appLogSecialEntities:Seq[(String, String, String, String, Int)],baseInfoEntities:List[LogBaseInfoEntity]) = {
         val conf = new Configuration()
         val fs = FileSystem.get(conf)
         //time字段，用来多个azkaban任务一起运行时，区分不同任务写入的目录
@@ -76,7 +77,6 @@ object Json2ParquetUtil {
                 val jsonFilePath = item._2._2
                 val stream = item._2._3
                 stream.close()
-
                 val tmpSize = fs.getContentSummary(tmpFilePath).getLength
                 val jsonFileDir = jsonFilePath.getParent
                 if (!fs.exists(jsonFileDir)) {
@@ -87,9 +87,7 @@ object Json2ParquetUtil {
                 println(s"finished tmp file[${ts},${tmpSize / 1024L}k]: $tmpFilePath -> $jsonFilePath")
             })
         })
-
         /** *******  写parquet文件阶段 ************/
-
         //按照outputPathType对文件进行分组
         val status = fs.listStatus(new Path(s"$jsonDir"))
         val fileGroups = status.map(item => {
@@ -107,12 +105,11 @@ object Json2ParquetUtil {
         //每类outputPathType用一个任务处理
         val futures = fileGroups.filter(_._1 > 0).map(group => {
             println(s"submit task : $group")
-            val callable = new ProcessCallable(group._1, group._2, group._3, sparkSession, fs, null)
+            val callable = new ProcessCallable(group._1, group._2, group._3, sparkSession, fs, null,appLogSecialEntities,baseInfoEntities)
             executor.submit(callable)
         })
         //等待执行结果
-        //val jsonProcTimeOut = params.paramMap.getOrElse("jsonProcTimeOut", "900").toInt
-        val jsonProcTimeOut = 3600
+        val jsonProcTimeOut = 7200
         futures.foreach(future => {
             val ret = future.get(jsonProcTimeOut, TimeUnit.SECONDS)
             println(ret)
@@ -150,28 +147,21 @@ object Json2ParquetUtil {
     }
 }
 
-private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: String, sparkSession: SparkSession, fs: FileSystem, paramMap: Map[String, String]) extends Callable[String] {
+private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: String, sparkSession: SparkSession, fs: FileSystem, paramMap: Map[String, String], appLogSecialEntities:Seq[(String, String, String, String, Int)],baseInfoEntities:List[LogBaseInfoEntity]) extends Callable[String] {
     override def call(): String = {
         val tsFrom = System.currentTimeMillis()
         try {
             //json文件分片计算
-           // val jsonSplitSize = paramMap.getOrElse("jsonSplitSize", (128 * 1024 * 1024).toString).toLong
             val jsonSplitSize = (1000 * 1024 * 1024).toLong
             val jsonSplitNum = Math.ceil(inputSize.toDouble / jsonSplitSize.toDouble).toInt
             //jons转parquet
-//            val outputPath2 = outputPath.replace("ods_view.db","ods_view.db2")
             println(s"process file[${jsonSplitNum},${jsonSplitSize}]: $inputPath -> $outputPath")
-//            sparkSession.read.json(inputPath).coalesce(jsonSplitNum).write.mode(SaveMode.Overwrite).parquet(outputPath)
             val tabName = outputPath.split("/")(3)
             val productCode = tabName.split("_")(1)
             val df = sparkSession.read.json(inputPath)
             val fieldList = df.schema.map(schema=>schema.name).toList
-            val fieldSchema = getDfSchema(fieldList,tabName,productCode)
-
-            df.selectExpr(fieldSchema:_*)
-              .coalesce(jsonSplitNum)
-              .write.mode(SaveMode.Overwrite).parquet(outputPath)
-            println(s"write file: $outputPath")
+            val fieldSchema = getDfSchema(fieldList,tabName,productCode,appLogSecialEntities,baseInfoEntities)
+            df.selectExpr(fieldSchema:_*).coalesce(jsonSplitNum).write.mode(SaveMode.Overwrite).parquet(outputPath)
             //删除输入目录
             fs.delete(new Path(inputPath), true)
             val outputSize = fs.getContentSummary(new Path(outputPath)).getLength
@@ -187,20 +177,15 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
         }
 
     }
-    def getDfSchema(list:List[String],tableName:String,productCode:String): List[String] ={
+    def getDfSchema(list:List[String],tableName:String,productCode:String, appLogSecialEntities:Seq[(String, String, String, String, Int)],baseInfoEntities:List[LogBaseInfoEntity]): List[String] ={
         //先rename 在filter
-        println(s"tableName $tableName")
-        println(s"productCode $productCode")
-        println(s"fields 初始值 $list")
         var fields = list
-        val metaDataUtils = new MetaDataUtils("http://odsviewmd.whaleybigdata.com", 100000)
-        val entities = metaDataUtils.queryAppLogSpecialFieldDescConf()
         //该产品下或者全日志或者表级别
-        val appLogSpecialFieldEntities = entities.filter(entity=>entity._1 == productCode || entity._1 == "log" || entity._1 == tableName )
+        val appLogSpecialFieldEntities = appLogSecialEntities.filter(entity=>entity._1 == productCode || entity._1 == "log" || entity._1 == tableName )
         //字段重命名: Seq[(源字段名,字段目标名)]
         //1.baseinfo 白名单 重命名
         val baseInfoFieldMap = mutable.Map[String,String]()
-        val baseInfoFields = metaDataUtils.metadataService().getAllLogBaseInfo().filter(item=>{
+        val baseInfoFields = baseInfoEntities.filter(item=>{
             item.isDeleted == false && item.getProductCode == productCode
         }).map(item => item.getFieldName)
         baseInfoFields.foreach(baseInfoField=>{
@@ -212,22 +197,22 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
             })
         })
         fields = fields.filter(field => !baseInfoFieldMap.keySet.contains(field))
-        println(s"baseInfoFieldMap ${baseInfoFieldMap}")
+//        println(s"baseInfoFieldMap ${baseInfoFieldMap}")
         //2.黑名单重命名
         //2.1表级别
         val tabRenameMap= handleRename(appLogSpecialFieldEntities,fields,tableName)
         fields = fields.filter(field => !tabRenameMap.keySet.contains(field))
-        println(s"tabRenameMap ${tabRenameMap}")
+//        println(s"tabRenameMap ${tabRenameMap}")
         //2.2产品线级别
         val productRenameMap= handleRename(appLogSpecialFieldEntities,fields,productCode)
         fields = fields.filter(field => !productRenameMap.keySet.contains(field))
-        println(s"productRenameMap ${productRenameMap}")
+//        println(s"productRenameMap ${productRenameMap}")
         //2.3全局级别
         val logRenameMap= handleRename(appLogSpecialFieldEntities,fields,"log")
         fields = fields.filter(field => !productRenameMap.keySet.contains(field))
-        println(s"logRenameMap ${logRenameMap}")
+//        println(s"logRenameMap ${logRenameMap}")
         val whiteRenameMap = baseInfoFieldMap.toMap ++ tabRenameMap ++ productRenameMap ++ logRenameMap
-        println(s"whiteRenameMap ${whiteRenameMap}")
+//        println(s"whiteRenameMap ${whiteRenameMap}")
         //字段过滤器: Seq[源字段名]
         //字段删除黑名单
         val fieldFilterList = appLogSpecialFieldEntities.filter(conf => conf._3 == "fieldFilter").flatMap(conf => {
@@ -251,10 +236,7 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
         println("字段删除 :"+fieldBlackFilter)
       }
         fields = fields.filter(field=> !fieldBlackFilter.contains(field))
-//        println("fields...为重命名之前......"+fields)
         //处理fields中相同的字段
-        //to do ...
-
         val set = fields.toStream.map(field=>field.toLowerCase).toSet
         //字段列表中含有字段模糊，需要重命名
         val renameMap = mutable.Map[String,String]()
@@ -278,9 +260,6 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
             val e = new RuntimeException(renameMap.toString())
             SendMail.post(e, s"[Log2Parquet new][Json2ParquetUtil][${inputPath}] field rename", Array("app-bigdata@whaley.cn"))
         }
-        println(s"renameMap ${renameMap.toMap}")
-        println(s"whiteRenameMap.values ${whiteRenameMap.values.toSet}")
-
         val allRenameMap = whiteRenameMap ++ renameMap.toMap
         //把重命名字段做到field list中
         allRenameMap.foreach(f=>{
@@ -290,12 +269,10 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
           if(!fields.contains(newName)){
             fields = fields.::(s"`$oldName` as `$newName`")
           }else{
-            println(s"fields $fields")
             fields = fields.filter(field=>field !=newName)
             fields = fields.::(s"(case when `$newName` is null or `$newName` == '' then `$oldName` else `$newName` end ) as `$newName`")
           }
         })
-        println("fields 最终直"+fields)
         fields
     }
 
