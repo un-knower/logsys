@@ -57,7 +57,7 @@ public class HiveRepo {
             statement.execute("use " + dbName);
             ResultSet rs = statement.executeQuery(String.format("show tables like '%s'", tabName));
             while (rs.next()) {
-                if (rs.getString(1).equalsIgnoreCase(tabName)) {
+                if (rs.getString(2).equalsIgnoreCase(tabName)) {
                     return true;
                 }
             }
@@ -102,6 +102,7 @@ public class HiveRepo {
                 } else {
                     String dbName = dbNameDotTabName[0];
                     String tabName = dbNameDotTabName[1];
+                    LOG.info("dbName ->"+dbName+", tabName->"+tabName);
                     Boolean tabExists = this.tabExists(dbName, tabName, conn);
                     tableInfo.setDbName(dbName);
                     tableInfo.setTabName(tabName);
@@ -164,7 +165,50 @@ public class HiveRepo {
 
         try {
             List<HiveFieldInfo> fieldInfos = new ArrayList<>();
-            String sql = String.format("show create table `%s.%s`", dbName, tabName);
+            String sql = String.format("show create table `%s`.`%s`", dbName, tabName);
+            Statement statement = conn.createStatement();
+            ResultSet rs = statement.executeQuery(sql);
+            rs.next();
+            String line = rs.getString(1).trim();
+            String[] splits = line.split("\\(");
+            //字段
+            String fieldLine  = splits[1].split("\\)")[0];
+            String[] fields = fieldLine.split("\\, `");
+            for (int i = 0; i < fields.length; i++) {
+                String[] cols = fields[i].split(" ");
+                String fieldName = cols[0].trim().replace("`", "");
+                String fieldType = cols[1].trim();
+                HiveFieldInfo fieldInfo = new HiveFieldInfo();
+                fieldInfo.setColName(fieldName);
+                fieldInfo.setDataType(fieldType);
+                fieldInfo.setPartitionField(false);
+                fieldInfos.add(fieldInfo);
+            }
+            //partitions
+            String[] partitions = splits[2].split("\\)")[0].split("\\, `");
+            for (int i = 0; i < partitions.length; i++) {
+                String[] cols = partitions[i].split(" ");
+                String fieldName = cols[0].trim().replace("`", "");
+                String fieldType = cols[1].trim();
+                HiveFieldInfo fieldInfo = new HiveFieldInfo();
+                fieldInfo.setColName(fieldName);
+                fieldInfo.setDataType(fieldType);
+                fieldInfo.setPartitionField(true);
+                fieldInfos.add(fieldInfo);
+            }
+            rs.close();
+            statement.close();
+            return fieldInfos;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private List<HiveFieldInfo> getTabFieldInfo2(String dbName, String tabName, Connection conn) {
+
+        try {
+            List<HiveFieldInfo> fieldInfos = new ArrayList<>();
+            String sql = String.format("show create table `%s`.`%s`", dbName, tabName);
             Statement statement = conn.createStatement();
             ResultSet rs = statement.executeQuery(sql);
             boolean isPartition = false;
@@ -221,8 +265,6 @@ public class HiveRepo {
             throw new RuntimeException(e);
         }
     }
-
-
     /**
      * 执行DDL语句
      *

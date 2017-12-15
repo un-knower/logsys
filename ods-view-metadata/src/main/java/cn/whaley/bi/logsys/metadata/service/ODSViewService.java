@@ -346,7 +346,7 @@ public class ODSViewService {
             }).collect(Collectors.toList());
             if (added.size() > 0) {
                 String addColumns = added.stream().map(item -> item.getFieldSql()).collect(Collectors.joining(","));
-                String ddlText = String.format("ALTER TABLE `%s` ADD COLUMNS(%s)", tabFullName, addColumns);
+                String ddlText = String.format("ALTER TABLE `%s`.`%s` ADD COLUMNS(%s)", dbName, tabName, addColumns);
                 LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
                 ddlEntity.setDbName(dbName);
                 ddlEntity.setTabName(tabName);
@@ -400,8 +400,8 @@ public class ODSViewService {
                     }*/
 
                     LOG.info ("table is ->"+tabFullName +  ",fieldName ->" +fieldName + " , oldFieldType-> "+oldFieldType +", newFieldType-> "+newFieldType +" ,targetFieldType-> "+targetFieldType);
-                    String ddlText = String.format("ALTER TABLE `%s` CHANGE COLUMN `%s` `%s` %s"
-                            , tabFullName, fieldName, fieldName, targetFieldType);
+                    String ddlText = String.format("ALTER TABLE `%s`.`%s` CHANGE COLUMN `%s` `%s` %s"
+                            , dbName, tabName, fieldName, fieldName, targetFieldType);
                     LOG.info ("ddlText->"+ddlText);
                     LogTabDDLEntity ddlEntity = new LogTabDDLEntity();
                     ddlEntity.setDbName(dbName);
