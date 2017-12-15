@@ -5,7 +5,8 @@ import java.util.Date
 import cn.whaley.bi.logsys.metadataManage.common.ParamKey
 import cn.whaley.bi.logsys.metadataManage.entity.{LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
 import cn.whaley.bi.logsys.metadataManage.util.{IdGenerator, ParquetHiveUtils, PhoenixUtil}
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
@@ -142,10 +143,17 @@ class MsgManager {
   }
 
   def generateFieldDescEntityArrayBuffer(taskId: String, distinctOutputArray: Array[String]): Seq[LogFileFieldDescEntity] = {
+//    val conf = new Configuration()
+//    val fs = FileSystem.get(conf)
     distinctOutputArray.flatMap(dir => {
       val list = ParquetHiveUtils.getParquetFilesFromHDFS(dir)
-
       val fieldInfo = if (list.size > 0) {
+//        val path = if(fs.exists(new Path(s"${dir}/_metadata"))){
+        //1.6 版本可以通过_metadata 获取schema
+//          new Path(s"${dir}/_metadata")
+//        }else{
+//          list.head.getPath
+//        }
         val parquetMetaData = ParquetHiveUtils.parseSQLFieldInfos(list.head.getPath)
         parquetMetaData.map(meta => {
           val fieldName = meta._1

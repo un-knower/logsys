@@ -46,6 +46,7 @@ object ParquetHiveUtils {
     , "JSON" -> "string"
     , "BSON" -> "string"
     , "INTERVAL" -> "string"
+    , "INT96" -> "timestamp "
   )
 
   /**
