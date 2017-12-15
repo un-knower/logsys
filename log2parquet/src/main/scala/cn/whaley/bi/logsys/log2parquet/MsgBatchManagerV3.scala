@@ -667,7 +667,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         val typeFlag = entitiy.getTypeFlag
         fieldTypeMap.put(filedName,typeFlag)
       })
-      map.put(name,fieldTypeMap.toMap)
+      map.put(name.trim,fieldTypeMap.toMap)
     })
     map.toMap
   }
