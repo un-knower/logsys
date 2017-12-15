@@ -6,6 +6,15 @@ upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ru
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('006','ALL','size','Long','2','field',false,now(),now());
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('007','ALL','preMemory','Long','2','field',false,now(),now());
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('008','ALL','postMemory','Long','2','field',false,now(),now());
+upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('010','log_medusa_main3x_medusa_ad_click','adAdminId','Long','2','table',false,now(),now());
+upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('011','log_medusa_main3x_medusa_ad_click','adCastId','Long','2','table',false,now(),now());
+upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('012','log_medusa_main3x_medusa_ad_click','adProgramId','Long','2','table',false,now(),now());
+upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('013','log_medusa_main3x_medusa_ad_click','adProjectId','Long','2','table',false,now(),now());
+upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('014','log_medusa_main3x_medusa_ad_click','carouselRound','Long','2','table',false,now(),now());
+upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('015','log_medusa_main3x_medusa_ad_homerecommendation_view ','carouselRound','Long','2','table',false,now(),now());
+
+
+
 
 //realLogType 例子
 --upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('009','app','long','Long','2','realLogType',false,now(),now());

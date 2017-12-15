@@ -160,10 +160,12 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
             val productCode = tabName.split("_")(1)
             val df = sparkSession.read.json(inputPath)
             val fieldList = df.schema.map(schema=>schema.name).toList
-            val fieldSchema = getDfSchema(fieldList,tabName,productCode,appLogSecialEntities,baseInfoEntities)
+            val (fieldSchema,flag) = getDfSchema(fieldList,tabName,productCode,appLogSecialEntities,baseInfoEntities)
             df.selectExpr(fieldSchema:_*).coalesce(jsonSplitNum).write.mode(SaveMode.Overwrite).parquet(outputPath)
             //删除输入目录
-            fs.delete(new Path(inputPath), true)
+            if(flag){
+                fs.delete(new Path(inputPath), true)
+            }
             val outputSize = fs.getContentSummary(new Path(outputPath)).getLength
             s"convert file: $inputPath(${inputSize / 1024}k) -> $outputPath(${outputSize / 1024}k),ts:${System.currentTimeMillis() - tsFrom}"
         }
@@ -177,7 +179,7 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
         }
 
     }
-    def getDfSchema(list:List[String],tableName:String,productCode:String, appLogSecialEntities:Seq[(String, String, String, String, Int)],baseInfoEntities:List[LogBaseInfoEntity]): List[String] ={
+    def getDfSchema(list:List[String],tableName:String,productCode:String, appLogSecialEntities:Seq[(String, String, String, String, Int)],baseInfoEntities:List[LogBaseInfoEntity]): (List[String],Boolean) ={
         //先rename 在filter
         var fields = list
         //该产品下或者全日志或者表级别
@@ -256,7 +258,10 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
                 })
             })
         }
+        //flag 中间结果json文件是否删除，如果没有重命名，怎删除为true
+        var flag = true
         if(renameMap.size !=0 ){
+            flag=false
             val e = new RuntimeException(renameMap.toString())
             SendMail.post(e, s"[Log2Parquet new][Json2ParquetUtil][${inputPath}] field rename", Array("app-bigdata@whaley.cn"))
         }
@@ -273,7 +278,7 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
             fields = fields.::(s"(case when `$newName` is null or `$newName` == '' then `$oldName` else `$newName` end ) as `$newName`")
           }
         })
-        fields
+        (fields,flag)
     }
 
 

@@ -1,0 +1,2 @@
+upsert into METADATA.BLACK_TABLE_INFO(id,tableName,isDeleted,createTime,updateTime) values('001','log_medusa_main20_corrupt',false,now(),now());
+upsert into METADATA.BLACK_TABLE_INFO(id,tableName,isDeleted,createTime,updateTime) values('002','log_medusa_main3x',false,now(),now());
