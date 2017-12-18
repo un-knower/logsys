@@ -75,8 +75,7 @@ class LogEntity(from: MsgEntity) extends MsgEntity(from) {
         this.removeMsgBody
         val size = normalizeMsgBody.size
         val entities = for (i <- 0 to size - 1) yield {
-            //只有一个消息体则可避免一次不必要的复制
-            val entity = if (i == 0) this else LogEntity.copy(this)
+            val entity = LogEntity.copy(this)
             val logId = this.msgId + StringUtil.fixLeftLen(Integer.toHexString(i), '0', 4)
             entity.updateLogId(logId)
             entity.updateLogBody(normalizeMsgBody(i))
