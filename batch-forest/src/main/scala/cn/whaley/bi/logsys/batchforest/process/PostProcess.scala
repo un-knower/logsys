@@ -2,7 +2,7 @@ package cn.whaley.bi.logsys.batchforest.process
 
 import cn.whaley.bi.logsys.batchforest.process.LogFormat.translateProp
 import cn.whaley.bi.logsys.batchforest.traits.{LogTrait, NameTrait}
-import cn.whaley.bi.logsys.batchforest.util.{DigestUtil, JsonUtil, MyAccumulator, StringUtil}
+import cn.whaley.bi.logsys.batchforest.util._
 import com.alibaba.fastjson.{JSON, JSONArray, JSONObject}
 import org.apache.commons.codec.digest.DigestUtils
 
@@ -47,11 +47,20 @@ object PostProcess extends NameTrait with LogTrait{
     msgBody.remove("body")
 
     //baseInfo展开
-    val baseInfo = if(body.get("baseInfo").isInstanceOf[String]){
-      JsonUtil.parseObject(body.get("baseInfo").asInstanceOf[String])
-    }else{
-      Some(body.get("baseInfo").asInstanceOf[JSONObject])
-    }
+    val baseInfo =
+      try {
+        if(body.get("baseInfo").isInstanceOf[String]){
+          JsonUtil.parseObject(body.get("baseInfo").asInstanceOf[String])
+        }else{
+          Some(body.get("baseInfo").asInstanceOf[JSONObject])
+        }
+      }catch {
+        case e:Exception=>{
+          LOG.error(s"baseInfo 数据异常 ${body.get("baseInfo")}")
+          None
+        }
+      }
+
     if(!baseInfo.isEmpty && baseInfo.get != null  ){
       //移除happenTime
       baseInfo.get.remove("happenTime")
@@ -61,10 +70,17 @@ object PostProcess extends NameTrait with LogTrait{
     }
     //logs展开
     val logs =
-      if (body.get("logs").isInstanceOf[String]) {
-        JsonUtil.parseArray(body.get("logs").asInstanceOf[String])
-      } else {
-        Some(body.get("logs").asInstanceOf[JSONArray])
+      try {
+        if (body.get("logs").isInstanceOf[String]) {
+          JsonUtil.parseArray(body.get("logs").asInstanceOf[String])
+        } else {
+          Some(body.get("logs").asInstanceOf[JSONArray])
+        }
+      }catch {
+        case e:Exception=>{
+          LOG.error(s"logs 数据异常 ${body.get("logs")}")
+          None
+        }
       }
 
     body.remove("logs")
@@ -75,6 +91,12 @@ object PostProcess extends NameTrait with LogTrait{
         //将body中的属性合并到log中
         try{
           val log = logs.get.getJSONObject(i)
+          log.keySet().toArray(new Array[String](0)).foreach(key=>{
+            if(body.containsKey(key) || LogFields.whiteFields.contains(key)){
+              log.put(s"${key}_r",log.get(key))
+              log.remove(key)
+            }
+          })
           log.asInstanceOf[java.util.Map[String,Object]].putAll(body)
           //将log中的属性合并到msgBody中,一定要创建一个新的logBody而不能采用引用
           val logBody = JSON.parseObject(msgBody.toJSONString)

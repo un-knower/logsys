@@ -37,7 +37,7 @@ object MainObj2 extends NameTrait with LogTrait{
       sparkContext.register(myAccumulator,"myAccumulator")
       //whaley main
 //      val inputPath = "/data_warehouse/ods_origin.db/log_raw/key_day=20171115/key_hour=13/boikgpokn78sb95kjhfrendo8dc5mlsr.log-2017111513-bigdata-extsvr-log1"
-      val inputPath = "/data_warehouse/ods_origin.db/log_origin/crash.json"
+      val inputPath = "/data_warehouse/ods_origin.db/log_origin/eagle.json"
       //eagle
 //      val inputPath = "/data_warehouse/ods_origin.db/log_raw/key_day=20171115/key_hour=15/boikgpokn78sb95k7id7n8eb8dc5mlsr.log-2017111515-bigdata-extsvr-log1"
 //      val inputPath = "/data_warehouse/ods_origin.db/log_origin/eagle.json"
@@ -45,8 +45,8 @@ object MainObj2 extends NameTrait with LogTrait{
       //1.日志解码
       val decodeRdd = inputRdd.map(line=>{
         myAccumulator.add("inputRecord")
-//        LogFormat.decode(line)
-        Some(line)
+        LogFormat.decode(line)
+//        Some(line)
       })
       //2.验证日志格式
       val formatRdd = decodeRdd.filter(f=>{
@@ -177,6 +177,7 @@ object MainObj2 extends NameTrait with LogTrait{
       body.put("STACK_TRACE_MD5",stackTraceMd5)
       return CrashProcess.handleCrash(message)(myAccumulator)
     }*/
+    println("11111111111111")
     val method = msgBody.getString("svr_req_method")
     method match {
       case "POST" => {
