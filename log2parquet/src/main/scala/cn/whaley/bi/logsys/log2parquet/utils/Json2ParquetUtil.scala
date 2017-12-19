@@ -265,7 +265,8 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
             val e = new RuntimeException(renameMap.toString())
             SendMail.post(e, s"[Log2Parquet new][Json2ParquetUtil][${inputPath}] field rename", Array("app-bigdata@whaley.cn"))
         }
-        val allRenameMap = whiteRenameMap ++ renameMap.toMap
+//        val allRenameMap = whiteRenameMap ++ renameMap.toMap
+        val allRenameMap = whiteRenameMap
         //把重命名字段做到field list中
         allRenameMap.foreach(f=>{
             val oldName = f._1

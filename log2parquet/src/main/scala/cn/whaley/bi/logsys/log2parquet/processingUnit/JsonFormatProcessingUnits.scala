@@ -121,6 +121,14 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
       }
       //add at 20171114 for move old log2parquet logic to this script
 
+      //除了_msg，所有的value转换成string类型
+      jsonObject.keySet().toArray(new Array[String](0)).foreach(key=>{
+        if(!LOG_MSG_MSG.equalsIgnoreCase(key)){
+          val value = jsonObject.getString(key)
+          jsonObject.put(key,value)
+        }
+      })
+
       new ProcessResult(this.name, ProcessResultCode.processed, "", Some(jsonObject))
     } catch {
       case e: Throwable => {

@@ -678,18 +678,37 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       //判断是否在类型转换名单中
       if(fieldTypeMap.keySet.contains(key.trim)){
         val value = jsonObject.getString(key).trim
-        //字段类型标识 1:String 2:Long 3:Double
+        //字段类型标识 1:String 2:Long 3:Double 4:Array
         val typeFlag = fieldTypeMap.get(key.trim).get
         typeFlag match {
           case "1" => jsonObject.put(key,value)
           case "2" => switchLong(key,jsonObject)
           case "3" => switchDouble(key,jsonObject)
+          case "4" => switchJsonArray(key,jsonObject)
           case _ =>
         }
       }
     }
   }
 
+
+  /**
+    * 转换为Array
+    * @param key
+    * @param json
+    */
+  def switchJsonArray(key:String,json:JSONObject): Unit ={
+    try {
+      val value = json.getString(key).trim
+      val jSONArray = JSON.parseArray(value)
+      json.put(key,jSONArray)
+    }catch {
+      case e:Exception=>{
+        e.printStackTrace()
+        json.remove(key)
+      }
+    }
+  }
 
   /**
     * 转换成Long

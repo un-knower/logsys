@@ -1,4 +1,4 @@
-import com.alibaba.fastjson.JSONObject
+import com.alibaba.fastjson.{JSON, JSONArray, JSONObject}
 import org.junit.Test
 
 /**
@@ -11,21 +11,48 @@ class DataSwitch {
   def typeSwitch(): Unit ={
 
     val json = new JSONObject()
-    json.put("long","11")
+    json.put("a",11)
+    val jSONArray = new JSONArray()
 
-    json.put("double2",0.01)
-    json.put("string",23.4.toString)
-    println(json.toString)
-    json.put("double2",json.getString("double2"))
+    val json1 = new JSONObject()
+    json1.put("1",11)
+    jSONArray.add(json1)
+    val json2 = new JSONObject()
+    json2.put("2",22)
+    jSONArray.add(json2)
+    json.put("array",jSONArray)
+    println(s"1... ${json}")
+    json.keySet().toArray(new Array[String](0)).foreach(key=>{
+      val value = json.getString(key)
+      json.put(key,value)
+    })
 
 
+    println(s"2... ${json}")
 
+
+    switchJsonArray("a",json)
+
+    println(s"3... ${json}")
 
 
 //    println(json.getString("aa").toString)
-println(json.toString)
 //    println(isLongValid("1.32.3"))
 
+  }
+
+
+  def switchJsonArray(key:String,json:JSONObject): Unit ={
+    try {
+      val value = json.getString(key).trim
+      val jSONArray = JSON.parseArray(value)
+      json.put(key,jSONArray)
+    }catch {
+      case e:Exception=>{
+        e.printStackTrace()
+        json.remove(key)
+      }
+    }
   }
 
 
