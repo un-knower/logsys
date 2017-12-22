@@ -25,7 +25,7 @@ object GetProcess extends NameTrait with LogTrait{
     message.remove("msgBody")
     val url = msgBody.getString("svr_req_url")
     //解析queryString
-    val httpUrl = URLParser.parseHttpURL(url,true)
+    val httpUrl = URLParser.parseHttpURL(url,false)
     val queryObj = URLParser.parseHttpQueryString(httpUrl.queryString)
     if(queryObj.isEmpty){
       myAccumulator.add("handleGetExcRecord")

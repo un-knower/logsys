@@ -38,7 +38,7 @@ object LogRegexs {
     val regexOperationShowlivelist = ( "(\\d+)-" +
         "operation-001-(showlivelist)-" +
             "(MoreTV[\\w\\.]+)-"
-            + "([a-f0-9]{32}-\\d*-\\d*|[a-f0-9]{32}-\\d*|[a-f0-9]{32})-(\\w+)-(\\d*)-(.+?)-(\\d{14})%26sid%3D([a-z0-9]{12})").r
+            + "([a-f0-9]{32}-\\d*-\\d*|[a-f0-9]{32}-\\d*|[a-f0-9]{32})-(\\w+)-(\\d*)-(.+?)-(\\d{14})&sid=([a-z0-9]{12})").r
 
     val regexOperationTimeshifting = ( "(\\d+)-" +
         "operation-001-(timeshifting)-" +
@@ -88,7 +88,7 @@ object LogRegexs {
 
     val regexHomeaccess = ( "(\\d+)-" +
         "homeaccess-001-(\\w+)-([\\w\\.]+)-([a-f0-9]{32}-\\d*-\\d*|[a-f0-9]{32}-\\d*|[a-f0-9]{32})" +
-            "-(\\w+)-(\\d*)-(.+?)-(\\d{14})%26location%3D(\\d+)_(\\d+)").r
+            "-(\\w+)-(\\d*)-(.+?)-(\\d{14})&location=(\\d+)_(\\d+)").r
 
     val regexMtvaccount = ( "(\\d+)-" +
         "mtvaccount-001-(\\w+)-([\\w\\.]+)-([a-f0-9]{32}-\\d*-\\d*|[a-f0-9]{32}-\\d*|[a-f0-9]{32})" +
@@ -120,7 +120,7 @@ object LogRegexs {
 
     val regexSetWallpaper = ( "(\\d+)-" +
         "set-001-(wallpaper)-([\\w\\.]+)-([a-f0-9]{32}-\\d*-\\d*|[a-f0-9]{32}-\\d*|[a-f0-9]{32})" +
-            "-(\\w+)-(\\d*)-(.+?)-(\\d{14})%26wallpaper%3D(\\d+)").r
+            "-(\\w+)-(\\d*)-(.+?)-(\\d{14})&wallpaper=(\\d+)").r
 
     val regexHomeRecommend = ( "(\\d+)-" +
         "homerecommend-001-(access)-([\\w\\.]+)-([a-f0-9]{32}-\\d*-\\d*|[a-f0-9]{32}-\\d*|[a-f0-9]{32})" +

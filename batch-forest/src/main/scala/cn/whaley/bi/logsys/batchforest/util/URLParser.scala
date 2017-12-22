@@ -20,25 +20,31 @@ object URLParser {
 
   /**
     *
-    * @param location 第一个？之前的部分
+    * @param location    第一个？之前的部分
     * @param queryString 第一个？之后的部分
     */
   case class HttpURL(location: String, queryString: String)
 
   /**
     * 将Http地址解析成HttpURL对象
+    *
     * @param url
     * @param needDecode 是否需要进行decode
     * @return
     */
   def parseHttpURL(url: String, needDecode: Boolean = true): HttpURL = {
-    val decodedUrl = try {
-      URLDecoder.decode(url, "utf-8")
-    } catch {
-      case ex: Throwable => {
-        url
-      }
-    }
+
+    val decodedUrl =
+      if (needDecode) {
+        try {
+          URLDecoder.decode(url, "utf-8")
+        } catch {
+          case _: Throwable => {
+            url
+          }
+        }
+      } else url
+
     val indexQuery = decodedUrl.indexOf('?')
 
     if (indexQuery >= 0) {
@@ -50,51 +56,45 @@ object URLParser {
 
   /**
     * 解析http查询字符串为一个JSON对象
+    *
     * @param queryString
     * @return 如果为空或长度为0，则返回一个空的JSONObject对象实例
     */
   def parseHttpQueryString(queryString: String): JSONObject = {
-    val queryObj = new JSONObject()
-    if (queryString != null && queryString.length() > 0) {
-      var ampersandIndex, lastAmpersandIndex = 0;
-      var param: String = ""
-      var value: String = ""
-      do {
-        ampersandIndex = queryString.indexOf('&', lastAmpersandIndex) + 1;
-        val subStr =
-          if (ampersandIndex > 0) {
-            val str = queryString.substring(lastAmpersandIndex, ampersandIndex - 1);
-            lastAmpersandIndex = ampersandIndex;
-            str
-          } else {
-            queryString.substring(lastAmpersandIndex);
-          }
-        val firstEQ = subStr.indexOf('=')
-        param = if (firstEQ <= 0) {
-          subStr
-        } else {
-          subStr.substring(0, firstEQ)
-        }
-        value = if (firstEQ <= 0 || firstEQ == subStr.length - 1) {
-          ""
-        } else {
-          subStr.substring(firstEQ + 1)
-        }
-        val obj = queryObj.get(param)
-        if (obj != null) {
-          val arr =
-            if (!obj.isInstanceOf[JSONArray]) {
-              new JSONArray(obj :: value :: Nil)
-            } else {
-              obj.asInstanceOf[JSONArray].add(value)
+    val js = new JSONObject()
+    if (queryString != null && queryString.nonEmpty) {
+      val kvs = queryString.split("\\&")
+      kvs.foreach(e => {
+        val kv = e.split("=")
+        if (kv.length == 2) {
+          try {
+            val value = kv(1)
+            if (value.contains("%")) {
+              putJsonValue(js, kv(0), URLDecoder.decode(kv(1), "utf-8"))
+            } else putJsonValue(js, kv(0), kv(1))
+          } catch {
+            case _: Exception => {
+              putJsonValue(js, kv(0), "")
             }
-          queryObj.put(param, arr)
-        } else {
-          queryObj.put(param, value)
-        }
-      } while (ampersandIndex > 0);
+          }
+        } else putJsonValue(js, kv(0), "")
+      })
     }
-    return queryObj;
+    js
+  }
+
+  /**
+    * json object put key 时判断是否存在，存在则以英文逗号拼接起来，否则直接放入
+    *
+    * @param jsObj 目标jsonobject
+    * @param key   键
+    * @param value 值
+    */
+  def putJsonValue(jsObj: JSONObject, key: String, value: String): Unit = {
+    if (jsObj.containsKey(key)) {
+      val existsValue = jsObj.getString(key)
+      jsObj.put(key, s"$existsValue,$value")
+    } else jsObj.put(key, value)
   }
 
 
