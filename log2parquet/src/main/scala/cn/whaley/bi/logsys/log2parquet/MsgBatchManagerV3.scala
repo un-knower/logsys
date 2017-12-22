@@ -162,6 +162,43 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       //tableName
       val realLogType = jSONObject.getString("realLogType")
       val tableName = jSONObject.getString("tableName")
+
+      //全量字段
+      val fieldAllMap = if(fieldLevel.size != 0 ){
+        fieldLevel.get("ALL").get
+      }else{
+        Map[String,String]()
+      }
+      //logType级别字段
+      val logTypeFieldMap = if(realLogTypeLevel.size != 0 && realLogTypeLevel.keySet.contains(realLogType)){
+        realLogTypeLevel.get(realLogType).get
+      }else{
+        Map[String,String]()
+      }
+     //表级别字段
+      val tableFieldMap = if(tableLevel.size != 0 && tableLevel.keySet.contains(tableName)){
+        tableLevel.get(tableName).get
+      }else{
+        Map[String,String]()
+      }
+
+      val it = jSONObject.keySet().iterator()
+      while (it.hasNext) {
+        val key = it.next()
+        if(tableFieldMap.size !=0 && tableFieldMap.keySet.contains(key.trim.toLowerCase)){
+          //table级别
+          processFiledType(jSONObject,key,tableFieldMap)
+        }else if(logTypeFieldMap.size !=0 && logTypeFieldMap.keySet.contains(key.trim.toLowerCase)){
+          //logType级别
+          processFiledType(jSONObject,key,logTypeFieldMap)
+        }else if(fieldAllMap.size !=0 && fieldAllMap.keySet.contains(key.trim.toLowerCase)){
+          //全量级别
+          processFiledType(jSONObject,key,fieldAllMap)
+        }
+
+      }
+
+/*
       //1.field level
      if(fieldLevel.size != 0){
        processFiledType(jSONObject,fieldLevel.get("ALL").get.toMap)
@@ -173,7 +210,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       //3.table level
       if(tableLevel.size != 0 && tableLevel.keySet.contains(tableName)){
         processFiledType(jSONObject,tableLevel.get(tableName).get.toMap)
-      }
+      }*/
       jSONObject.remove("tableName")
       (path,jSONObject)
     })
@@ -203,7 +240,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
     //删除输入数据源
     if(fs.exists(new Path(inputPath))){
-     fs.delete(new Path(inputPath),true)
+//     fs.delete(new Path(inputPath),true)
     }
 
     println("=============== 规则处理移除字段 =============== ：")
@@ -652,7 +689,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     */
   def getFieldTypeMap(logFieldTypeInfoEntitys : List[LogFieldTypeInfoEntity],ruleLevel:String): Map[String,Map[String,String]] ={
     val map =  mutable.Map[String,Map[String,String]]()
-    val fieldTypeMap = mutable.Map[String,String]()
+
    logFieldTypeInfoEntitys
       .filter(entity=>{
         entity.getRuleLevel.equals(ruleLevel)
@@ -660,6 +697,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
      //以name 分组
       entity.getName
     }).foreach(e=>{
+     val fieldTypeMap = mutable.Map[String,String]()
       val name = e._1
       val entities = e._2
       entities.foreach(entitiy=>{
@@ -671,26 +709,35 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     })
     map.toMap
   }
-  def processFiledType(jsonObject:JSONObject,fieldTypeMap:Map[String,String]): Unit ={
-    val it = jsonObject.keySet().iterator()
-    while (it.hasNext){
-      val key=it.next()
-      //判断是否在类型转换名单中
-      if(fieldTypeMap.keySet.contains(key.trim)){
-        val value = jsonObject.getString(key).trim
-        //字段类型标识 1:String 2:Long 3:Double 4:Array
-        val typeFlag = fieldTypeMap.get(key.trim).get
-        typeFlag match {
-          case "1" => jsonObject.put(key,value)
-          case "2" => switchLong(key,jsonObject)
-          case "3" => switchDouble(key,jsonObject)
-          case "4" => switchJsonArray(key,jsonObject)
-          case _ =>
-        }
-      }
+
+  def processFiledType(jsonObject:JSONObject,key:String,fieldTypeMap:Map[String,String]): Unit ={
+    //字段类型标识 1:String 2:Long 3:Double 4:Array
+    val typeFlag = fieldTypeMap.get(key.trim.toLowerCase).get
+    typeFlag match {
+      case "1" => switchString(key,jsonObject)
+      case "2" => switchLong(key,jsonObject)
+      case "3" => switchDouble(key,jsonObject)
+      case "4" => switchJsonArray(key,jsonObject)
+      case _ =>
     }
   }
 
+  /**
+    * 转换为string
+    * @param key
+    * @param json
+    */
+  def switchString(key:String,json:JSONObject): Unit ={
+    try {
+      val value = json.getString(key).trim
+      json.put(key,value)
+    }catch {
+      case e:Exception=>{
+        e.printStackTrace()
+        json.put(key,"")
+      }
+    }
+  }
 
   /**
     * 转换为Array

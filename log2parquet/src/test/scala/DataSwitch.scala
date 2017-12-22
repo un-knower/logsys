@@ -11,29 +11,12 @@ class DataSwitch {
   def typeSwitch(): Unit ={
 
     val json = new JSONObject()
-    json.put("a",11)
-    val jSONArray = new JSONArray()
-
-    val json1 = new JSONObject()
-    json1.put("1",11)
-    jSONArray.add(json1)
-    val json2 = new JSONObject()
-    json2.put("2",22)
-    jSONArray.add(json2)
-    json.put("array",jSONArray)
-    println(s"1... ${json}")
-    json.keySet().toArray(new Array[String](0)).foreach(key=>{
-      val value = json.getString(key)
-      json.put(key,value)
-    })
-
-
-    println(s"2... ${json}")
-
-
-    switchJsonArray("a",json)
-
+    json.put("a",null)
     println(s"3... ${json}")
+
+    val value = json.getString("a").trim
+    println(s"311... ${value}")
+
 
 
 //    println(json.getString("aa").toString)

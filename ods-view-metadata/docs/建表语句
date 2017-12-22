@@ -123,8 +123,8 @@ create table metadata.logtab_dml(
     ,createTime timestamp --记录创建时间
     ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,seq)
-) SALT_BUCKETS=40;
-CREATE INDEX idx_logtab_dml_taskId ON metadata.logtab_dml(taskId) SALT_BUCKETS=40;
+) ;
+CREATE INDEX idx_logtab_dml_taskId ON metadata.logtab_dml(taskId);
 CREATE SEQUENCE metadata.seq_logtab_dml;
 
 

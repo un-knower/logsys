@@ -130,6 +130,11 @@ object Start {
         val productCode = allParam.getOrElseUpdate(PRODUCT_CODE,"")
         val appCode = allParam.getOrElseUpdate(APP_CODE,"")
         val appId = getAppId(appCode,productCode,appIdInfoMap)
+        if(appId.isEmpty){
+          println("path -> "+path +" appId is '' ....")
+          Breaks.break()
+        }
+
         allParam.put(APPID,appId)
         val taPrefix = allParam.getOrElseUpdate("tab_prefix","")
         val realLogType = allParam.getOrElseUpdate("realLogType","")

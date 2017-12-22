@@ -11,6 +11,13 @@ upsert into metadata.applog_key_field_desc values('boikgpokn78sb95khcs3d2qglpf6i
 upsert into metadata.applog_key_field_desc values('boikgpokn78sb95khcs3d2qglpf6i8nn','app_code',1,2,'mysql',false,now(),now());
 upsert into metadata.applog_key_field_desc values('boikgpokn78sb95ktmsc1bnkpdgmnnb8','product_code',1,1,'medusa',false,now(),now());
 upsert into metadata.applog_key_field_desc values('boikgpokn78sb95ktmsc1bnkpdgmnnb8','app_code',1,2,'merge',false,now(),now());
+upsert into metadata.applog_key_field_desc values('boikgpokn78sb95kjhfrendoikjf9uhc','app_code',1,2,'all',false,now(),now());
+upsert into metadata.applog_key_field_desc values('boikgpokn78sb95kjhfrendoikjf9uhc','product_code',1,1,'whaleytv',false,now(),now());
+
+
+
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('boikgpokn78sb95k7id7n8ebqmihnjmg','app_code',1,2,'appstore',false,now(),now());
+upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('boikgpokn78sb95k7id7n8ebqmihnjmg','product_code',1,1,'eagle',false,now(),now());
 --日志文件关键字段字段值表
 create table metadata.logfile_key_field_value(
     logPath varchar(500) not null --日志文件路径 [key]
