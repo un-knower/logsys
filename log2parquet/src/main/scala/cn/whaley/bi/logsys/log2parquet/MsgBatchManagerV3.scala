@@ -15,6 +15,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
+import scala.collection.JavaConversions._
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -181,10 +182,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }else{
         Map[String,String]()
       }
-
-      val it = jSONObject.keySet().iterator()
-      while (it.hasNext) {
-        val key = it.next()
+      val it = jSONObject.keySet().toList
+      it.foreach(key => {
         if(tableFieldMap.size !=0 && tableFieldMap.keySet.contains(key.trim.toLowerCase)){
           //table级别
           processFiledType(jSONObject,key,tableFieldMap)
@@ -195,8 +194,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
           //全量级别
           processFiledType(jSONObject,key,fieldAllMap)
         }
-
-      }
+      })
 
 /*
       //1.field level
@@ -240,7 +238,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     println("-------Json2ParquetUtil.saveAsParquet end at "+new Date())
     //删除输入数据源
     if(fs.exists(new Path(inputPath))){
-//     fs.delete(new Path(inputPath),true)
+     fs.delete(new Path(inputPath),true)
     }
 
     println("=============== 规则处理移除字段 =============== ：")
