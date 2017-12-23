@@ -80,7 +80,7 @@ object EagleProcess extends NameTrait with LogTrait{
           val log = logs.get.getJSONObject(i)
           log.keySet().toArray(new Array[String](0)).foreach(key=>{
             if(body.containsKey(key) || LogFields.whiteFields.contains(key)){
-              log.put(s"${key}_r",log.get(key))
+              log.put(s"${key}_rb",log.get(key))
               log.remove(key)
             }
           })

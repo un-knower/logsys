@@ -77,7 +77,7 @@ object URLParser {
               putJsonValue(js, kv(0), "")
             }
           }
-        } else putJsonValue(js, kv(0), "")
+        } else if(kv.length == 1) putJsonValue(js, kv(0), "")
       })
     }
     js
