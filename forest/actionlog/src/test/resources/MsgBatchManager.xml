@@ -24,6 +24,10 @@
         <name>MsgBatchManager.recoverSourceOffsetFromSink</name>
         <value>${prop.KafkaMsgSource.recoverSourceOffsetFromSink}</value>
     </property>
+    <property>
+        <name>MsgBatchManager.resetOffsetToLatest</name>
+        <value>${prop.KafkaMsgSource.resetOffsetToLatest}</value>
+    </property>
     <!-- KafkaMsgSource -->
     <property>
         <name>KafkaMsgSource.class</name>

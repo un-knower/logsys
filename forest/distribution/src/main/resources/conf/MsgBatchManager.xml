@@ -25,6 +25,10 @@
         <value>${prop.MsgBatchManager.recoverSourceOffsetFromSink}</value>
     </property>
     <property>
+        <name>MsgBatchManager.resetOffsetToLatest</name>
+        <value>${prop.KafkaMsgSource.resetOffsetToLatest}</value>
+    </property>
+    <property>
         <name>MsgBatchManager.callableWaitSize</name>
         <value>${prop.MsgBatchManager.callableWaitSize}</value>
     </property>

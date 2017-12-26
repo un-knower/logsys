@@ -152,6 +152,16 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
         })
     }
 
+    def seekOffsetToEnd() : Unit = {
+        consumerThreads.foreach(thread => {
+            val consumer = thread.kafkaConsumer
+            if (!thread.isStarted) {
+                consumer.poll(1000)
+            }
+            consumer.seekToEnd(List())
+        })
+    }
+
     /**
      * 获取最后偏移量
      * @param topic

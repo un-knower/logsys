@@ -42,6 +42,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         batchSize = confManager.getConfOrElseValue(this.name, "batchSize", "4000").toInt
         callableSize = confManager.getConfOrElseValue(this.name, "callableSize", "2000").toInt
         recoverSourceOffsetFromSink = confManager.getConfOrElseValue(this.name, "recoverSourceOffsetFromSink", "1").toInt
+        resetOffsetToLatest = confManager.getConfOrElseValue(this.name, "resetOffsetToLatest", "0").toInt
         callableWaitSize = confManager.getConfOrElseValue(this.name, "callableWaitSize", callableWaitSize.toString).toInt
         callableWaitSec = confManager.getConfOrElseValue(this.name, "callableWaitSec", callableWaitSec.toString).toInt
 
@@ -378,13 +379,14 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     }
                 }
             })
-        }
-
-        if (offsetMap.size > 0) {
-            LOG.info(s"commitOffset:${offsetMap}")
-            msgSource.seekOffset(offsetMap.toMap)
-        } else {
-            LOG.info(s"commitOffset:None")
+            if (offsetMap.size > 0) {
+                LOG.info(s"commitOffset:${offsetMap}")
+                msgSource.seekOffset(offsetMap.toMap)
+            } else {
+                LOG.info(s"commitOffset:None")
+            }
+        } else if (resetOffsetToLatest == 1) {
+            msgSource.seekOffsetToEnd()
         }
 
         //启动消费线程
@@ -450,6 +452,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     private var processThreadErr: Int = 0
     //是否从消息目标系统中恢复消息源系统的offset
     private var recoverSourceOffsetFromSink: Int = 1
+    //是否重置为从最新开始消费
+    private var resetOffsetToLatest: Int = 0
     private var msgSource: KafkaMsgSource = null
     private var msgSink: MsgSinkTrait = null
     private var processorChain: GenericProcessorChain = null
