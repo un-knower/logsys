@@ -746,7 +746,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     try {
       val value = json.getString(key).trim
       val jSONArray = JSON.parseArray(value)
-      json.put(key,jSONArray)
+      if(jSONArray.size() == 0){
+        json.remove(key)
+      }else{
+        json.put(key,jSONArray)
+      }
+
+
     }catch {
       case e:Exception=>{
         e.printStackTrace()
