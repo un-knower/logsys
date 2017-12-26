@@ -373,7 +373,9 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                         (arrItem._1, arrItem._2.maxBy(_._2)._2)
                     })
                     LOG.info(s"offsetInfo:[${offset.mkString(",")}]")
-                    offsetMap.put(topic, offset)
+                    if(offset.nonEmpty) {
+                        offsetMap.put(topic, offset)
+                    }
                 }
             })
         }
