@@ -195,11 +195,11 @@ public class ODSViewService {
         Integer ret = 0;
         List<LogTabDMLEntity> dmlEntities = logTabDMLRepo.queryForTaskId(taskId, false);
         //过滤不执行的 drop 语句
-     /*   if(!"true".equalsIgnoreCase(deleteOld.trim())){
+       if(!"true".equalsIgnoreCase(deleteOld.trim())){
             dmlEntities = dmlEntities.stream().filter(dmlEntity->{
                 return dmlEntity.getDmlText().contains("location");
             }).collect(Collectors.toList());
-        }*/
+        }
 
         if (dmlEntities.size() > 0) {
             ret += hiveRepo.executeDML(dmlEntities);
@@ -372,7 +372,6 @@ public class ODSViewService {
                 return hasChangedField == true;
             }).collect(Collectors.toList());
             if (changed.size() > 0) {
-                LOG.info("changed size is .... "+changed.size());
                 List<LogTabDDLEntity> changedDDLs = changed.stream().filter(change->{
                     //修复 array 类型存在的问题
                     String fieldName = change.getFieldName();
@@ -419,13 +418,12 @@ public class ODSViewService {
                 changedDDLs.stream().forEach(ddlEntity->{
                     String tab = ddlEntity.getTabName();
                     String ddlText = ddlEntity.getDdlText();
-                    System.out.println("11111 aa "+ddlText);
                     context.append(tab+" -> "+ddlText+"\n");
                 });
                 //发邮件
                 if(!context.toString().trim().isEmpty()){
                     String[] users = {"app-bigdata@whaley.cn"};
-//                    SendMail.post(context.toString(), "[ods-view-metadata][字段类型重命名]", users);
+                    SendMail.post(context.toString(), "[ods-view-metadata][字段类型重命名]", users);
                 }
             }
         }
