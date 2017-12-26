@@ -28,7 +28,7 @@ class GenericActionLogPostProcessorTest {
 
     @Test
     def testPost: Unit = {
-        val stream = this.getClass.getClassLoader.getResourceAsStream("data/medusamain3.x.2")
+        val stream = this.getClass.getClassLoader.getResourceAsStream("data/medusamain3.x")
         val source = scala.io.Source.fromInputStream(stream)
         //val lines = source.getLines().toArray
         val decoder = new StringDecoder()

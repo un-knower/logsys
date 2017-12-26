@@ -70,6 +70,15 @@
         <name>KafkaMsgSink.include</name>
         <value>kafka-producer.xml</value>
     </property>
+    <!-- ConfigurableKafkaMsgSink -->
+    <property>
+        <name>ConfigurableKafkaMsgSink.class</name>
+        <value>cn.whaley.bi.logsys.forest.sinker.ConfigurableKafkaMsgSink</value>
+    </property>
+    <property>
+        <name>ConfigurableKafkaMsgSink.include</name>
+        <value>kafka-producer.xml</value>
+    </property>
     <!-- HdfsMsgSink -->
     <property>
         <name>HdfsMsgSink.class</name>
