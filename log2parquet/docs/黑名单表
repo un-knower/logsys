@@ -1,2 +1,7 @@
 upsert into METADATA.BLACK_TABLE_INFO(id,tableName,isDeleted,createTime,updateTime) values('001','log_medusa_main20_corrupt',false,now(),now());
 upsert into METADATA.BLACK_TABLE_INFO(id,tableName,isDeleted,createTime,updateTime) values('002','log_medusa_main3x',false,now(),now());
+upsert into METADATA.BLACK_TABLE_INFO(id,tableName,isDeleted,createTime,updateTime) values('003','log_medusa_main3x_medusa_pday_back',false,now(),now());
+upsert into METADATA.BLACK_TABLE_INFO(id,tableName,isDeleted,createTime,updateTime) values('004','log_whaleytv_main',false,now(),now());
+upsert into METADATA.BLACK_TABLE_INFO(id,tableName,isDeleted,createTime,updateTime) values('005','log_medusa_main3x_medusalauncherfocus',false,now(),now());
+upsert into METADATA.BLACK_TABLE_INFO(id,tableName,isDeleted,createTime,updateTime) values('006','log_medusa_main3x_medusa_launchermchange',false,now(),now());
+

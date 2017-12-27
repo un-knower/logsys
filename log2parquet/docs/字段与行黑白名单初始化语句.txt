@@ -3972,6 +3972,12 @@ upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,special
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5087','log_medusa_main3x_live','rename','livetype_r',10,'livetype',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5089','log_medusa_main3x_live','fieldFilter','00',10,'^liveType$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5090','medusa','fieldFilter','01',10,'^groupId$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5091','whaleytv','rename','locationIndex_r',10,'locationindex',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5092','medusa','rename','locationIndex_r',10,'locationindex',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5093','whaleytv','rename','accessLocation_r',10,'accesslocation',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5094','medusa','rename','accessLocation_r',10,'accesslocation',false,now(),now());
+
+
 
 
 --测试
