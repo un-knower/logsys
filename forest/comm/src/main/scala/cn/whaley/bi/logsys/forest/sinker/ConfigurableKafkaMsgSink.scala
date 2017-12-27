@@ -46,8 +46,8 @@ class ConfigurableKafkaMsgSink extends MsgSinkTrait with InitialTrait with NameT
         //是否保存错误数据
         saveErrorData = confManager.getConfOrElseValue(this.name, "saveErrorData", "true").toBoolean
 
-        filterConfig = Array(("boikgpokn78sb95ktmsc1bnk", "test", JSON.parseObject("{\"logType\":\"play\"}")),
-            ("boikgpokn78sb95ktmsc1bnk", "test1", JSON.parseObject("{\"eventId\":\"medusa-player-sdk-startPlay\"}")))
+        filterConfig = Array(("boikgpokn78sb95ktmsc1bnk", "test", JSON.parseObject("{\"realLogType\":\"play\"}")),
+            ("boikgpokn78sb95ktmsc1bnk", "test1", JSON.parseObject("{\"realLogType\":\"medusa-player-sdk-startPlay\"}")))
 
     }
 
@@ -94,7 +94,7 @@ class ConfigurableKafkaMsgSink extends MsgSinkTrait with InitialTrait with NameT
         val items = datas.flatMap(data => {
             data._2.result.get.map(log => {
                 val topics = filterConfig.filter(c => log.appId.contains(c._1) && isOK(log.logBody, c._3)).map(_._2)
-                (data._1, log.logBody, topics)
+                (data._1, log.logBody, topics)  //只获取logBody
             }).filter(_._3.length > 0)
         })
         LOG.info("条数" + items.size)

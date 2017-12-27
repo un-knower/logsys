@@ -78,6 +78,7 @@ class LogEntity(from: MsgEntity) extends MsgEntity(from) {
             val entity = LogEntity.copy(this)
             val logId = this.msgId + StringUtil.fixLeftLen(Integer.toHexString(i), '0', 4)
             entity.updateLogId(logId)
+            addRealLogType(normalizeMsgBody(i))  //增加realLogType字段
             entity.updateLogBody(normalizeMsgBody(i))
 
             //提升公共字段
@@ -89,6 +90,31 @@ class LogEntity(from: MsgEntity) extends MsgEntity(from) {
             entity
         }
         entities
+    }
+
+    private def addRealLogType(jsonObj: JSONObject): Unit = {
+        if(jsonObj.containsKey("logtype") && !jsonObj.containsKey("logType")){
+            val logType = jsonObj.get("logtype")
+            jsonObj.put("logType", logType)
+            jsonObj.remove("logtype")
+        }
+
+        val logType = jsonObj.getString("logType")
+        val realLogType = if("event".equals(logType)){
+            jsonObj.getString("eventId")
+        }else if("start_end".equals(logType)){
+            jsonObj.getString("actionId")
+        }else if(logType != null && logType.length > 0){
+            logType
+        }else if(jsonObj.getString("eventId") != null) {
+            jsonObj.getString("eventId")
+        }else if(jsonObj.getString("actionId") != null) {
+            jsonObj.getString("actionId")
+        } else {
+            null
+        }
+
+        jsonObj.put("realLogType", realLogType)
     }
 
 }
