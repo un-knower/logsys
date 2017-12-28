@@ -234,11 +234,11 @@ class ConfigurableKafkaMsgSink extends MsgSinkTrait with InitialTrait with NameT
                             configLastUpdateTime = date
                             LOG.info("配置更新完成")
                         }
+                        Thread.sleep(10 * 1000)
                     } catch {
                         case e: Exception =>
                             LOG.error("读取配置数据库失败，配置最后更新时间：" + configLastUpdateTime, e)
                     }
-                    Thread.sleep(10 * 1000)
                 }
             }
         })
