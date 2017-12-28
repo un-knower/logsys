@@ -1,10 +1,11 @@
 package cn.whaley.bi.logsys.forest.sinker
 
 import java.net.Socket
+import java.util
 import java.util.Date
 
 import cn.whaley.bi.logsys.common.{ConfManager, KafkaUtil}
-import cn.whaley.bi.logsys.forest.ProcessResult
+import cn.whaley.bi.logsys.forest.{DBOperationUtils, ProcessResult}
 import cn.whaley.bi.logsys.forest.Traits.{InitialTrait, LogTrait, NameTrait}
 import cn.whaley.bi.logsys.forest.entity.LogEntity
 import com.alibaba.fastjson.{JSON, JSONObject}
@@ -12,7 +13,7 @@ import org.apache.commons.lang.time.DateFormatUtils
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+import collection.JavaConversions._
 
 /**
  * Created by lituo on 17/12/14.
@@ -37,17 +38,12 @@ class ConfigurableKafkaMsgSink extends MsgSinkTrait with InitialTrait with NameT
         //实例化kafka生产者
         kafkaProducer = new KafkaProducer[Array[Byte], Array[Byte]](kafkaConf)
 
-        //目标topic名前缀
-//        targetTopicPrefix = confManager.getConfOrElseValue(this.name, "targetTopicPrefix", targetTopicPrefix)
-
-        //lobBody过滤对象
-//        logFilter = JSON.parseObject(confManager.getConfOrElseValue(this.name, "logFilter", "{}"))
-
         //是否保存错误数据
         saveErrorData = confManager.getConfOrElseValue(this.name, "saveErrorData", "true").toBoolean
 
-        filterConfig = Array(("boikgpokn78sb95ktmsc1bnk", "test", JSON.parseObject("{\"realLogType\":\"play\"}")),
-            ("boikgpokn78sb95ktmsc1bnk", "test1", JSON.parseObject("{\"realLogType\":\"medusa-player-sdk-startPlay\"}")))
+        dBOperationUtils = new DBOperationUtils("streaming")
+
+        startConfigUpdateThread()
 
     }
 
@@ -93,7 +89,8 @@ class ConfigurableKafkaMsgSink extends MsgSinkTrait with InitialTrait with NameT
 
         val items = datas.flatMap(data => {
             data._2.result.get.map(log => {
-                val topics = filterConfig.filter(c => log.appId.contains(c._1) && isOK(log.logBody, c._3)).map(_._2)
+                val topics = filterConfig.values.toArray
+                  .filter(c => log.appId.contains(c._1) && isOK(log.logBody, c._3)).map(_._2)
                 (data._1, log.logBody, topics)  //只获取logBody
             }).filter(_._3.length > 0)
         })
@@ -222,6 +219,62 @@ class ConfigurableKafkaMsgSink extends MsgSinkTrait with InitialTrait with NameT
         kafkaUtil = new KafkaUtil(list)
     }
 
+    private def startConfigUpdateThread(): Unit = {
+
+        val thread = new Thread(new Runnable {
+            override def run(): Unit = {
+                val sqlPrefix = "select * from kafka_topic_distribute where updateTime > "
+                while (true) {
+                    val date = new Date()
+                    try {
+                        val sql = sqlPrefix + "'" + DateFormatUtils.format(configLastUpdateTime, "yyyy-MM-dd HH:mm:ss") + "'"
+                        val result = dBOperationUtils.selectMapList(sql)
+                        if(result != null && result.size() > 0) {
+                            updateConfig(result)
+                            configLastUpdateTime = date
+                            LOG.info("配置更新完成")
+                        }
+                    } catch {
+                        case e: Exception =>
+                            LOG.error("读取配置数据库失败，配置最后更新时间：" + configLastUpdateTime, e)
+                    }
+                    Thread.sleep(10 * 1000)
+                }
+            }
+        })
+
+        thread.start()
+    }
+
+    private def updateConfig(newConfig: util.List[util.Map[String, Object]]): Unit = {
+        if(newConfig == null || newConfig.size() == 0) {
+            return
+        }
+        newConfig.foreach(c => {
+            val id = c.get("id").asInstanceOf[Number].intValue()
+            if(!c.get("status").asInstanceOf[Int].equals(1)) {
+                filterConfig.remove(id)
+                LOG.info("从配置中删除项，id=" + id)
+            } else {
+                val filter = try {
+                    JSON.parseObject(c.get("filter").asInstanceOf[String])
+                } catch {
+                    case e: Exception =>
+                        LOG.error("过滤条件解析json失败, id=" + id)
+                        null
+                }
+                if(filter != null) {
+                    val config = (c.get("appIdPrefix").asInstanceOf[String],
+                      c.get("destTopic").asInstanceOf[String],
+                      filter)
+                    filterConfig.put(id, config)
+                    LOG.info("新增或修改配置项，id=" + id)
+
+                }
+            }
+        })
+    }
+
     private var kafkaProducer: KafkaProducer[Array[Byte], Array[Byte]] = null
     private var kafkaUtil: KafkaUtil = null
     private var bootstrapServers: String = null
@@ -229,7 +282,18 @@ class ConfigurableKafkaMsgSink extends MsgSinkTrait with InitialTrait with NameT
     //日志过滤器,LogEntity应该是logFilter的一个超集,不能存在属性值不一致
 //    private var logFilter: JSONObject = null
     private var saveErrorData: Boolean = true
-    private var filterConfig: Array[(String, String, JSONObject)] = null
+    private val filterConfig = new mutable.HashMap[Int, (String, String, JSONObject)]
+    private var dBOperationUtils: DBOperationUtils = null
+    private var configLastUpdateTime: Date = new Date(0)
 
+//
+}
+
+object ConfigurableKafkaMsgSink {
+    def main(args: Array[String]): Unit = {
+        val test = new ConfigurableKafkaMsgSink
+        test.dBOperationUtils = new DBOperationUtils("streaming")
+        test.startConfigUpdateThread()
+    }
 
 }
