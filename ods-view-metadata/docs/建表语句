@@ -171,8 +171,8 @@ create table metadata.log_field_type_info(
     id varchar(100) not null --唯一性ID [key]
     ,name varchar(80) --ruleLevel 为table则为表名，为realLogType 则为realLogType，为field 则为 ALL
     ,fieldName varchar(20) --字段名称
-    ,fieldType varchar(10) --字段类型
-    ,typeFlag varchar(2) --字段类型标识 1:String 2:Long 3:Double
+    ,fieldType varchar(20) --字段类型
+    ,typeFlag varchar(2) --字段类型标识 1:String 2:Long 3:Double 4.array 5.arrayString 6.arrayLong 7.arrayStruct
     ,ruleLevel varchar(15) --规则类型 1.table:表级别 2.realLogType:日志类型级别 3.field:字段级别
     ,isDeleted boolean --记录是否删除
     ,createTime timestamp --记录创建时间

@@ -359,8 +359,11 @@ public class ODSViewService {
 
             //change column
             List<LogTabFieldDescEntity> changed = tabGroup.stream().filter(item -> {
+
                 String fieldName = item.getFieldName();
                 String fieldType = item.getFieldType();
+//                System.out.println("fieldName parquet ->"+fieldName);
+//                System.out.println("fieldType parquet ->"+fieldType);
                 Boolean hasChangedField = fieldInfos.stream()
                         .filter(fieldInfo ->
                                 fieldInfo.getColName().equalsIgnoreCase(fieldName)
@@ -411,7 +414,7 @@ public class ODSViewService {
                     ddlEntity.setTaskId(desc.taskId);
                     return ddlEntity;
                 }).collect(Collectors.toList());
-//                entities.addAll(changedDDLs);
+                entities.addAll(changedDDLs);
                 //取消直接执行changed语句，改为发送邮件
                 //拼接执行语句
                 StringBuffer context = new StringBuffer();
