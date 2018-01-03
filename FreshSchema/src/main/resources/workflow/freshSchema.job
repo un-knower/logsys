@@ -1,0 +1,3 @@
+type=command
+mainClass=cn.whaley.bi.fresh.Start
+command=sh ${working.dir}/../bin/submit.sh  --mainClass ${mainClass} --tablePattern ${tablePattern} --partitionPattern ${partitionPattern}
