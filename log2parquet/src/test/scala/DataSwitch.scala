@@ -12,29 +12,14 @@ class DataSwitch {
   def typeSwitch(): Unit ={
 
     val json = new JSONObject()
-    json.put("a","aa")
+    json.put("a","2.3")
 
-    val jSONArray = new JSONArray()
 
-    val json1 = new JSONObject()
-    json1.put("contentId","a")
-    json1.put("linkType",1)
-    json1.put("locationindex",2)
-    json1.put("recommendType",3)
-    jSONArray.add(json1)
 
-    val json2 = new JSONObject()
-    json2.put("contentId","aa")
-    json2.put("linkType",11)
-    json2.put("locationindex",22)
-    json2.put("recommendType",null)
-    jSONArray.add(json2)
-
-    json.put("jsonArray",jSONArray)
     println(s"json 000... ${json}")
-//    switchJsonArrayStruct("a",json)
+    switchLong("a",json)
 //    switchJsonArrayBigInt("a",json)
-    switchJsonArrayString("a",json)
+//    switchJsonArrayString("a",json)
 //    switchJsonArrayStruct("jsonArray",json)
 //    switchJsonArrayBigInt("jsonArray",json)
 //    switchJsonArrayString("jsonArray",json)

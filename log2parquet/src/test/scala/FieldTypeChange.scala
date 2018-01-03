@@ -7,12 +7,11 @@ import scala.io.Source
 object FieldTypeChange {
   def main(args: Array[String]): Unit = {
 //    switch(0,"int","Long","2","field")
-//    switch(104,"arrayString","Array","4","table")
+//    switch(104,"arrayString","ArrayString","5","table")
+//    switch(116,"arrayStruct","ArrayStruct","7","table")
 
 
-    switch(0,"int","Long","2","field")
-    switch(104,"arrayString","ArrayString","5","table")
-    switch(116,"arrayStruct","ArrayStruct","7","table")
+    a()
   }
 
 
@@ -53,8 +52,8 @@ object FieldTypeChange {
     val lines = Source.fromFile(path).getLines()
     while (lines.hasNext) {
       val line = lines.next()
-      if(line.startsWith("11111 aa ALTER TABLE")){
-        println(line +"  ;")
+      if(line.contains("ALTER TABLE")){
+        println(line +"` CHANGE COLUMN `status` `status` string ;")
       }
     }
   }

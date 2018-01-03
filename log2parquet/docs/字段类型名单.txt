@@ -91,7 +91,6 @@ upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ru
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('091','ALL','sign','Long','2','field',false,now(),now());
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('092','ALL','sourceindex','Long','2','field',false,now(),now());
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('093','ALL','starttime','Long','2','field',false,now(),now());
-upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('094','ALL','status','Long','2','field',false,now(),now());
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('095','ALL','subtitlesnum','Long','2','field',false,now(),now());
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('096','ALL','svr_receive_time','Long','2','field',false,now(),now());
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('097','ALL','threshold','Long','2','field',false,now(),now());

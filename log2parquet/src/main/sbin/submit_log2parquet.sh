@@ -54,7 +54,7 @@ spark_dynamicAllocation_maxExecutors=$(getSparkProp $MainClass "spark.dynamicAll
 spark_dynamicAllocation_initialExecutors=$(getSparkProp $MainClass "spark.dynamicAllocation.initialExecutors")
 spark_default_parallelism=$(getSparkProp $MainClass "spark.default.parallelism")
 spark_yarn_queue=$(getSparkProp $MainClass "spark.yarn.queue")
-
+spark_parquet_compression_codec=$(getSparkProp $MainClass "spark.sql.parquet.compression.codec")
 export CLASSPATH=.:${CLASSPATH}:${pwd}/../conf
 
 dependenceDir=/data/apps/azkaban/log2parquet
@@ -117,5 +117,6 @@ $spark_home/bin/spark-submit -v \
 --conf spark.dynamicAllocation.maxExecutors=${spark_dynamicAllocation_maxExecutors} \
 --conf spark.dynamicAllocation.initialExecutors=${spark_dynamicAllocation_initialExecutors} \
 --conf spark.default.parallelism=${spark_default_parallelism} \
+--conf spark.sql.parquet.compression.codec=${spark_parquet_compression_codec} \
 --conf spark.yarn.queue=${spark_yarn_queue} \
 --class "$MainClass" $spark_mainJar $Args
