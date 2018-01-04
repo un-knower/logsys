@@ -22,6 +22,9 @@ fi
 
 if [ -z "$topicRegex" ] && [ "$cmd" == "start" ] ; then
     case "$taskName" in
+        all)
+            topicRegex='(^log-raw-boikgpokn78sb95ktmsc1bnk.*$)|(^log-raw-boikgpokn78sb95kjhfrendo.*$)'
+        ;;
         medusa)
             topicRegex='^log-raw-boikgpokn78sb95ktmsc1bnk.*$'
         ;;
@@ -49,7 +52,7 @@ fi
 
 
 if [ -z "$groupId" ]; then
-    groupId="forest-dist-${taskName}"
+    groupId="forest-dist-${taskName}-test"
 fi
 if [ -n "$taskId" ]; then
     taskName="${taskName}${taskId}"

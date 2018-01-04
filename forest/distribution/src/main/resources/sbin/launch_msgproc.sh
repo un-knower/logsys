@@ -22,6 +22,9 @@ fi
 
 if [ -z "$topicRegex" ] && [ "$cmd" == "start" ] ; then
     case "$taskName" in
+        all)
+            topicRegex='(^log-raw-boikgpokn78sb95ktmsc1bnk.*$)|(^log-raw-boikgpokn78sb95kjhfrendo.*$)'
+        ;;
         medusa)
             topicRegex='^log-raw-boikgpokn78sb95ktmsc1bnk.*$'
         ;;
