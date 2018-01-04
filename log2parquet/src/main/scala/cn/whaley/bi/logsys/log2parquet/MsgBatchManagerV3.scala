@@ -63,10 +63,12 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     val renameFiledMyAcc = new MyAccumulator
     val baseInfoRenameFiledMyAcc = new MyAccumulator
     val removeFiledMyAcc = new MyAccumulator
+    val fieldTypeSwitchMyAcc = new MyAccumulator
     val myAccumulator =  new MyAccumulator
     sc.register(renameFiledMyAcc,"renameFiledMyAcc")
     sc.register(baseInfoRenameFiledMyAcc,"baseInfoRenameFiledMyAcc")
     sc.register(removeFiledMyAcc,"removeFiledMyAcc")
+    sc.register(fieldTypeSwitchMyAcc,"fieldTypeSwitchMyAcc")
     sc.register(myAccumulator,"myAccumulator")
 
     //读取原始文件
@@ -186,13 +188,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       it.foreach(key => {
         if(tableFieldMap.size !=0 && tableFieldMap.keySet.contains(key.trim.toLowerCase)){
           //table级别
-          processFiledType(jSONObject,key,tableFieldMap)
+          processFiledType(fieldTypeSwitchMyAcc,jSONObject,key,tableFieldMap)
         }else if(logTypeFieldMap.size !=0 && logTypeFieldMap.keySet.contains(key.trim.toLowerCase)){
           //logType级别
-          processFiledType(jSONObject,key,logTypeFieldMap)
+          processFiledType(fieldTypeSwitchMyAcc,jSONObject,key,logTypeFieldMap)
         }else if(fieldAllMap.size !=0 && fieldAllMap.keySet.contains(key.trim.toLowerCase)){
           //全量级别
-          processFiledType(jSONObject,key,fieldAllMap)
+          processFiledType(fieldTypeSwitchMyAcc,jSONObject,key,fieldAllMap)
         }
       })
 
@@ -270,6 +272,30 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }
     })
 */
+
+    val fieldTypeSwitchMap = fieldTypeSwitchMyAcc.value.toMap
+    println("=============== 字段类型转换异常:表字段级别 =============== ：")
+    fieldTypeSwitchMyAcc.value.toList.filter(r=>{
+      r._1.contains("table:")
+    }).sortBy(-_._2).foreach(r=>{
+      val name = r._1.split("->")(0)
+      val times = r._2
+      val total = fieldTypeSwitchMap.getOrDefault(name,1)
+      val rate = times.toDouble/total
+      println(s"字段类型转换异常 表字段：${name} --> 转换异常次数: ${times} -> 总次数：${total} ->占比：${rate} ")
+    })
+
+    println("=============== 字段类型转换异常:字段级别 =============== ：")
+    fieldTypeSwitchMyAcc.value.toList.filter(r=>{
+       r._1.contains("field:")
+    }).sortBy(-_._2).foreach(r=>{
+      val name = r._1.split("->")(0)
+      val times = r._2
+      val total = fieldTypeSwitchMap.getOrDefault(name,1)
+      val rate = times.toDouble/total
+      println(s"字段类型转换异常 字段级别：${name} --> 转换异常次数: ${times} -> 总次数：${total} ->占比：${rate} ")
+    })
+
     println("=============== 规则处理baseInfo 重命名字段 =============== ：")
     baseInfoRenameFiledMyAcc.value.toList.sortBy(-_._2).foreach(r=>{
       if(isValid(r._1)){
@@ -588,49 +614,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
           }
         })
       }
-/*      if(!jsonObject.isEmpty){
-        //删除字段
-        if(fieldBlackFilterMap.keySet.contains(path) && !fieldBlackFilterMap.get(path).isEmpty){
-          val array = fieldBlackFilterMap.get(path).get
-          array.foreach(field=>{
-            if(jsonObject.containsKey(field)){
-              removeFiledMyAcc.add(field+"->"+path.split("/")(1).split("_")(1))
-              jsonObject.remove(field)
-            }
-          })
-        }
-        //删除单字母，纯数字字段
-        jsonObject.keySet().toArray(new Array[String](0)).foreach(field=>{
-          if(field.length <=1 || isinValidKey(field)){
-            jsonObject.remove(field)
-          }
-        })
-
-        //baseinfo 白名单处理
-        if(baseInfoRenameMap.keySet.contains(path) && !baseInfoRenameMap.get(path).isEmpty){
-          val map = baseInfoRenameMap.get(path).get
-          map.keys.foreach(oldName=>{
-            if(jsonObject.containsKey(oldName)){
-              val newName = map.get(oldName).get
-              jsonObject.put(newName, jsonObject.get(oldName))
-              baseInfoRenameFiledMyAcc.add(oldName+"->"+path.split("/")(1).split("_")(1))
-              jsonObject.remove(oldName)
-            }
-          })
-        }
-        //重命名
-        if(renameMap.keySet.contains(path) && !renameMap.get(path).isEmpty){
-          val map = renameMap.get(path).get
-          map.keys.foreach(oldName=>{
-            if(jsonObject.containsKey(oldName)){
-              val newName = map.get(oldName).get
-              jsonObject.put(newName, jsonObject.get(oldName))
-              renameFiledMyAcc.add(oldName+"->"+path.split("/")(1).split("_")(1))
-              jsonObject.remove(oldName)
-            }
-          })
-        }
-      }*/
       //累加器影响的行数
       if(!jsonObject.isEmpty){
         if(jsonObject.size()!=compareJson.size()){
@@ -708,17 +691,17 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     map.toMap
   }
 
-  def processFiledType(jsonObject:JSONObject,key:String,fieldTypeMap:Map[String,String]): Unit ={
+  def processFiledType(fieldTypeSwitchMyAcc:MyAccumulator,jsonObject:JSONObject,key:String,fieldTypeMap:Map[String,String]): Unit ={
     //字段类型标识 1:String 2:Long 3:Double 4:Array
     val typeFlag = fieldTypeMap.get(key.trim.toLowerCase).get
     typeFlag match {
-      case "1" => switchString(key,jsonObject)
-      case "2" => switchLong(key,jsonObject)
-      case "3" => switchDouble(key,jsonObject)
-      case "4" => switchJsonArray(key,jsonObject)
-      case "5" => switchJsonArrayString(key,jsonObject)
-      case "6" => switchJsonArrayBigInt(key,jsonObject)
-      case "7" => switchJsonArrayStruct(key,jsonObject)
+      case "1" => switchString(fieldTypeSwitchMyAcc,key,jsonObject)
+      case "2" => switchLong(fieldTypeSwitchMyAcc,key,jsonObject)
+      case "3" => switchDouble(fieldTypeSwitchMyAcc,key,jsonObject)
+      case "4" => switchJsonArray(fieldTypeSwitchMyAcc,key,jsonObject)
+      case "5" => switchJsonArrayString(fieldTypeSwitchMyAcc,key,jsonObject)
+      case "6" => switchJsonArrayBigInt(fieldTypeSwitchMyAcc,key,jsonObject)
+      case "7" => switchJsonArrayStruct(fieldTypeSwitchMyAcc,key,jsonObject)
       case _ =>
     }
   }
@@ -728,14 +711,14 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * @param key
     * @param json
     */
-  def switchString(key:String,json:JSONObject): Unit ={
+  def switchString(fieldTypeSwitchMyAcc:MyAccumulator,key:String,json:JSONObject): Unit ={
     try {
       val value = json.getString(key).trim
       json.put(key,value)
     }catch {
       case e:Exception=>{
         e.printStackTrace()
-        json.put(key,"")
+        json.remove(key)
       }
     }
   }
@@ -745,7 +728,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * @param key
     * @param json
     */
-  def switchJsonArray(key:String,json:JSONObject): Unit ={
+  def switchJsonArray(fieldTypeSwitchMyAcc:MyAccumulator,key:String,json:JSONObject): Unit ={
     try {
       val value = json.getString(key).trim
       val jSONArray = JSON.parseArray(value)
@@ -769,7 +752,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * @param key
     * @param json
     */
-  def switchJsonArrayString(key:String,json:JSONObject): Unit ={
+  def switchJsonArrayString(fieldTypeSwitchMyAcc:MyAccumulator,key:String,json:JSONObject): Unit ={
     try {
       val value = json.getString(key).trim
       val jSONArray = JSON.parseArray(value)
@@ -794,7 +777,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * @param key
     * @param json
     */
-  def switchJsonArrayBigInt(key:String,json:JSONObject): Unit ={
+  def switchJsonArrayBigInt(fieldTypeSwitchMyAcc:MyAccumulator,key:String,json:JSONObject): Unit ={
     try {
       val value = json.getString(key).trim
       val jSONArray = JSON.parseArray(value)
@@ -827,7 +810,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * @param key
     * @param json
     */
-  def switchJsonArrayStruct(key:String,json:JSONObject): Unit ={
+  def switchJsonArrayStruct(fieldTypeSwitchMyAcc:MyAccumulator,key:String,json:JSONObject): Unit ={
     try {
       val value = json.getString(key).trim
       val jSONArray = JSON.parseArray(value)
@@ -837,7 +820,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         val newJsonArray = new JSONArray()
         for( i<- 0 to ( jSONArray.size()-1 )){
           val jsonObject = jSONArray.getJSONObject(i)
-
           val keys = jsonObject.keySet().toList
           keys.foreach(key=>{
             jsonObject.put(key,jsonObject.getString(key))
@@ -862,18 +844,25 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * @param key
     * @param json
     */
-  def switchLong(key:String,json:JSONObject): Unit ={
+  def switchLong(fieldTypeSwitchMyAcc:MyAccumulator,key:String,json:JSONObject): Unit ={
+    val tableName = json.getString("tableName")
+    fieldTypeSwitchMyAcc.add(s"${tableName}:${key}")
+    fieldTypeSwitchMyAcc.add(s"${key}")
     try {
       val value = json.getString(key).trim
       if(isLongValid(value)){
         json.put(key,value.toLong)
       }else{
-        json.put(key,0)
+        fieldTypeSwitchMyAcc.add(s"${tableName}:${key}->table:long exception")
+        fieldTypeSwitchMyAcc.add(s"${key}->field:long exception")
+        json.remove(key)
       }
     }catch {
       case e:Exception=>{
+        fieldTypeSwitchMyAcc.add(s"table:${tableName}:${key}->long exception")
+        fieldTypeSwitchMyAcc.add(s"field:${key}->long exception")
         e.printStackTrace()
-        json.put(key,0)
+        json.remove(key)
       }
     }
   }
@@ -883,18 +872,18 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * @param key
     * @param json
     */
-  private def switchDouble(key:String,json:JSONObject):Unit = {
+  private def switchDouble(fieldTypeSwitchMyAcc:MyAccumulator,key:String,json:JSONObject):Unit = {
     try {
       val value = json.getString(key).trim
       if(isDoubleValid(value)){
         json.put(key,value.toDouble)
       }else{
-        json.put(key,0.0)
+        json.remove(key)
       }
     }catch {
       case e:Exception=>{
         e.printStackTrace()
-        json.put(key,0.0)
+        json.remove(key)
       }
     }
   }

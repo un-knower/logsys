@@ -42,12 +42,12 @@ do
     esac
 done
 
-startTime=`date -d "$startDate $startHour -1 hour" +"%Y%m%d%H"`
-endTime=`date -d "$endDate $endHour -1 hour" +"%Y%m%d%H"`
+endTime=`date -d "$startDate $startHour -1 hour" +"%Y%m%d%H"`
+startTime=`date -d "$endDate $endHour -1 hour" +"%Y%m%d%H"`
 
 echo "filterContext ... ${filterContext}"
 
-while [[ ${startTime}  -le  ${endTime} ]]
+while [[ ${startTime}  -ge  ${endTime} ]]
    do
     echo "execute time ... is ${startTime}"
     startDate=${startTime:0:8}
@@ -57,7 +57,7 @@ while [[ ${startTime}  -le  ${endTime} ]]
             echo "batch forest ${startTime} is fail ..."
             exit 1
     fi
-    startTime=`date -d "${startDate} ${startHour} 1 hour" +"%Y%m%d%H"`
+    startTime=`date -d "${startDate} ${startHour} -1 hour" +"%Y%m%d%H"`
 done
 
 
