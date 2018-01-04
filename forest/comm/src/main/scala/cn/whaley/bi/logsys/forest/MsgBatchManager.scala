@@ -227,7 +227,6 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     LOG.info(s"${topic}-msgProcess(${procResults.size}):${processStep}")
                     monitorMsg.put("processStepMillis", processStep._2)
                     monitorMsg.put("msgProcessSize", procResults.size)
-                    monitorMsg.put("msgProcessErrSize", procResults.count(_._2.hasErr))
 
                     //发送处理成功的数据
                     val ret = msgSink.saveProcMsg(procResults)
@@ -239,6 +238,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     //打印错误日志
                     val errorResults = procResults.filter(result => result._2.hasErr == true).toList
                     val errorCount = errorResults.size
+                    monitorMsg.put("msgProcessErrSize", errorCount)
                     if (errorCount > 0) {
                         LOG.error(s"${errorCount} messages processed failure.")
                         errorResults.foreach(err => {
@@ -263,7 +263,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     val doneStep = monitor.checkDone()
                     LOG.info(s"${topic}-done(${listSize}):${doneStep}:${offset}")
                     monitorMsg.put("overallMsgSize", msgCount)
-                    monitorMsg.put("doneStepMillis", doneStep._2)
+                    monitorMsg.put("taskMillis", doneStep._2)
                     msgSink.saveMonitorInfo(monitorMsg)
                 }
             }
