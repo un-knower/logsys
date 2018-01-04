@@ -78,8 +78,8 @@ class LogEntity(from: MsgEntity) extends MsgEntity(from) {
             val entity = LogEntity.copy(this)
             val logId = this.msgId + StringUtil.fixLeftLen(Integer.toHexString(i), '0', 4)
             entity.updateLogId(logId)
-            addRealLogType(normalizeMsgBody(i))  //增加realLogType字段
             entity.updateLogBody(normalizeMsgBody(i))
+            addRealLogType(entity.getJSONObject(LogEntity.KEY_LOG_BODY))  //增加realLogType字段
 
             //提升公共字段
             MsgEntity.translateProp(entity.logBody, LogEntity.KEY_APP_ID, entity, LogEntity.KEY_APP_ID)

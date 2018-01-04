@@ -86,18 +86,26 @@ class ConfigurableKafkaMsgSink extends MsgSinkTrait with InitialTrait with NameT
     private def saveSuccess(datas: Seq[(KafkaMessage, ProcessResult[Seq[LogEntity]])]): Int = {
 
         var count = 0
+//        var errorCount = 0
+//        var output = false
 
         val items = datas.flatMap(data => {
             data._2.result.get.map(log => {
                 val topics = filterConfig.values.toArray
                   .filter(c => log.appId.contains(c._1) && isOK(log.logBody, c._3)).map(_._2)
+//                if(log.logBody.get("realLogType") == null) {
+//                    errorCount = errorCount + 1
+//                    if(!output) {
+//                        LOG.info(log.logBody.toString)
+//                        output = true
+//                    }
+//                }
                 (data._1, log.logBody, topics)  //只获取logBody
             }).filter(_._3.length > 0)
         })
-        LOG.info("条数" + items.size)
+//        LOG.info("没有realLogType条数" + errorCount)
         val produceTime = DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss")
 
-        val startTime=System.currentTimeMillis()
         items.foreach(item => {
             val message: KafkaMessage = item._1
             val log: JSONObject = item._2
@@ -111,8 +119,7 @@ class ConfigurableKafkaMsgSink extends MsgSinkTrait with InitialTrait with NameT
             })
             count = count + 1
         })
-        val endTime=System.currentTimeMillis()
-        LOG.info("单批量写入时间" + (endTime - startTime))
+
         count
     }
 
