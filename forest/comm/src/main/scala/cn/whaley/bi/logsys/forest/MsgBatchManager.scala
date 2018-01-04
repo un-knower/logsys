@@ -233,7 +233,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     val ret = msgSink.saveProcMsg(procResults)
                     val saveStep = monitor.checkStep()
                     LOG.info(s"${topic}-msgSave(${ret._1},${ret._2}):${saveStep}")
-                    monitorMsg.put("saveStepMillis", processStep._2)
+                    monitorMsg.put("saveStepMillis", saveStep._2)
                     monitorMsg.put("msgSaveSize", ret._1)
 
                     //打印错误日志
@@ -263,7 +263,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     val doneStep = monitor.checkDone()
                     LOG.info(s"${topic}-done(${listSize}):${doneStep}:${offset}")
                     monitorMsg.put("overallMsgSize", msgCount)
-                    monitorMsg.put("doneStepMillis", processStep._2)
+                    monitorMsg.put("doneStepMillis", doneStep._2)
                     msgSink.saveMonitorInfo(monitorMsg)
                 }
             }
