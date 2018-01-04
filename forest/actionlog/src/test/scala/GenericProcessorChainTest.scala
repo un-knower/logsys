@@ -18,16 +18,13 @@ class GenericProcessorChainTest extends LogTrait {
         //val dataPath="data/data1.txt"
         //confManager.putConf("GenericMsgDecoder.filebeatDecode","false");
 
-        val dataPath = "data/data2.txt"
-        confManager.putConf("GenericMsgDecoder.filebeatDecode", "true");
-
         val chain = new GenericProcessorChain()
 
         chain.init(confManager)
 
 
 
-        val stream = this.getClass.getClassLoader.getResourceAsStream("data/data1.txt")
+        val stream = this.getClass.getClassLoader.getResourceAsStream("data/test")
         val source = scala.io.Source.fromInputStream(stream)
         val filelines = source.getLines().toArray
         val lines = new ArrayBuffer[String]()
