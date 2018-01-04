@@ -80,8 +80,22 @@ class ConfigurableKafkaMsgSink extends MsgSinkTrait with InitialTrait with NameT
 
 
     /**
+      * 保存监控数据
+      *
+      * @param monitorInfo 监控数据
+      */
+    override def saveMonitorInfo(monitorInfo: JSONObject): Unit = {
+        val key: Array[Byte] = monitorInfo.getString("time").getBytes()
+        val value: Array[Byte] = monitorInfo.toJSONString.getBytes()
+        val targetTopic: String = "forest-monitor"
+        val record = new ProducerRecord[Array[Byte], Array[Byte]](targetTopic, key, value)
+        kafkaProducer.send(record)
+    }
+
+    /**
      * 保存正常数据
-     * @param datas
+      *
+      * @param datas
      */
     private def saveSuccess(datas: Seq[(KafkaMessage, ProcessResult[Seq[LogEntity]])]): Int = {
 

@@ -105,6 +105,13 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
 
 
     /**
+      * 保存监控数据
+      *
+      * @param monitorInfo 监控数据
+      */
+    override def saveMonitorInfo(monitorInfo: JSONObject): Unit = {}
+
+    /**
      * 保存正常数据
      * @param datas
      */

@@ -6,10 +6,12 @@ import java.util.Date
 import java.util.concurrent._
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
-import cn.whaley.bi.logsys.forest.entity.{LogEntity}
+import cn.whaley.bi.logsys.forest.Traits.{InitialTrait, LogTrait, NameTrait}
+import cn.whaley.bi.logsys.forest.entity.LogEntity
 import cn.whaley.bi.logsys.forest.sinker.MsgSinkTrait
+import com.alibaba.fastjson.JSONObject
 import org.apache.commons.lang.exception.ExceptionUtils
+import org.apache.commons.lang.time.DateFormatUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
 import scala.collection.JavaConversions._
@@ -193,9 +195,14 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                 if (listSize == 0) {
                     LOG.info("message list is empty.")
                 } else {
+                    val monitorMsg = new JSONObject()
+                    monitorMsg.put("topic", topic)
+                    monitorMsg.put("messageSize", listSize)
+                    monitorMsg.put("machineId", machineId)
+                    monitorMsg.put("time", DateFormatUtils.format(monitor.getTaskFrom(), "yyyy-MM-dd HH:mm:ss"))
 
                     //分批次提交消息处理任务,利用多线程加快处理进度
-                    val callableCount: Int = Math.max(1, Math.ceil(listSize / callableSize).toInt)
+                    val callableCount: Int = Math.max(1, Math.ceil(listSize * 1.0 / callableSize).toInt)
                     val futures =
                         for (i <- 0 to callableCount - 1) yield {
                             callId = callId + 1
@@ -207,17 +214,27 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                             future
                         }
 
-                    LOG.info(s"${topic}-taskSubmit(${callableCount},${callableSize}):${monitor.checkStep()}")
+                    val submitStep = monitor.checkStep()
+                    LOG.info(s"${topic}-taskSubmit(${callableCount},${callableSize}):${submitStep}")
+                    monitorMsg.put("submitStepMillis", submitStep._2)
+                    monitorMsg.put("processCallableCount", callableCount)
 
                     //等待所有消息处理任务执行完毕,sink端采用单线程模式
                     val procResults = futures.map(future => {
                         future.get
                     }).sortBy(_._1).flatMap(_._2)
-                    LOG.info(s"${topic}-msgProcess(${procResults.size}):${monitor.checkStep()}")
+                    val processStep = monitor.checkStep()
+                    LOG.info(s"${topic}-msgProcess(${procResults.size}):${processStep}")
+                    monitorMsg.put("processStepMillis", processStep._2)
+                    monitorMsg.put("msgProcessSize", procResults.size)
+                    monitorMsg.put("msgProcessErrSize", procResults.count(_._2.hasErr))
 
                     //发送处理成功的数据
                     val ret = msgSink.saveProcMsg(procResults)
-                    LOG.info(s"${topic}-msgSave(${ret._1},${ret._2}):${monitor.checkStep()}")
+                    val saveStep = monitor.checkStep()
+                    LOG.info(s"${topic}-msgSave(${ret._1},${ret._2}):${saveStep}")
+                    monitorMsg.put("saveStepMillis", processStep._2)
+                    monitorMsg.put("msgSaveSize", ret._1)
 
                     //打印错误日志
                     val errorResults = procResults.filter(result => result._2.hasErr == true).toList
@@ -243,7 +260,11 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     })
 
                     msgCount = msgCount + list.size()
-                    LOG.info(s"${topic}-done(${listSize}):${monitor.checkDone()}:${offset}")
+                    val doneStep = monitor.checkDone()
+                    LOG.info(s"${topic}-done(${listSize}):${doneStep}:${offset}")
+                    monitorMsg.put("overallMsgSize", msgCount)
+                    monitorMsg.put("doneStepMillis", processStep._2)
+                    msgSink.saveMonitorInfo(monitorMsg)
                 }
             }
 
@@ -291,7 +312,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
             /**
              * 检查单步
-             * @return (单步序号，单步起始时间，单步耗时)
+             * @return (单步序号，单步耗时，单步起始时间)
              */
             def checkStep(): (Int, Long, String) = {
                 step = step + 1
@@ -462,6 +483,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     private var callableSize: Int = 2000
     private var callableWaitSize: Int = 100
     private var callableWaitSec: Int = 1
+    private val machineId = ConfigUtils.getMachineId
 
     val shutdownLatch = new CountDownLatch(1)
 
