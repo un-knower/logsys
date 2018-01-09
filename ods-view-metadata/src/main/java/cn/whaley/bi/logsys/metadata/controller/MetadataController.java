@@ -7,6 +7,7 @@ package cn.whaley.bi.logsys.metadata.controller;
 import cn.whaley.bi.logsys.metadata.entity.*;
 import cn.whaley.bi.logsys.metadata.repository.*;
 import cn.whaley.bi.logsys.metadata.service.ODSViewService;
+import cn.whaley.bigdata.dw.HiveUtil;
 import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -213,6 +214,10 @@ public class MetadataController {
                 Integer dmlRet = odsViewService.executeDML(taskId,deleteOld);
                 result.put("executeDML", dmlRet);
             }
+
+            Integer ddlSqlRet = odsViewService.executeSql(taskId);
+            LOG.info("task ddlSqlRet={}", ddlSqlRet);
+
             retEntity.setCode(0);
             retEntity.setMessage("OK");
         } catch (Throwable ex) {

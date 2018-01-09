@@ -210,6 +210,31 @@ public class ODSViewService {
         return ret;
     }
 
+    /**
+     * 执行 select * from db.table limit 1;
+     * 刷新 tblproperties
+     * @param taskId
+     */
+    public Integer executeSql(String taskId) {
+        Integer ret = 0;
+        List<LogTabDDLEntity> ddlEntities = logTabDDLRepo.queryByTaskId(taskId, false);
+
+        if(ddlEntities.size()> 0){
+            List<LogTabDDLEntity> filterEntity = ddlEntities.stream().filter(entity -> {
+                return !entity.getDdlText().contains("DROP TABLE");
+            }).collect(Collectors.toList());
+
+            for (int i = 0; i < filterEntity.size(); i++) {
+                LogTabDDLEntity entity = filterEntity.get(i);
+                String dbName = entity.getDbName();
+                String tabName = entity.getTabName();
+                cn.whaley.bigdata.dw.HiveUtil.generateTblProperties(dbName,tabName);
+                ret=ret+1;
+            }
+        }
+        return ret;
+    }
+
 
     /**
      * 产生表字段定义描述

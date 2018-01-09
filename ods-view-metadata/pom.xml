@@ -102,12 +102,36 @@
         </dependency>
         -->
 
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-jdbc</artifactId>
             <version>2.1.1</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/../lib/hive-jdbc.jar</systemPath>
+        </dependency>-->
+
+        <dependency>
+            <groupId>cn.whaley.bigdata.dw</groupId>
+            <artifactId>hive-jdbc</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.whaley.bigdata.dw</groupId>
+            <artifactId>hive_util</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-dbutils</groupId>
+            <artifactId>commons-dbutils</artifactId>
+            <version>1.6</version>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.39</version>
         </dependency>
 
         <dependency>
@@ -151,6 +175,7 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
+
 
 
     </dependencies>
@@ -233,7 +258,7 @@
                 </property>
             </activation>
             <properties>
-                <package-dependency-scope>provided</package-dependency-scope>
+                <!--<package-dependency-scope>provided</package-dependency-scope>-->
                 <package-format>tar.gz</package-format>
                 <package-includeBaseDirectory>true</package-includeBaseDirectory>
                 <package-output-dir>${project.parent.build.directory}</package-output-dir>

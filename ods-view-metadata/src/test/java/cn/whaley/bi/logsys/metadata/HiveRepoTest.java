@@ -2,6 +2,7 @@ package cn.whaley.bi.logsys.metadata;
 
 
 import cn.whaley.bi.logsys.metadata.entity.HiveFieldInfo;
+import cn.whaley.bi.logsys.metadata.entity.HiveTableInfo;
 import cn.whaley.bi.logsys.metadata.repository.HiveRepo;
 import cn.whaley.bi.logsys.metadata.service.HiveUtil;
 import org.junit.Before;
@@ -11,7 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -40,7 +43,7 @@ public class HiveRepoTest {
     @Test
     public void Test2() {
         String dbName = "ods_view";
-        String tabName = "log_medusa_main3x_switchonoff";
+        String tabName = "log_whaleytv_all_on";
         List<HiveFieldInfo> fieldInfos = repo.getTabFieldInfo(dbName, tabName);
         for (HiveFieldInfo fieldInfo : fieldInfos) {
             LOG.info("{} {} {}", fieldInfo.getPartitionField(), fieldInfo.getColName(), fieldInfo.getDataType());
@@ -70,5 +73,11 @@ public class HiveRepoTest {
                 });
     }
 
+    @Test
+    public void Test5() {
+        ArrayList<String> dbNameAndTabNameArray = new ArrayList<>();
+        dbNameAndTabNameArray.add("ods_view.log_whaleytv_all_on");
+        Map<String, HiveTableInfo> tabInfo = repo.getTabInfo(dbNameAndTabNameArray);
 
+    }
 }

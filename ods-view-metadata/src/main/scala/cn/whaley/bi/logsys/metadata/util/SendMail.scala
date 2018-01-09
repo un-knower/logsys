@@ -82,7 +82,8 @@ object SendMail {
 
 
   def main(args: Array[String]): Unit = {
-    val arr = Array("guo.hao@whaley.cn")
-    SendMail.post("aaa","test",arr)
+//    val arr = Array("guo.hao@whaley.cn")
+//    SendMail.post("aaa","test",arr)
+    cn.whaley.bigdata.dw.HiveUtil.generateTblProperties("ods_view", "log_medusa_main3x_play")
   }
 }

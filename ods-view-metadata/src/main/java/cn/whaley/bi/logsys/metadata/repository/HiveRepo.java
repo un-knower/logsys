@@ -57,7 +57,8 @@ public class HiveRepo {
             statement.execute("use " + dbName);
             ResultSet rs = statement.executeQuery(String.format("show tables like '%s'", tabName));
             while (rs.next()) {
-                if (rs.getString(2).equalsIgnoreCase(tabName)) {
+                //通过 hive thrift  columnIndex=1 ,spark thrift columnIndex=2
+                if (rs.getString(1).equalsIgnoreCase(tabName)) {
                     return true;
                 }
             }
@@ -102,7 +103,6 @@ public class HiveRepo {
                 } else {
                     String dbName = dbNameDotTabName[0];
                     String tabName = dbNameDotTabName[1];
-                    LOG.info("dbName ->"+dbName+", tabName->"+tabName);
                     Boolean tabExists = this.tabExists(dbName, tabName, conn);
                     tableInfo.setDbName(dbName);
                     tableInfo.setTabName(tabName);
@@ -156,12 +156,12 @@ public class HiveRepo {
 
     /**
      * 获取特定表的字段类型信息
-     *
+     * spark thrift
      * @param dbName
      * @param tabName
      * @return
      */
-    private List<HiveFieldInfo> getTabFieldInfo(String dbName, String tabName, Connection conn) {
+    private List<HiveFieldInfo> getTabFieldInfo2(String dbName, String tabName, Connection conn) {
 
         try {
             List<HiveFieldInfo> fieldInfos = new ArrayList<>();
@@ -204,7 +204,7 @@ public class HiveRepo {
         }
     }
 
-    private List<HiveFieldInfo> getTabFieldInfo2(String dbName, String tabName, Connection conn) {
+    private List<HiveFieldInfo> getTabFieldInfo(String dbName, String tabName, Connection conn) {
 
         try {
             List<HiveFieldInfo> fieldInfos = new ArrayList<>();
