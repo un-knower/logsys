@@ -63,6 +63,7 @@ object PostProcess extends NameTrait with LogTrait{
 
     if(!baseInfo.isEmpty && baseInfo.get != null  ){
       //移除happenTime
+      baseInfo.get.remove("appId")
       baseInfo.get.remove("happenTime")
       //baseInfo 合并到body
       body.remove("baseInfo")

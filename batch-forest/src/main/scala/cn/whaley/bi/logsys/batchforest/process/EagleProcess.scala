@@ -48,6 +48,7 @@ object EagleProcess extends NameTrait with LogTrait{
     if(!baseInfo.isEmpty && baseInfo.get != null  ){
       //baseInfo 合并到body
       apkVersion = baseInfo.get.getString("apkVersion")
+      baseInfo.get.remove("appId")
       body.remove("baseInfo")
       body.asInstanceOf[java.util.Map[String,Object]].putAll(baseInfo.get)
     }
