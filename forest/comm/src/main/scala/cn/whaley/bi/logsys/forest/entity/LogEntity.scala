@@ -114,7 +114,7 @@ class LogEntity(from: MsgEntity) extends MsgEntity(from) {
             null
         }
 
-        jsonObj.put("realLogType", realLogType)
+        jsonObj.put("realLogType", realLogType.replace("-","_"))
     }
 
 }
