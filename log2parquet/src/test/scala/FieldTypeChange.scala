@@ -6,11 +6,13 @@ import scala.io.Source
   */
 object FieldTypeChange {
   def main(args: Array[String]): Unit = {
-    switch(0,"int","Long","2","field")
-    switch(18,"int2","Long","2","table")
-    switch(356,"arrayString","ArrayString","5","table")
-    switch(368,"arrayStruct","ArrayStruct","7","table")
+//    switch(0,"int","Long","2","field")
+//    switch(18,"int2","Long","2","table")
+//    switch(356,"arrayString","ArrayString","5","table")
+//    switch(368,"arrayStruct","ArrayStruct","7","table")
 
+    val a = 0.1
+    println(Math.ceil(a))
 
 //    a()
   }

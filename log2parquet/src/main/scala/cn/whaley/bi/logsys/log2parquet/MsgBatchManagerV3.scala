@@ -146,7 +146,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         entity.getTableName
       })
       rddSchema = rddSchema.filter(f=>{
-        val tableName = f._2.getString("tableName")
+        val tableName = f._2.getString("svrTableName")
         if(blackTableList.contains(tableName)){
           false
         }else{
@@ -164,7 +164,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       val jSONObject = row._2
       //tableName
       val realLogType = jSONObject.getString("realLogType")
-      val tableName = jSONObject.getString("tableName")
+      val tableName = jSONObject.getString("svrTableName")
 
       //全量字段
       val fieldAllMap = if(fieldLevel.size != 0 ){
@@ -198,20 +198,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         }
       })
 
-/*
-      //1.field level
-     if(fieldLevel.size != 0){
-       processFiledType(jSONObject,fieldLevel.get("ALL").get.toMap)
-     }
-      //2.realLogType level
-      if(realLogTypeLevel.size != 0 && realLogTypeLevel.keySet.contains(realLogType)){
-        processFiledType(jSONObject,realLogTypeLevel.get(realLogType).get.toMap)
-      }
-      //3.table level
-      if(tableLevel.size != 0 && tableLevel.keySet.contains(tableName)){
-        processFiledType(jSONObject,tableLevel.get(tableName).get.toMap)
-      }*/
-      jSONObject.remove("tableName")
+      jSONObject.remove("svrTableName")
       (path,jSONObject)
     })
 //    pathRdd.foreach(f=>{
@@ -871,22 +858,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         json.remove(key)
       }
     }
-  }
-
-  /**
-    * 判读字段类型转换是否合法
-    * @return
-    */
-  def isDoubleValid(s:String)={
-    val regex = "^([0-9]+)|([0-9]+.[0-9]+)$"
-    s.matches(regex)
-  }
-
-
-  def isLongValid(s:String)={
-    //转整型
-    val regex = "^([0-9]+)$"
-    s.matches(regex)
   }
 
 
