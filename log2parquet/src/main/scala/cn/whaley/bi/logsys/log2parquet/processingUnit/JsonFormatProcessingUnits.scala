@@ -157,7 +157,7 @@ class JsonFormatProcessingUnits extends LogProcessorTraitV2 with LogTrait {
     val sysPlatform = getStringValue(json, SYS_PLATFORM)
 
     if (productSN != "" && productSN.startsWith("P") || productSN.startsWith("B") ||
-      productSN.startsWith("A") || orcaWhiteList(productSN)) {
+      productSN.startsWith("A") || productSN.startsWith("C") || orcaWhiteList(productSN)) {
       productLine = "orca"
       json.put(PRODUCT_LINE, "orca")
     } else if (productLine == null || productLine.isEmpty) {

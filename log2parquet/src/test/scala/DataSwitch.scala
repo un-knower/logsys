@@ -14,6 +14,7 @@ class DataSwitch {
     val json = new JSONObject()
     json.put("a","2.3")
 
+    println("aaaaaa "+json.getString("aaaa"))
 
 
     println(s"json 000... ${json}")

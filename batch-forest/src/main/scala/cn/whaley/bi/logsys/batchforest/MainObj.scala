@@ -64,7 +64,8 @@ object MainObj extends NameTrait with LogTrait{
         "boikgpokn78sb95kkls3bhmtjqosocdj",
         "boikgpokn78sb95kkls3bhmtichjhhm8",
         "boikgpokn78sb95ktmsc1bnkklf477ap",
-        "boikgpokn78sb95kicggqhbkepkseljn")
+        "boikgpokn78sb95kicggqhbkepkseljn",
+        "boikgpokn78sb95kjhfrendoikjf9uhc")
 
       paths = appId match {
         //过滤不需要转换的appId
@@ -96,7 +97,7 @@ object MainObj extends NameTrait with LogTrait{
       inputsize = inputsize/(1024*1024)
       val times = 1.1 //膨胀系数
       //block大小256
-      val partitionNum = (inputsize*times/256).toInt
+      val partitionNum = Math.ceil(inputsize*times/256).toInt
       println(s"inputsize is ${inputsize}")
       println(s"partitionNum is ${partitionNum}")
 

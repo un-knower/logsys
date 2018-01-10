@@ -7,11 +7,14 @@ import scala.io.Source
 object FieldTypeChange {
   def main(args: Array[String]): Unit = {
 //    switch(0,"int","Long","2","field")
-//    switch(104,"arrayString","ArrayString","5","table")
-//    switch(116,"arrayStruct","ArrayStruct","7","table")
+//    switch(18,"int2","Long","2","table")
+//    switch(356,"arrayString","ArrayString","5","table")
+//    switch(368,"arrayStruct","ArrayStruct","7","table")
 
+    val a = 0.1
+    println(Math.ceil(a))
 
-    a()
+//    a()
   }
 
 
@@ -50,10 +53,25 @@ object FieldTypeChange {
   def a(): Unit ={
     val path = Thread.currentThread().getContextClassLoader.getResource("aaa").getPath
     val lines = Source.fromFile(path).getLines()
+    val sb = new StringBuilder
     while (lines.hasNext) {
       val line = lines.next()
-      if(line.contains("ALTER TABLE")){
-        println(line +"` CHANGE COLUMN `status` `status` string ;")
+      val tableName = line.split("\\|")(0)
+      val fieldName = line.split("\\|")(1)
+
+      println("ALTER TABLE `ods_view`.`"+tableName+"` CHANGE COLUMN `"+fieldName+"` `"+fieldName+"` bigint ;")
+
+    }
+
+  }
+
+  def b(): Unit ={
+    val path = Thread.currentThread().getContextClassLoader.getResource("aaa").getPath
+    val lines = Source.fromFile(path).getLines()
+    while (lines.hasNext) {
+      val line = lines.next()
+      if(line.contains("log_")){
+        println(line)
       }
     }
   }

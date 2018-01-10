@@ -64,25 +64,6 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
 
 
     /**
-     * 对RDD的每条记录解析其输出路径,格式错误的行将被忽略
-      *
-     * @return
-     */
- /*   def parseLogStrRddPath(rdd: RDD[String])(implicit accumulator:LongAccumulator=rdd.sparkContext.longAccumulator): RDD[(String, JSONObject, scala.collection.mutable.Map[String,String])] = {
-        val jsonObjRdd = rdd.map(row => {
-            try {
-                Some(JSON.parseObject(row))
-            }
-            catch {
-                case _: Throwable => {
-                    None
-                }
-            }
-        }).filter(row => row.isDefined).map(row => row.get)
-        parseLogObjRddPath(jsonObjRdd)
-    }*/
-
-    /**
      * 对RDD的每条记录解析其输出路径
       *
       * @param rdd
@@ -98,16 +79,6 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
         rdd.map(jsonObj => parseLogObjPath(myAccumulator,jsonObj, dbNameFieldMap, tabNameFieldMap, parFieldMap,key_day,key_hour)).filter(rdd=>rdd._1 !=null)
     }
 
-  /*  def parseLogObjRddPathTest(rdd: RDD[JSONObject]): RDD[(String, JSONObject,scala.collection.mutable.Map[String,String])] = {
-        /*  val dbNameFieldMap = resolveAppLogKeyFieldDescConfig(0)
-          val tabNameFieldMap = resolveAppLogKeyFieldDescConfig(1)
-          val parFieldMap = resolveAppLogKeyFieldDescConfig(2)*/
-
-        val d = Map("ALL" -> List(("ALL", "db_name", "ods_view", 0)))
-        val t = Map("boikgpokn78sb95ktmsc1bnkechpgj9l" -> List(("ALL", "tab_prefix", "log", 0), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "product_code", "medusa", 1), ("boikgpokn78sb95ktmsc1bnkechpgj9l", "app_code", "main3x", 2), ("ALL", "logType", null, 3), ("ALL", "eventId", null, 4)))
-        val partitionMap = Map("ALL" -> List(("ALL", "key_day", null, 0), ("ALL", "key_hour", null, 1)))
-        rdd.map(jsonObj => parseLogObjPath(jsonObj, d, t, partitionMap))
-    }*/
 
     /**
      * 解析某条日志记录的输出路径
@@ -150,7 +121,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
             myAccumulator.add("exceptionJsonAcc")
             path = null
         }
-        logObj.put("tableName",tabNameStr.replace("-","_"))
+        logObj.put("svrTableName",tabNameStr.replace("-","_"))
         (path, logObj,dbMap++tableMap++parMap+(LogKeys.LOG_APP_ID->appId))
     }
 
@@ -231,27 +202,18 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 }
                 case _ => ""
             }
-
            /* if(realLogType == null){
               realLogType = "default"
             }*/
            if(isInValidLogType(realLogType)){
              return  ("",scala.collection.mutable.HashMap.empty[String,String])
            }
+          realLogType = realLogType.replace("-","_")
             jsonObj.put(LogKeys.LOG_BODY_REAL_LOG_TYPE,realLogType.toLowerCase)
             val fields = conf.get.map(field => {
                 val fieldName = field._2
                 var fieldValue = field._3
                 val fieldOrder = field._4
-                /*if (fieldName == "key_day" && !logBody.containsKey("key_day")) {
-                    val logTime = new Date()
-                    logTime.setTime(jsonObj.getLongValue("logTime"))
-                    fieldValue = new SimpleDateFormat("yyyyMMdd").format(logTime)
-                } else if (fieldName == "key_hour" && !logBody.containsKey("key_hour")) {
-                    val logTime = new Date()
-                    logTime.setTime(jsonObj.getLongValue("logTime"))
-                    fieldValue = new SimpleDateFormat("HH").format(logTime)
-                }*/
 
                 if (fieldName == LogKeys.LOG_KEY_DAY) {
                     fieldValue = key_day

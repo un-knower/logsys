@@ -1,3 +1,4 @@
+
 package cn.whaley.bi.fresh
 
 import org.apache.spark.SparkConf
@@ -17,9 +18,15 @@ object ParquetSchema {
     val inputPath = "/data_warehouse/ods_view.db/log_medusa_main3x_medusa_launcher_area_quit/key_day=20180102/key_hour=08"
 
     val df = sparkSession.read.parquet(inputPath)
-    for (field <- df.schema) {
-      val name = field.name
-      val dataType = field.dataType
+    df.printSchema()
+
+    val a  = df.schema.fields
+
+
+
+    for (stuctField <- df.schema.fields) {
+//      val name = stuctField.name
+      val dataType = stuctField.dataType
       buildFormattedString(dataType)
     }
 
@@ -30,10 +37,11 @@ object ParquetSchema {
                       ): Unit = {
     dataType match {
       case array: ArrayType =>
+        array.elementType
         println(s"name ${dataType.typeName}")
 //        dataType.typeName.
         buildFormattedArray(dataType)
-      case struct: StructType =>  println(s"name ${dataType.typeName}")
+      case struct: StructType =>  println(s"name ${dataType}")
       case map: MapType =>
       case _ =>
     }
