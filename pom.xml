@@ -23,6 +23,7 @@
         <module>batch-forest</module>
         <module>metadataMerge</module>
         <module>metadataManage</module>
+        <module>FreshSchema</module>
 
     </modules>
 
