@@ -37,6 +37,11 @@ trait MsgSinkTrait {
      */
     def getTopicLastOffset(sourceTopic: String, sourceLatestOffset: Map[Int, Long], maxMsgCount: Int): Map[Int, Long]
 
+    /**
+      * 保存监控数据
+      * @param monitorInfo 监控数据
+      */
+    def saveMonitorInfo(monitorInfo: JSONObject): Unit
 
     /**
      * 构建同步信息

@@ -14,15 +14,27 @@
     </property>
     <property>
         <name>MsgBatchManager.batchSize</name>
-        <value>${prop.KafkaMsgSource.batchSize}</value>
+        <value>${prop.MsgBatchManager.batchSize}</value>
     </property>
     <property>
         <name>MsgBatchManager.callableSize</name>
-        <value>${prop.KafkaMsgSource.callableSize}</value>
+        <value>${prop.MsgBatchManager.callableSize}</value>
     </property>
     <property>
         <name>MsgBatchManager.recoverSourceOffsetFromSink</name>
-        <value>${prop.KafkaMsgSource.recoverSourceOffsetFromSink}</value>
+        <value>${prop.MsgBatchManager.recoverSourceOffsetFromSink}</value>
+    </property>
+    <property>
+        <name>MsgBatchManager.resetOffsetToLatest</name>
+        <value>${prop.KafkaMsgSource.resetOffsetToLatest}</value>
+    </property>
+    <property>
+        <name>MsgBatchManager.callableWaitSize</name>
+        <value>${prop.MsgBatchManager.callableWaitSize}</value>
+    </property>
+    <property>
+        <name>MsgBatchManager.callableWaitSec</name>
+        <value>${prop.MsgBatchManager.callableWaitSec}</value>
     </property>
     <!-- KafkaMsgSource -->
     <property>
@@ -42,6 +54,10 @@
         <value>${prop.KafkaMsgSource.defaultOffset}</value>
     </property>
     <property>
+        <name>KafkaMsgSource.queueCapacity</name>
+        <value>${prop.KafkaMsgSource.queueCapacity}</value>
+    </property>
+    <property>
         <name>KafkaMsgSource.logPerMsgCount</name>
         <value>${prop.KafkaMsgSource.logPerMsgCount}</value>
     </property>
@@ -58,10 +74,23 @@
         <name>KafkaMsgSink.include</name>
         <value>kafka-producer.xml</value>
     </property>
+    <!-- ConfigurableKafkaMsgSink -->
+    <property>
+        <name>ConfigurableKafkaMsgSink.class</name>
+        <value>cn.whaley.bi.logsys.forest.sinker.ConfigurableKafkaMsgSink</value>
+    </property>
+    <property>
+        <name>ConfigurableKafkaMsgSink.include</name>
+        <value>kafka-producer.xml</value>
+    </property>
     <!-- HdfsMsgSink -->
     <property>
         <name>HdfsMsgSink.class</name>
         <value>cn.whaley.bi.logsys.forest.sinker.HdfsMsgSink</value>
+    </property>
+    <property>
+        <name>HdfsMsgSink.codec</name>
+        <value>${prop.HdfsMsgSink.codec}</value>
     </property>
     <property>
         <name>HdfsMsgSink.commitOpCount</name>

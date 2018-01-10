@@ -3,22 +3,23 @@ package cn.whaley.bi.logsys.forest.sinker
 
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.{Timer, TimerTask, Date}
-import java.util.concurrent.atomic.{AtomicInteger, AtomicBoolean}
-import java.util.concurrent.locks.{ReentrantReadWriteLock}
+import java.util.{Date, Timer, TimerTask}
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.concurrent.{CountDownLatch, Executors}
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.forest.{ProcessResult}
-import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
+import cn.whaley.bi.logsys.forest.ProcessResult
+import cn.whaley.bi.logsys.forest.Traits.{InitialTrait, LogTrait, NameTrait}
 import cn.whaley.bi.logsys.forest.entity.LogEntity
-import com.alibaba.fastjson.{JSON}
+import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FSDataOutputStream, Path, FileSystem}
+import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.hadoop.io.compress.CompressionCodec
 import org.apache.hadoop.io.{IOUtils, SequenceFile, Text}
 import org.apache.hadoop.util.ReflectionUtils
 import org.slf4j.LoggerFactory
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
@@ -154,6 +155,14 @@ class HdfsMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Log
         })
         offsetMap.toMap
     }
+
+
+    /**
+      * 保存监控数据
+      *
+      * @param monitorInfo 监控数据
+      */
+    override def saveMonitorInfo(monitorInfo: JSONObject): Unit = {}
 
     /**
      * 保存正常数据

@@ -1,6 +1,9 @@
 package cn.whaley.bi.logsys.forest.entity
 
+import java.util.Date
+
 import com.alibaba.fastjson.{JSONArray, JSONObject}
+import org.apache.commons.lang.time.DateFormatUtils
 
 /**
  * Created by fj on 17/5/2.
@@ -43,6 +46,19 @@ class MsgBodyEntity(from: JSONObject) extends JSONObject(from) {
 
         if (body == null) {
             return Array(this)
+        }
+        val logTime = this.getLong("svr_receive_time")
+        if(logTime != null) {
+            try {
+                val date = new Date(logTime)
+                val dateStr = DateFormatUtils.format(date, "yyyy-MM-dd")
+                val datetime = DateFormatUtils.format(date, "yyyy-MM-dd HH:mm:ss")
+                this.put("date", dateStr)
+                this.put("day", dateStr)
+                this.put("datetime", datetime)
+            }catch {
+                case e: Exception =>
+            }
         }
         if (body.isInstanceOf[JSONObject]) {
             this.asInstanceOf[java.util.Map[String, Object]].putAll(body.asInstanceOf[JSONObject])

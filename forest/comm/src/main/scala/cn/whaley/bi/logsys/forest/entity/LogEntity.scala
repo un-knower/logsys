@@ -75,11 +75,11 @@ class LogEntity(from: MsgEntity) extends MsgEntity(from) {
         this.removeMsgBody
         val size = normalizeMsgBody.size
         val entities = for (i <- 0 to size - 1) yield {
-            //只有一个消息体则可避免一次不必要的复制
-            val entity = if (i == 0) this else LogEntity.copy(this)
+            val entity = LogEntity.copy(this)
             val logId = this.msgId + StringUtil.fixLeftLen(Integer.toHexString(i), '0', 4)
             entity.updateLogId(logId)
             entity.updateLogBody(normalizeMsgBody(i))
+            addRealLogType(entity.getJSONObject(LogEntity.KEY_LOG_BODY))  //增加realLogType字段
 
             //提升公共字段
             MsgEntity.translateProp(entity.logBody, LogEntity.KEY_APP_ID, entity, LogEntity.KEY_APP_ID)
@@ -90,6 +90,31 @@ class LogEntity(from: MsgEntity) extends MsgEntity(from) {
             entity
         }
         entities
+    }
+
+    private def addRealLogType(jsonObj: JSONObject): Unit = {
+        if(jsonObj.containsKey("logtype") && !jsonObj.containsKey("logType")){
+            val logType = jsonObj.get("logtype")
+            jsonObj.put("logType", logType)
+            jsonObj.remove("logtype")
+        }
+
+        val logType = jsonObj.getString("logType")
+        val realLogType = if("event".equals(logType)){
+            jsonObj.getString("eventId")
+        }else if("start_end".equals(logType)){
+            jsonObj.getString("actionId")
+        }else if(logType != null && logType.length > 0){
+            logType
+        }else if(jsonObj.getString("eventId") != null) {
+            jsonObj.getString("eventId")
+        }else if(jsonObj.getString("actionId") != null) {
+            jsonObj.getString("actionId")
+        } else {
+            null
+        }
+
+        jsonObj.put("realLogType", realLogType.replace("-","_"))
     }
 
 }

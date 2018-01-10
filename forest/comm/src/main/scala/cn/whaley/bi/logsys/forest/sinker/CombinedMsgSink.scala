@@ -4,8 +4,9 @@ import java.util.concurrent.CountDownLatch
 
 import cn.whaley.bi.logsys.common.ConfManager
 import cn.whaley.bi.logsys.forest.ProcessResult
-import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
+import cn.whaley.bi.logsys.forest.Traits.{InitialTrait, LogTrait, NameTrait}
 import cn.whaley.bi.logsys.forest.entity.LogEntity
+import com.alibaba.fastjson.JSONObject
 
 /**
  * Created by fj on 2017/6/27.
@@ -39,6 +40,13 @@ class CombinedMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with
     override def getTopicLastOffset(sourceTopic: String, sourceLatestOffset: Map[Int, Long], maxMsgCount: Int): Map[Int, Long] = {
         throw new UnsupportedOperationException
     }
+
+    /**
+      * 保存监控数据
+      *
+      * @param monitorInfo 监控数据
+      */
+    override def saveMonitorInfo(monitorInfo: JSONObject): Unit = {}
 
     /**
      * 保存处理后的数据

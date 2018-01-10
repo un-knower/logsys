@@ -6,10 +6,12 @@ import java.util.Date
 import java.util.concurrent._
 
 import cn.whaley.bi.logsys.common.ConfManager
-import cn.whaley.bi.logsys.forest.Traits.{LogTrait, NameTrait, InitialTrait}
-import cn.whaley.bi.logsys.forest.entity.{LogEntity}
+import cn.whaley.bi.logsys.forest.Traits.{InitialTrait, LogTrait, NameTrait}
+import cn.whaley.bi.logsys.forest.entity.LogEntity
 import cn.whaley.bi.logsys.forest.sinker.MsgSinkTrait
+import com.alibaba.fastjson.JSONObject
 import org.apache.commons.lang.exception.ExceptionUtils
+import org.apache.commons.lang.time.DateFormatUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
 import scala.collection.JavaConversions._
@@ -42,6 +44,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
         batchSize = confManager.getConfOrElseValue(this.name, "batchSize", "4000").toInt
         callableSize = confManager.getConfOrElseValue(this.name, "callableSize", "2000").toInt
         recoverSourceOffsetFromSink = confManager.getConfOrElseValue(this.name, "recoverSourceOffsetFromSink", "1").toInt
+        resetOffsetToLatest = confManager.getConfOrElseValue(this.name, "resetOffsetToLatest", "0").toInt
         callableWaitSize = confManager.getConfOrElseValue(this.name, "callableWaitSize", callableWaitSize.toString).toInt
         callableWaitSec = confManager.getConfOrElseValue(this.name, "callableWaitSec", callableWaitSec.toString).toInt
 
@@ -192,9 +195,14 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                 if (listSize == 0) {
                     LOG.info("message list is empty.")
                 } else {
+                    val monitorMsg = new JSONObject()
+                    monitorMsg.put("topic", topic)
+                    monitorMsg.put("messageSize", listSize)
+                    monitorMsg.put("machineId", machineId)
+                    monitorMsg.put("time", DateFormatUtils.format(monitor.getTaskFrom(), "yyyy-MM-dd HH:mm:ss"))
 
                     //分批次提交消息处理任务,利用多线程加快处理进度
-                    val callableCount: Int = Math.max(1, Math.ceil(listSize / callableSize).toInt)
+                    val callableCount: Int = Math.max(1, Math.ceil(listSize * 1.0 / callableSize).toInt)
                     val futures =
                         for (i <- 0 to callableCount - 1) yield {
                             callId = callId + 1
@@ -206,21 +214,31 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                             future
                         }
 
-                    LOG.info(s"${topic}-taskSubmit(${callableCount},${callableSize}):${monitor.checkStep()}")
+                    val submitStep = monitor.checkStep()
+                    LOG.info(s"${topic}-taskSubmit(${callableCount},${callableSize}):${submitStep}")
+                    monitorMsg.put("submitStepMillis", submitStep._2)
+                    monitorMsg.put("processCallableCount", callableCount)
 
                     //等待所有消息处理任务执行完毕,sink端采用单线程模式
                     val procResults = futures.map(future => {
                         future.get
                     }).sortBy(_._1).flatMap(_._2)
-                    LOG.info(s"${topic}-msgProcess(${procResults.size}):${monitor.checkStep()}")
+                    val processStep = monitor.checkStep()
+                    LOG.info(s"${topic}-msgProcess(${procResults.size}):${processStep}")
+                    monitorMsg.put("processStepMillis", processStep._2)
+                    monitorMsg.put("msgProcessSize", procResults.size)
 
                     //发送处理成功的数据
                     val ret = msgSink.saveProcMsg(procResults)
-                    LOG.info(s"${topic}-msgSave(${ret._1},${ret._2}):${monitor.checkStep()}")
+                    val saveStep = monitor.checkStep()
+                    LOG.info(s"${topic}-msgSave(${ret._1},${ret._2}):${saveStep}")
+                    monitorMsg.put("saveStepMillis", saveStep._2)
+                    monitorMsg.put("msgSaveSize", ret._1)
 
                     //打印错误日志
                     val errorResults = procResults.filter(result => result._2.hasErr == true).toList
                     val errorCount = errorResults.size
+                    monitorMsg.put("msgProcessErrSize", errorCount)
                     if (errorCount > 0) {
                         LOG.error(s"${errorCount} messages processed failure.")
                         errorResults.foreach(err => {
@@ -242,7 +260,11 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                     })
 
                     msgCount = msgCount + list.size()
-                    LOG.info(s"${topic}-done(${listSize}):${monitor.checkDone()}:${offset}")
+                    val doneStep = monitor.checkDone()
+                    LOG.info(s"${topic}-done(${listSize}):${doneStep}:${offset}")
+                    monitorMsg.put("overallMsgSize", msgCount)
+                    monitorMsg.put("taskMillis", doneStep._2)
+                    msgSink.saveMonitorInfo(monitorMsg)
                 }
             }
 
@@ -290,7 +312,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
 
             /**
              * 检查单步
-             * @return (单步序号，单步起始时间，单步耗时)
+             * @return (单步序号，单步耗时，单步起始时间)
              */
             def checkStep(): (Int, Long, String) = {
                 step = step + 1
@@ -373,16 +395,19 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
                         (arrItem._1, arrItem._2.maxBy(_._2)._2)
                     })
                     LOG.info(s"offsetInfo:[${offset.mkString(",")}]")
-                    offsetMap.put(topic, offset)
+                    if(offset.nonEmpty) {
+                        offsetMap.put(topic, offset)
+                    }
                 }
             })
-        }
-
-        if (offsetMap.size > 0) {
-            LOG.info(s"commitOffset:${offsetMap}")
-            msgSource.seekOffset(offsetMap.toMap)
-        } else {
-            LOG.info(s"commitOffset:None")
+            if (offsetMap.size > 0) {
+                LOG.info(s"commitOffset:${offsetMap}")
+                msgSource.seekOffset(offsetMap.toMap)
+            } else {
+                LOG.info(s"commitOffset:None")
+            }
+        } else if (resetOffsetToLatest == 1) {
+            msgSource.seekOffsetToEnd()
         }
 
         //启动消费线程
@@ -448,6 +473,8 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     private var processThreadErr: Int = 0
     //是否从消息目标系统中恢复消息源系统的offset
     private var recoverSourceOffsetFromSink: Int = 1
+    //是否重置为从最新开始消费
+    private var resetOffsetToLatest: Int = 0
     private var msgSource: KafkaMsgSource = null
     private var msgSink: MsgSinkTrait = null
     private var processorChain: GenericProcessorChain = null
@@ -456,6 +483,7 @@ class MsgBatchManager extends InitialTrait with NameTrait with LogTrait {
     private var callableSize: Int = 2000
     private var callableWaitSize: Int = 100
     private var callableWaitSec: Int = 1
+    private val machineId = ConfigUtils.getMachineId
 
     val shutdownLatch = new CountDownLatch(1)
 

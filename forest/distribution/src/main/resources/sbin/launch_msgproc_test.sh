@@ -52,7 +52,7 @@ fi
 
 
 if [ -z "$groupId" ]; then
-    groupId="forest-dist-${taskName}"
+    groupId="forest-dist-${taskName}-test"
 fi
 if [ -n "$taskId" ]; then
     taskName="${taskName}${taskId}"
@@ -87,6 +87,7 @@ case "$cmd" in
         nohup ../bin/launch_executor.sh MsgProcExecutor \
             --f MsgBatchManager.xml,settings.properties \
             --c prop.KafkaMsgSource.topicRegex=$topicRegex \
+            --c prop.KafkaMsgSource.resetOffsetToLatest=1 \
             --c prop.kafka-consumer.group.id=${groupId}
             >> ${logFile} 2>&1 &
         set +x

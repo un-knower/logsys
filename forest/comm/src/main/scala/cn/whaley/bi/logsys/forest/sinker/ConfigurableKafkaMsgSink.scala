@@ -1,20 +1,24 @@
 package cn.whaley.bi.logsys.forest.sinker
 
 import java.net.Socket
+import java.util
+import java.util.Date
 
 import cn.whaley.bi.logsys.common.{ConfManager, KafkaUtil}
-import cn.whaley.bi.logsys.forest.{ProcessResult}
+import cn.whaley.bi.logsys.forest.{DBOperationUtils, ProcessResult}
 import cn.whaley.bi.logsys.forest.Traits.{InitialTrait, LogTrait, NameTrait}
 import cn.whaley.bi.logsys.forest.entity.LogEntity
 import com.alibaba.fastjson.{JSON, JSONObject}
+import org.apache.commons.lang.time.DateFormatUtils
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 import scala.collection.mutable
+import collection.JavaConversions._
 
 /**
- * Created by fj on 16/10/30.
+ * Created by lituo on 17/12/14.
  */
-class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with LogTrait {
+class ConfigurableKafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with LogTrait {
 
     /**
      * 初始化方法
@@ -34,14 +38,12 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
         //实例化kafka生产者
         kafkaProducer = new KafkaProducer[Array[Byte], Array[Byte]](kafkaConf)
 
-        //目标topic名前缀
-        targetTopicPrefix = confManager.getConfOrElseValue(this.name, "targetTopicPrefix", targetTopicPrefix)
-
-        //lobBody过滤对象
-        logFilter = JSON.parseObject(confManager.getConfOrElseValue(this.name, "logFilter", "{}"))
-
         //是否保存错误数据
         saveErrorData = confManager.getConfOrElseValue(this.name, "saveErrorData", "true").toBoolean
+
+        dBOperationUtils = new DBOperationUtils("streaming")
+
+        startConfigUpdateThread()
 
     }
 
@@ -73,33 +75,6 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
      */
     override def getTopicLastOffset(sourceTopic: String, sourceLatestOffset: Map[Int, Long], maxMsgCount: Int): Map[Int, Long] = {
         val offsetMap = new mutable.HashMap[Int, Long]
-        val topicPrefix = getTargetTopic(sourceTopic, null)
-        val targetTopics = kafkaUtil.getTopics().filter(topic => topic.startsWith(topicPrefix))
-        LOG.info("get sourceTopic offset from :{}", targetTopics.mkString(","))
-
-        targetTopics.foreach(targetTopic => {
-            val msgs = kafkaUtil.getLatestMessage(targetTopic, maxMsgCount)
-            msgs.foreach(msg => {
-                msg._2.map(item => {
-                    val strKey = new String(item.key(), "UTF-8")
-                    val offsetInfo = getOffsetInfoFromKey(strKey, sourceTopic)
-                    //LOG.info(s"key:${strKey},offsetInfo:${offsetInfo}")
-                    if (offsetInfo.isDefined) {
-                        val partition = offsetInfo.get._1
-                        val fromOffset = offsetInfo.get._2 + 1
-                        val oldValue = offsetMap.getOrElse(partition, 0L)
-                        val newValue = Math.max(fromOffset, oldValue)
-                        //最后偏移不能大于源topic的最后偏移值
-                        val latestOffsetValue = sourceLatestOffset.getOrElse(partition, 0L)
-                        val value = Math.min(newValue, latestOffsetValue)
-                        offsetMap.put(partition, value)
-                        //LOG.info(s"update offsetMap:${partition},${value}")
-                    }
-                })
-            })
-            LOG.info(s"getTopicLastOffset msgs:${targetTopic};${maxMsgCount};${msgs.map(item => (item._1, item._2.length))};${sourceLatestOffset.mkString(",")};${offsetMap.mkString(",")}")
-        })
-
         offsetMap.toMap
     }
 
@@ -109,27 +84,56 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
       *
       * @param monitorInfo 监控数据
       */
-    override def saveMonitorInfo(monitorInfo: JSONObject): Unit = {}
+    override def saveMonitorInfo(monitorInfo: JSONObject): Unit = {
+        val key: Array[Byte] = monitorInfo.getString("time").getBytes()
+        val value: Array[Byte] = monitorInfo.toJSONString.getBytes()
+        val targetTopic: String = "forest-monitor"
+        val record = new ProducerRecord[Array[Byte], Array[Byte]](targetTopic, key, value)
+        kafkaProducer.send(record)
+    }
 
     /**
      * 保存正常数据
-     * @param datas
+      *
+      * @param datas
      */
     private def saveSuccess(datas: Seq[(KafkaMessage, ProcessResult[Seq[LogEntity]])]): Int = {
+
         var count = 0
+//        var errorCount = 0
+//        var output = false
+
         val items = datas.flatMap(data => {
-            data._2.result.get.map(log => (data._1, log))
-        }).filter(item => isOK(item._2, logFilter))
+            data._2.result.get.map(log => {
+                val topics = filterConfig.values.toArray
+                  .filter(c => log.appId.contains(c._1) && isOK(log.logBody, c._3)).map(_._2)
+//                if(log.logBody.get("realLogType") == null) {
+//                    errorCount = errorCount + 1
+//                    if(!output) {
+//                        LOG.info(log.logBody.toString)
+//                        output = true
+//                    }
+//                }
+                (data._1, log.logBody, topics)  //只获取logBody
+            }).filter(_._3.length > 0)
+        })
+//        LOG.info("没有realLogType条数" + errorCount)
+        val produceTime = DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss")
+
         items.foreach(item => {
             val message: KafkaMessage = item._1
-            val log: LogEntity = item._2
-            val targetTopic: String = getTargetTopic(message.topic(), log)
+            val log: JSONObject = item._2
+            log.put("forestProduceTime", produceTime)
             val key: Array[Byte] = getKeyFromSource(message).getBytes()
             val value: Array[Byte] = log.toJSONString.getBytes()
-            val record = new ProducerRecord[Array[Byte], Array[Byte]](targetTopic, key, value)
-            kafkaProducer.send(record)
+            item._3.foreach(item_topic => {
+                val targetTopic: String = item_topic
+                val record = new ProducerRecord[Array[Byte], Array[Byte]](targetTopic, key, value)
+                kafkaProducer.send(record)
+            })
             count = count + 1
         })
+
         count
     }
 
@@ -179,19 +183,6 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
         ok
     }
 
-    private def getTargetTopic(sourceTopic: String, logEntity: LogEntity): String = {
-        val targetTopic =
-            if (logEntity != null) {
-                s"${targetTopicPrefix}-${logEntity.appId}"
-            } else {
-                if (sourceTopic.startsWith("log-raw-")) {
-                    s"${targetTopicPrefix}-${sourceTopic.substring("log-raw-".length)}"
-                } else {
-                    s"${targetTopicPrefix}-${sourceTopic}"
-                }
-            }
-        targetTopic
-    }
 
     private def getErrTopic(sourceTopic: String): String = {
         s"err-${sourceTopic}"
@@ -249,13 +240,81 @@ class KafkaMsgSink extends MsgSinkTrait with InitialTrait with NameTrait with Lo
         kafkaUtil = new KafkaUtil(list)
     }
 
+    private def startConfigUpdateThread(): Unit = {
+
+        val thread = new Thread(new Runnable {
+            override def run(): Unit = {
+                val sqlPrefix = "select * from kafka_topic_distribute where updateTime > "
+                while (true) {
+                    val date = new Date()
+                    try {
+                        val sql = sqlPrefix + "'" + DateFormatUtils.format(configLastUpdateTime, "yyyy-MM-dd HH:mm:ss") + "'"
+                        val result = dBOperationUtils.selectMapList(sql)
+                        if(result != null && result.size() > 0) {
+                            updateConfig(result)
+                            configLastUpdateTime = date
+                            LOG.info("配置更新完成")
+                        }
+                        Thread.sleep(10 * 1000)
+                    } catch {
+                        case e: Exception =>
+                            LOG.error("读取配置数据库失败，配置最后更新时间：" + configLastUpdateTime, e)
+                    }
+                }
+            }
+        })
+
+        thread.start()
+    }
+
+    private def updateConfig(newConfig: util.List[util.Map[String, Object]]): Unit = {
+        if(newConfig == null || newConfig.size() == 0) {
+            return
+        }
+        newConfig.foreach(c => {
+            val id = c.get("id").asInstanceOf[Number].intValue()
+            if(!c.get("status").asInstanceOf[Int].equals(1)) {
+                filterConfig.remove(id)
+                LOG.info("从配置中删除项，id=" + id)
+            } else {
+                val filter = try {
+                    JSON.parseObject(c.get("filter").asInstanceOf[String])
+                } catch {
+                    case e: Exception =>
+                        LOG.error("过滤条件解析json失败, id=" + id)
+                        null
+                }
+                if(filter != null) {
+                    val config = (c.get("appIdPrefix").asInstanceOf[String],
+                      c.get("destTopic").asInstanceOf[String],
+                      filter)
+                    filterConfig.put(id, config)
+                    LOG.info("新增或修改配置项，id=" + id)
+
+                }
+            }
+        })
+    }
+
     private var kafkaProducer: KafkaProducer[Array[Byte], Array[Byte]] = null
     private var kafkaUtil: KafkaUtil = null
     private var bootstrapServers: String = null
-    private var targetTopicPrefix = "log-origin"
+//    private var targetTopicPrefix = "log-origin"
     //日志过滤器,LogEntity应该是logFilter的一个超集,不能存在属性值不一致
-    private var logFilter: JSONObject = null
+//    private var logFilter: JSONObject = null
     private var saveErrorData: Boolean = true
+    private val filterConfig = new mutable.HashMap[Int, (String, String, JSONObject)]
+    private var dBOperationUtils: DBOperationUtils = null
+    private var configLastUpdateTime: Date = new Date(0)
 
+//
+}
+
+object ConfigurableKafkaMsgSink {
+    def main(args: Array[String]): Unit = {
+        val test = new ConfigurableKafkaMsgSink
+        test.dBOperationUtils = new DBOperationUtils("streaming")
+        test.startConfigUpdateThread()
+    }
 
 }

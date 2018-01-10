@@ -118,7 +118,7 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
      * @param offsetInfo
      */
     def seekOffset(offsetInfo: Map[String, Map[Int, Long]]): Unit = {
-        offsetInfo.map(item => {
+        offsetInfo.foreach(item => {
             val topic = item._1
             val offset = item._2
             consumerThreads.filter(_.consumerTopic == topic).foreach(thread => {
@@ -149,6 +149,16 @@ class KafkaMsgSource extends InitialTrait with NameTrait with LogTrait {
                 }
             })
 
+        })
+    }
+
+    def seekOffsetToEnd() : Unit = {
+        consumerThreads.foreach(thread => {
+            val consumer = thread.kafkaConsumer
+            if (!thread.isStarted) {
+                consumer.poll(1000)
+            }
+            consumer.seekToEnd(List())
         })
     }
 

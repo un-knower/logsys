@@ -24,10 +24,8 @@
     </property>
     <property>
         <name>GenericMsgDecoder.filebeatDecode</name>
-        <value>false</value>
+        <value>true</value>
     </property>
-
-
 
     <!-- GenericMsgProcessor -->
     <property>
@@ -49,10 +47,12 @@
         <name>GenericLogProcessor.class</name>
         <value>cn.whaley.bi.logsys.forest.processor.GenericLogProcessor</value>
     </property>
+
     <property>
         <name>GenericLogProcessor.processors</name>
         <value>GenericActionLogGetProcessor,GenericActionLogPostProcessor,GenericActionLogCommProcessor</value>
     </property>
+
     <property>
         <name>GenericActionLogGetProcessor.class</name>
         <value>cn.whaley.bi.logsys.forest.actionlog.GenericActionLogGetProcessor</value>
@@ -83,7 +83,5 @@
         <value>accountId,duration,speed,size,preMemory,postMemory</value>
     </property>
     -->
-
-
 
 </configuration>
