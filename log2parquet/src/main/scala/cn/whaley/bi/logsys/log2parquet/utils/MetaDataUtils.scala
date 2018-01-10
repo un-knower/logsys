@@ -232,6 +232,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 case _ => ""
             }
 
+          realLogType = realLogType.replace("-","_")
            /* if(realLogType == null){
               realLogType = "default"
             }*/

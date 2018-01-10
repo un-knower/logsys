@@ -788,11 +788,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
         for( i<- 0 to ( jSONArray.size()-1 )){
           val value = jSONArray.get(i).toString
-          if(isLongValid(value)){
-            newJsonArray.add(value.toLong)
-          }else{
-            newJsonArray.add(0)
-          }
+          newJsonArray.add(value.toLong)
         }
         json.put(key,newJsonArray)
       }
@@ -850,13 +846,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     fieldTypeSwitchMyAcc.add(s"${key}")
     try {
       val value = json.getString(key).trim
-      if(isLongValid(value)){
-        json.put(key,value.toLong)
-      }else{
-        fieldTypeSwitchMyAcc.add(s"${tableName}:${key}->table:long exception")
-        fieldTypeSwitchMyAcc.add(s"${key}->field:long exception")
-        json.remove(key)
-      }
+      json.put(key,value.toLong)
     }catch {
       case e:Exception=>{
         fieldTypeSwitchMyAcc.add(s"table:${tableName}:${key}->long exception")
@@ -869,17 +859,12 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
   /**
     * 转换成double
-    * @param key
-    * @param json
+
     */
   private def switchDouble(fieldTypeSwitchMyAcc:MyAccumulator,key:String,json:JSONObject):Unit = {
     try {
       val value = json.getString(key).trim
-      if(isDoubleValid(value)){
-        json.put(key,value.toDouble)
-      }else{
-        json.remove(key)
-      }
+      json.put(key,value.toDouble)
     }catch {
       case e:Exception=>{
         e.printStackTrace()
@@ -890,7 +875,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
 
   /**
     * 判读字段类型转换是否合法
-    * @param s
     * @return
     */
   def isDoubleValid(s:String)={
