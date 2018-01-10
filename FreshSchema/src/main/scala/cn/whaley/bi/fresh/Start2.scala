@@ -72,8 +72,8 @@ object Start2 {
         val tmpParentPath = tmpOut.substring(0,tmpOut.lastIndexOf("/"))
         val df = sparkSession.read.parquet(srcPath)
         val fieldMames = df.schema.fieldNames.toList
-        if(fieldMames.contains("status")){
-//          if(true){
+//        if(fieldMames.contains("mode")){
+          if(true){
           //移动文件
             if(!fs.exists(new Path(tmpParentPath))){
               fs.mkdirs(new Path(tmpParentPath))

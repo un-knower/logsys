@@ -1,0 +1,54 @@
+appId 组成16+8+8 ->公司Id（whaley）+	产品代码(product_code)	+ 应用代码(app_code)
+
+2.kafka
+moretv@bigdata-appsvr-130-6
+cd /opt/kafka3
+查看topic
+//生产环境
+ bin/kafka-topics.sh --list --zookeeper  bigdata-appsvr-130-1:2183,bigdata-appsvr-130-2:2183,bigdata-appsvr-130-3:2183,bigdata-appsvr-130-4:2183,bigdata-appsvr-130-5:2183
+
+//创建topic
+bin/kafka-topics.sh --create --zookeeper bigdata-appsvr-130-1:2183, bigdata-appsvr-130-2:2183, bigdata-appsvr-130-3:2183, bigdata-appsvr-130-4:2183, bigdata-appsvr-130-5:2183   --replication-factor 3 --partitions 2 --topic log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr
+bin/kafka-topics.sh --create --zookeeper bigdata-appsvr-130-1:2183, bigdata-appsvr-130-2:2183, bigdata-appsvr-130-3:2183, bigdata-appsvr-130-4:2183, bigdata-appsvr-130-5:2183   --replication-factor 3 --partitions 2 --topic log-raw-boikgpokn78sb95ktmsc1bnkechpgj9l
+
+//输出topic
+bin/kafka-topics.sh --create --zookeeper bigdata-appsvr-130-1:2183, bigdata-appsvr-130-2:2183, bigdata-appsvr-130-3:2183, bigdata-appsvr-130-4:2183, bigdata-appsvr-130-5:2183   --replication-factor 3 --partitions 2 --topic log-origin-boikgpokn78sb95kjhfrendo8dc5mlsr
+bin/kafka-topics.sh --create --zookeeper bigdata-appsvr-130-1:2183, bigdata-appsvr-130-2:2183, bigdata-appsvr-130-3:2183, bigdata-appsvr-130-4:2183, bigdata-appsvr-130-5:2183   --replication-factor 3 --partitions 2 --topic log-origin-boikgpokn78sb95ktmsc1bnkechpgj9l
+
+ 查看此topic的属性
+ bin/kafka-topics.sh --describe --zookeeper   bigdata-appsvr-130-1:2183, bigdata-appsvr-130-2:2183, bigdata-appsvr-130-3:2183, bigdata-appsvr-130-4:2183, bigdata-appsvr-130-5:2183  --topic log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr
+
+//发送message
+bin/kafka-console-producer.sh --broker-list bigdata-appsvr-130-1:9094,bigdata-appsvr-130-2:9094,bigdata-appsvr-130-3:9094,bigdata-appsvr-130-4:9094,bigdata-appsvr-130-5:9094,bigdata-appsvr-130-6:9094 --topic   log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr
+
+//接收数据
+bin/kafka-console-consumer.sh --zookeeper  bigdata-appsvr-130-1:2183, bigdata-appsvr-130-2:2183, bigdata-appsvr-130-3:2183, bigdata-appsvr-130-4:2183, bigdata-appsvr-130-5:2183   --topic log-raw-boikgpokn78sb95kjhfrendo8dc5mlsr --from-beginning
+
+//删除topic
+bin/kafka-topics.sh --delete --zookeeper  bigdata-appsvr-130-1:2183, bigdata-appsvr-130-2:2183, bigdata-appsvr-130-3:2183, bigdata-appsvr-130-4:2183, bigdata-appsvr-130-5:2183  --topic log-raw-boikgpokn78sb95kbqei6cc9
+
+
+3.forest部署
+hadoop@bigdata-appsvr-130-8，hadoop@bigdata-appsvr-130-9
+
+修改\WhaleyLogSys\forest\distribution\src\main\resources\conf\settings.properties
+修改为生产机器上的kafka
+prop.kafka.bootstrap.servers=bigdata-appsvr-130-1:9094,bigdata-appsvr-130-2:9094,bigdata-appsvr-130-3:9094,bigdata-appsvr-130-4:9094,bigdata-appsvr-130-5:9094,bigdata-appsvr-130-6:9094
+
+cd /opt/forest-dist/sbin
+启动
+sh /opt/forest-dist/sbin//launch_msgproc.sh start --groupId=forest-dist-whaleytv --taskName=whaleytv 监听微鲸主程序
+sh /opt/forest-dist/sbin//launch_msgproc.sh start --groupId=forest-dist-medusa --taskName=medusa 监听medusa main3.x主程序
+
+停止
+./launch_msgproc.sh stop --groupId=forest-dist-whaleytv --taskName=whaleytv 监听微鲸主程序
+
+需要测试程序是否读入数据
+
+
+group.id=forest-dist-medusa
+group.id=forest-dist-whaleytv
+group.id=forest-dist-whaleyvr_orca
+group.id=forest-dist-eagle_mobilehelper
+group.id=forest-dist-crawler
+group.id=forest-dist-whaley_other
