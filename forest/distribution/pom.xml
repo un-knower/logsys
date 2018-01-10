@@ -11,6 +11,7 @@
 
     <artifactId>forest-dist</artifactId>
     <packaging>pom</packaging>
+    <version>1.0.0</version>
 
     <properties>
         <assembly-desc>src/assembly/assembly-dir.xml</assembly-desc>
@@ -39,7 +40,7 @@
     </dependencies>
 
     <build>
-        <finalName>forest-dist</finalName>
+        <finalName>forest-dist-${version}</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
