@@ -1,0 +1,2 @@
+type=command
+command=sh ${working.dir}/../sbin/day.sh --startDate ${startDate} --endDate ${endDate} --startHour ${startHour} --endHour ${endHour} --appId ${appId}   --filterContext ${filterContext}  --realLogType ${realLogType}
