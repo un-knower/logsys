@@ -34,6 +34,9 @@ object GetProcess extends NameTrait with LogTrait{
     //移除冗余的url参数
     msgBody.put("svr_req_url",httpUrl.location)
     message.put("logBody",queryObj)
+    if(httpUrl.location != null && httpUrl.location.startsWith("/moretv/userdurationlog")){
+      queryObj.put("logType","userduration")
+    }
     message.getJSONObject("logBody").asInstanceOf[java.util.Map[String, Object]].putAll(msgBody)
     //获取logId
     val msgId = message.getString("msgId")
