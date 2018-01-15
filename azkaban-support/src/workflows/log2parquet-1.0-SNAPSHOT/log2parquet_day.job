@@ -1,6 +1,6 @@
 type=command
 mainClass=cn.whaley.bi.logsys.log2parquet.MainObj
 dependencies=batch_forest_day
-command=sh ${working.dir}/../sbin/log2parquet.sh --mainClass ${mainClass} --startDate ${startDate} --startHour ${startHour} --endDate ${endDate} --endHour ${endHour}  --realLogType ${realLogType} --appId ${appId}
+command=sh ${working.dir}/../sbin/log2parquet.sh --mainClass ${mainClass} --startDate ${startDate} --startHour ${startHour} --endDate ${endDate} --endHour ${endHour}  --tableName ${tableName} --appId ${appId}
 
 #所有程序AppId
