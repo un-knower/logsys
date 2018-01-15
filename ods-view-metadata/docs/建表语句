@@ -180,3 +180,32 @@ create table metadata.log_field_type_info(
     ,CONSTRAINT pk PRIMARY KEY (id)
 );
 
+--日志关键字段描述表
+create table metadata.applog_key_field_desc(
+    appId varchar(100) not null --appId [key]
+    ,fieldName varchar(100) not null  --字段名 [key]
+    ,fieldFlag integer --字段标记, 0=库名字段;1=表名字段,2=分区字段
+    ,fieldOrder integer --字段顺序
+    ,fieldDefault varchar(100) --字段默认值
+    ,isDeleted boolean --记录是否删除
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (appId,fieldName)
+)
+;
+
+--日志特殊字段描述表
+create table metadata.applog_special_field_desc(
+    id varchar(100) not null --唯一性ID [key]
+    ,tabNameReg varchar(100) --表名正则匹配表达式
+    ,logPathReg varchar(100) --日志文件路径正则匹配表达式
+    ,fieldNameReg varchar(100) --字段名正则匹配表达式
+    ,specialType varchar(100) --特例类型, blackList=黑名单,rename=重命名
+    ,specialValue varchar(500) --特例值,如重命名值
+    ,specialOrder integer --排序值
+    ,isDeleted boolean --记录是否删除
+    ,createTime timestamp --记录创建时间
+    ,updateTime timestamp --记录更新时间
+    ,CONSTRAINT pk PRIMARY KEY (id)
+)
+;
