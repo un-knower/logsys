@@ -834,7 +834,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     * @param json
     */
   def switchLong(fieldTypeSwitchMyAcc:MyAccumulator,key:String,json:JSONObject): Unit ={
-    val tableName = json.getString("tableName")
+    val tableName = json.getString("svrTableName")
     fieldTypeSwitchMyAcc.add(s"${tableName}:${key}")
     fieldTypeSwitchMyAcc.add(s"${key}")
     try {
