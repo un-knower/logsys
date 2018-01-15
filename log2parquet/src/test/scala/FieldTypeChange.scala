@@ -11,10 +11,8 @@ object FieldTypeChange {
 //    switch(356,"arrayString","ArrayString","5","table")
 //    switch(368,"arrayStruct","ArrayStruct","7","table")
 
-    val a = 0.1
-    println(Math.ceil(a))
 
-//    a()
+    b()
   }
 
 
@@ -70,9 +68,14 @@ object FieldTypeChange {
     val lines = Source.fromFile(path).getLines()
     while (lines.hasNext) {
       val line = lines.next()
-      if(line.contains("log_")){
-        println(line)
-      }
+      //upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('ALL','actionId',2,1,'ALL',false,now(),now());
+      val appId = line.split("\\|")(0)
+      val fieldName = line.split("\\|")(1)
+      val fieldFlag = line.split("\\|")(2)
+      val fieldOrder = line.split("\\|")(3)
+      val fieldDefault = line.split("\\|")(4)
+      val isDeleted = line.split("\\|")(5)
+      println(s"upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('${appId}','${fieldName}',${fieldFlag},${fieldOrder},'${fieldDefault}',${isDeleted},now(),now());")
     }
   }
 }

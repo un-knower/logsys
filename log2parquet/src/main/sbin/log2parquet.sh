@@ -4,7 +4,7 @@ cd `dirname $0`
 pwd=`pwd`
 echo "${pwd}"
 
-ARGS=`getopt -o m:r:s:e:b:h:a --long mainClass:,realLogType:,startDate:,endDate:,startHour:,endHour:,appId: -- "$@"`
+ARGS=`getopt -o m:t:s:e:b:h:a --long mainClass:,tableName:,startDate:,endDate:,startHour:,endHour:,appId: -- "$@"`
 
 #将规范化后的命令行参数分配至位置参数（$1,$2,...)
 eval set -- "${ARGS}"
@@ -15,8 +15,8 @@ do
         -m|--mainClass)
             mainClass=$2;
             shift 2;;
-        -r|--realLogType)
-            realLogType=$2;
+        -t|--tableName)
+            tableName=$2;
             shift 2;;
 		-s|--startDate)
             startDate=$2;
@@ -53,7 +53,7 @@ while [[ ${startTime}  -ge  ${endTime} ]]
     startHour=${startTime:8:2}
     inputPath=/data_warehouse/ods_origin.db/log_origin/key_day=${startDate}/key_hour=${startHour}
     echo "inputPath:${inputPath},startDate:${startDate},startHour:${startHour},taskFlag:${taskFlag}"
-    sh  ./submit_log2parquet.sh ${mainClass} MsgProcExecutor --f MsgBatchManagerV3.xml,settings.properties --c inputPath=${inputPath} --c startDate=${startDate} --c startHour=${startHour} --c realLogType=${realLogType} --c appId=${appId}
+    sh  ./submit_log2parquet.sh ${mainClass} MsgProcExecutor --f MsgBatchManagerV3.xml,settings.properties --c inputPath=${inputPath} --c startDate=${startDate} --c startHour=${startHour} --c tableName=${tableName} --c appId=${appId}
     if [ $? -ne 0 ];then
             echo "log2parquet ${startTime} is fail ..."
             exit 1

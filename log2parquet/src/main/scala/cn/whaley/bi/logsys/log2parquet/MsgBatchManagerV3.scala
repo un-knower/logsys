@@ -132,12 +132,18 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     var rddSchema = metaDataUtils.parseLogObjRddPath(okRowsRdd,startDate,startHour)(myAccumulator)
 
     //添加执行过滤某个日志类型逻辑
-    val realLogType = confManager.getConf("realLogType")
-    if(!("all").equals(realLogType)){
-      rddSchema = rddSchema.filter(f=>{
-        f._2.getString("realLogType").replace("-","_").equals(realLogType)
+    val tableName = confManager.getConf("realLogType")
+    rddSchema = if(!("all").equals(tableName)){
+      rddSchema.filter(f=>{
+        val svrTableName = f._2.getString("svrTableName")
+        tableName.split("\\,").contains(svrTableName)
       })
+    }else{
+      rddSchema
     }
+
+
+
     //处理过滤黑名单表
     val blackTableInfoEntitys = metaDataUtils.metadataService().getAllBlackTableDesc()
     if(blackTableInfoEntitys.size != 0 ){
