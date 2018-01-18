@@ -215,8 +215,8 @@ public class MetadataController {
                 result.put("executeDML", dmlRet);
             }
 
-//            Integer ddlSqlRet = odsViewService.executeSql(taskId);
-//            LOG.info("task ddlSqlRet={}", ddlSqlRet);
+            Integer ddlSqlRet = odsViewService.executeSql(taskId);
+            LOG.info("task ddlSqlRet={}", ddlSqlRet);
 
             retEntity.setCode(0);
             retEntity.setMessage("OK");
