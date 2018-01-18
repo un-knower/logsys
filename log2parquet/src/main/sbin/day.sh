@@ -4,7 +4,7 @@ cd `dirname $0`
 pwd=`pwd`
 echo "${pwd}"
 
-ARGS=`getopt -o f:r:s:e:b:h:a --long filterContext:,realLogType:,startDate:,endDate:,startHour:,endHour:,appId: -- "$@"`
+ARGS=`getopt -o f:t:s:e:b:h:a --long filterContext:,tableName:,startDate:,endDate:,startHour:,endHour:,appId: -- "$@"`
 
 #将规范化后的命令行参数分配至位置参数（$1,$2,...)
 eval set -- "${ARGS}"
@@ -15,8 +15,8 @@ do
         -f|--filterContext)
             filterContext=$2;
             shift 2;;
-        -r|--realLogType)
-            realLogType=$2;
+        -t|--tableName)
+            tableName=$2;
             shift 2;;
 		-s|--startDate)
             startDate=$2;
@@ -58,7 +58,7 @@ while [[ ${startTime}  -ge  ${endTime} ]]
             exit 1
     fi
     inputPath=/data_warehouse/ods_origin.db/log_origin/key_day=${startDate}/key_hour=${startHour}
-    sh  ./submit_log2parquet.sh  cn.whaley.bi.logsys.log2parquet.MainObj  MsgProcExecutor --f MsgBatchManagerV3.xml,settings.properties --c inputPath=${inputPath} --c startDate=${startDate} --c startHour=${startHour} --c realLogType=${realLogType} --c appId=${appId}
+    sh  ./submit_log2parquet.sh  cn.whaley.bi.logsys.log2parquet.MainObj  MsgProcExecutor --f MsgBatchManagerV3.xml,settings.properties --c inputPath=${inputPath} --c startDate=${startDate} --c startHour=${startHour} --c tableName=${tableName} --c appId=${appId}
     ##sh ./log2parquet.sh --mainClass cn.whaley.bi.logsys.log2parquet.MainObj --startDate ${startDate} --startHour ${startHour} --endDate ${startDate} --endHour ${startHour}  --realLogType ${realLogType} --appId ${appId}
     if [ $? -ne 0 ];then
             echo "log2parquet ${startTime} is fail ..."

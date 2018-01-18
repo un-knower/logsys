@@ -12,7 +12,7 @@ object FieldTypeChange {
 //    switch(368,"arrayStruct","ArrayStruct","7","table")
 
 
-    b()
+    c()
   }
 
 
@@ -76,6 +76,18 @@ object FieldTypeChange {
       val fieldDefault = line.split("\\|")(4)
       val isDeleted = line.split("\\|")(5)
       println(s"upsert into metadata.applog_key_field_desc(appId,fieldName,fieldFlag,fieldOrder,fieldDefault,isDeleted,createTime,updateTime) values('${appId}','${fieldName}',${fieldFlag},${fieldOrder},'${fieldDefault}',${isDeleted},now(),now());")
+    }
+  }
+
+
+  def c(): Unit ={
+    val path = Thread.currentThread().getContextClassLoader.getResource("aaa").getPath
+    val lines = Source.fromFile(path).getLines()
+    while (lines.hasNext) {
+      val line = lines.next()
+      if(line.startsWith(" line")){
+        println(line)
+      }
     }
   }
 }
