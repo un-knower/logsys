@@ -117,7 +117,7 @@ done
 set -x
 ts=`date +%Y%m%d_%H%M%S`
 ${spark_home}/bin/spark-submit -v \
- --name ${app_name:-$mainClass}_$ts \
+ --name ${app_name:-$mainClass}_$ts_guohao \
  --master ${spark_master} \
  --executor-memory ${spark_executor_memory} \
  --driver-memory ${spark_driver_memory}   \

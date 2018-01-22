@@ -12,7 +12,7 @@ object FieldTypeChange {
 //    switch(368,"arrayStruct","ArrayStruct","7","table")
 
 
-    c()
+    b()
   }
 
 

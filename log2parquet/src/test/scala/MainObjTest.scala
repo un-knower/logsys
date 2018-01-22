@@ -25,7 +25,9 @@ class MainObjTest extends LogTrait{
   def testMainObjTest: Unit = {
     val args = Array("MsgProcExecutor",
 //    "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/fileType.json","--c","masterURL=local[1]","--c","startDate=20171117", "--c" ,"startHour=09" ,"--c" ,"taskFlag=111","--c" ,"realLogType=all","--c" ,"appId=all")
-    "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/test.json","--c","masterURL=local[1]","--c","startDate=20171117", "--c" ,"startHour=09" ,"--c" ,"taskFlag=111","--c" ,"tableName=all","--c" ,"appId=all")
+//    "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/test.json","--c","masterURL=local[1]","--c","startDate=20171117", "--c" ,"startHour=09" ,"--c" ,"taskFlag=111","--c" ,"tableName=all","--c" ,"appId=all")
+    "--f","MsgBatchManagerV3.xml,settings.properties","--c","inputPath=/data_warehouse/ods_origin.db/log_origin/launcher_module_view.json","--c","masterURL=local[1]","--c","startDate=20171117", "--c" ,"startHour=09" ,"--c" ,"taskFlag=111","--c" ,"tableName=all","--c" ,"appId=all")
+
     MainObj.main(args)
   }
 
