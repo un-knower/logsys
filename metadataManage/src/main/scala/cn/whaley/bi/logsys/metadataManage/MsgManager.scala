@@ -5,6 +5,7 @@ import java.util.Date
 import cn.whaley.bi.logsys.metadataManage.common.ParamKey
 import cn.whaley.bi.logsys.metadataManage.entity.{LogFileFieldDescEntity, LogFileKeyFieldValueEntity}
 import cn.whaley.bi.logsys.metadataManage.util.{IdGenerator, ParquetHiveUtils, PhoenixUtil}
+import com.alibaba.fastjson.JSONObject
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.slf4j.LoggerFactory
@@ -16,7 +17,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 class MsgManager {
   val LOG = LoggerFactory.getLogger(this.getClass)
-  def generateMetaDataToTable(phoenixUtil: PhoenixUtil,pathSchema:Array[(String,scala.collection.mutable.Map[String,String])],deleteOld:String): Unit = {
+  def generateMetaDataToTable(phoenixUtil: PhoenixUtil,pathSchema:Array[(String,scala.collection.mutable.Map[String,String])],deleteOld:String): JSONObject = {
     //生成taskId
     val generator = IdGenerator.defaultInstance
     val taskId = generator.nextId().replace("/", "")
@@ -50,9 +51,8 @@ class MsgManager {
     //发送taskId给元数据模块
     println("-------发送taskId给元数据模块 start at "+new Date())
     val responseTaskIdResponse = phoenixUtil.postTaskId2MetaModel(taskId, deleteOld)
-    LOG.info(s"responseTaskIdResponse : " + responseTaskIdResponse.toJSONString)
-    println(s"----responseTaskIdResponse : " + responseTaskIdResponse.toJSONString)
     println("-------发送taskId给元数据模块 end at "+new Date())
+    responseTaskIdResponse
   }
 
 

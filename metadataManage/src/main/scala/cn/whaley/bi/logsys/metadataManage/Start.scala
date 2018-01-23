@@ -4,7 +4,7 @@ package cn.whaley.bi.logsys.metadataManage
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import cn.whaley.bi.logsys.metadataManage.util.{ConfigurationManager, ParamsParseUtil, PhoenixUtil}
+import cn.whaley.bi.logsys.metadataManage.util.{ConfigurationManager, ParamsParseUtil, PhoenixUtil, SendMail}
 import cn.whaley.bi.logsys.metadataManage.common.ParamKey._
 import cn.whaley.bi.logsys.metadataManage.entity.AppLogKeyFieldDescEntity
 import org.apache.hadoop.conf.Configuration
@@ -159,7 +159,14 @@ object Start {
     println(s"arrayBuffer size is ${arrayBuffer.size}")
     //生成parquet的schema
     val msgManager = new MsgManager
-    msgManager.generateMetaDataToTable(phoenixUtil,arrayBuffer.toArray,deleteOld)
+    val responseResult = msgManager.generateMetaDataToTable(phoenixUtil,arrayBuffer.toArray,deleteOld)
+    val message = responseResult.getString("message")
+    if(!"OK".equals(message)){
+      //发送邮件告警
+      val users: Array[String] = Array("app-bigdata@whaley.cn")
+      SendMail.post(message,s"metadataManage exception [元数据管理异常] ${pathExp}",users)
+    }
+    println(s"responseResult .... ${responseResult.toJSONString}")
   }
 
   def isValidParam(allParam:mutable.Map[String,String]): Boolean ={
