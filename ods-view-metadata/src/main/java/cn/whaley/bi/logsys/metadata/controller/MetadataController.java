@@ -214,18 +214,15 @@ public class MetadataController {
                 Integer dmlRet = odsViewService.executeDML(taskId,deleteOld);
                 result.put("executeDML", dmlRet);
             }
-
             retEntity.setCode(0);
             retEntity.setMessage("OK");
+            Integer ddlSqlRet = odsViewService.executeSql(taskId);
+            LOG.info("task ddlSqlRet={}", ddlSqlRet);
         } catch (Throwable ex) {
             LOG.error("taskId=" + taskId, ex);
             retEntity.setCode(-1);
             retEntity.setMessage(ex.getMessage());
         }
-        Integer ddlSqlRet = odsViewService.executeSql(taskId);
-        LOG.info("task ddlSqlRet={}", ddlSqlRet);
-
-
         LOG.info("task end.taskId={},deleteOld={}.ts={}", taskId, deleteOld, System.currentTimeMillis() - fromTs);
         return retEntity;
 
