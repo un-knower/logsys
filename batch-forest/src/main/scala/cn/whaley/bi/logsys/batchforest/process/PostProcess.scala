@@ -22,19 +22,25 @@ object PostProcess extends NameTrait with LogTrait{
     val logTime = msgBody.getLong("svr_receive_time")
     message.put("logTime",logTime)
     val body = msgBody.getJSONObject("body")
-    //处理eagle日志
+
     val appId = msgBody.getString("appId")
-    if("boikgpokn78sb95k7id7n8eb8dc5mlsr".equalsIgnoreCase(appId)){
-      myAccumulator.add("handleEagleRecord")
-      return EagleProcess.handleMessage(message)(myAccumulator)
-    }
+
     //针对crash日志处理
-    if(body.containsKey("STACK_TRACE")){
+    if(body.containsKey("STACK_TRACE") &&(
+      "boikgpokn78sb95kjhfrendo8dc5mlsr".equalsIgnoreCase(appId) ||
+        "boikgpokn78sb95ktmsc1bnkechpgj9l".equalsIgnoreCase(appId)||
+        "boikgpokn78sb95k7id7n8ebqmihnjmg".equalsIgnoreCase(appId)
+      )){
       myAccumulator.add("handleCrashRecord")
       val stackTraceStr = body.getString("STACK_TRACE")
       val stackTraceMd5 = DigestUtils.md5Hex(stackTraceStr)
       body.put("STACK_TRACE_MD5",stackTraceMd5)
       return CrashProcess.handleCrash(message)(myAccumulator)
+    }
+    //处理eagle日志
+    if("boikgpokn78sb95k7id7n8eb8dc5mlsr".equalsIgnoreCase(appId)){
+      myAccumulator.add("handleEagleRecord")
+      return EagleProcess.handleMessage(message)(myAccumulator)
     }
     //消息体验证,方法内部将更新相关签名字段的值
     val flag= verify(message)(myAccumulator)
