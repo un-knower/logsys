@@ -28,7 +28,12 @@ object CrashProcess extends NameTrait with LogTrait{
       // medusa main3.x crash md5校验
       case "boikgpokn78sb95ktmsc1bnkechpgj9l" => {
         myAccumulator.add("handleCrashMd5Record")
-        handleMedusaCrash(message)(myAccumulator)
+        handleCrashMd5(message)(myAccumulator)
+      }
+        //eagle crash md5校验
+      case "boikgpokn78sb95k7id7n8ebqmihnjmg" => {
+        myAccumulator.add("handleCrashMd5Record")
+        handleCrashMd5(message)(myAccumulator)
       }
       case _ => {
         myAccumulator.add("handleCrashExcRecord")
@@ -57,11 +62,11 @@ object CrashProcess extends NameTrait with LogTrait{
   }
 
   /**
-    * 校验Medusa main3.x Crash md5
+    * 校验 Crash md5
     * @param message
     * @return
     */
-  def handleMedusaCrash(message:JSONObject)
+  def handleCrashMd5(message:JSONObject)
                        (implicit myAccumulator:MyAccumulator=new MyAccumulator):Option[JSONObject]={
     val body = message.getJSONObject("msgBody").getJSONObject("body")
     val CRASH_KEY = "p&i#Hl5!gAo*#dwSa9sfluynvaoOKD3"

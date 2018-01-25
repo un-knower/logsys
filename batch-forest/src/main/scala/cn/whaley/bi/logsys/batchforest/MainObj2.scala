@@ -42,13 +42,15 @@ object MainObj2 extends NameTrait with LogTrait{
 //      val inputPath = "/data_warehouse/ods_origin.db/log_raw/key_day=20171115/key_hour=15/boikgpokn78sb95k7id7n8eb8dc5mlsr.log-2017111515-bigdata-extsvr-log1"
 //      val inputPath = "/data_warehouse/ods_origin.db/log_origin/eagle.json"
 //      val inputPath = "/data_warehouse/ods_origin.db/log_origin/global_menu2.json"
-      val inputPath = "/data_warehouse/ods_origin.db/log_origin/wui20.json"
+//      val inputPath = "/data_warehouse/ods_origin.db/log_origin/wui20.json"
+//      val inputPath = "/data_warehouse/ods_origin.db/log_origin/enter.json"
+      val inputPath = "/data_warehouse/ods_origin.db/log_origin/eagle_crash"
       var inputRdd:RDD[String ] = sparkContext.textFile(inputPath)
       //1.日志解码
       val decodeRdd = inputRdd.map(line=>{
         myAccumulator.add("inputRecord")
-        LogFormat.decode(line)
-//        Some(line)
+//        LogFormat.decode(line)
+        Some(line)
       })
       //2.验证日志格式
       val formatRdd = decodeRdd.filter(f=>{
@@ -105,7 +107,7 @@ object MainObj2 extends NameTrait with LogTrait{
 //      )
 
       println("---------------------")
-      resultRdd.take(10).foreach(f=>{
+      resultRdd.foreach(f=>{
         println(f)
       })
       println("---------------------")
