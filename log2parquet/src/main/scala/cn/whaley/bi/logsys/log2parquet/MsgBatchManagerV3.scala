@@ -542,18 +542,8 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
     // 获得规则库的每条规则
     val rules = metaDataUtils.parseSpecialRules(resultRdd)
     val rowBlackFilterMap = mutable.Map[String,Map[String,String]]()
-    val fieldBlackFilterMap = mutable.Map[String,List[String]]()
-    val renameMap = mutable.Map[String,Map[String,String]]()
-    val baseInfoRenameMap = mutable.Map[String,Map[String,String]]()
     rules.foreach(rule=>{
       val path = rule.path
-      //字段删除
-      val fieldBlackFilter = rule.fieldBlackFilter
-      val list = new ListBuffer[String]()
-      fieldBlackFilter.foreach(e=>{
-        list +=(e)
-      })
-      fieldBlackFilterMap.put(path,list.toList)
       //行删除
       val rowBlackFilter = rule.rowBlackFilter
       val map1 = mutable.Map[String,String]()
@@ -563,70 +553,35 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
         map1.put(key,value)
       })
       rowBlackFilterMap.put(path,map1.toMap)
-      //重命名
-      val rename = rule.rename
-      val map2 = mutable.Map[String,String]()
-      rename.foreach(e=>{
-        val oldName = e._1
-        val newName = e._2
-        map2.put(oldName,newName)
-      })
-      renameMap.put(path,map2.toMap)
-
-      //baseInfo重命名
-      val baseInfoRename = rule.baseInfoRename
-      val map3 = mutable.Map[String,String]()
-      baseInfoRename.foreach(e=>{
-        val oldName = e._1
-        val newName = e._2
-        map3.put(oldName,newName)
-      })
-      baseInfoRenameMap.put(path,map3.toMap)
 
     })
 
-    val myBroadcast = MyBroadcast(rowBlackFilterMap.toMap,fieldBlackFilterMap.toMap,renameMap.toMap,baseInfoRenameMap.toMap)
+    val myBroadcast = MyBroadcast(rowBlackFilterMap.toMap)
     val broadcast = sc.broadcast(myBroadcast)
     //TODO debug
     val afterRuleRdd = resultRdd.map(e => {
       val rowBlackFilterMap = broadcast.value.rowBlackFilterMap
-      val fieldBlackFilterMap =  broadcast.value.fieldBlackFilterMap
-      val renameMap =  broadcast.value.renameMap
-      val baseInfoRenameMap = broadcast.value.baseInfoRenameMap
       myAccumulator.add("okRowAcc")
       val path = e._1
       val jsonObject = e._2
-      //用于累加器比较规则处理后数据的变化
-      val compareJson = JSON.parseObject(jsonObject.toJSONString)
+
       //删除行
       if(rowBlackFilterMap.keySet.contains(path) && !rowBlackFilterMap.get(path).isEmpty){
+          //该path下有删除行规则
         val map = rowBlackFilterMap.get(path).get
         map.keys.foreach(key=>{
           if(jsonObject.containsKey(key) && jsonObject.getString(key) == map.get(key).get){
             jsonObject.clear()
           }
         })
-      }
-      //累加器影响的行数
-      if(!jsonObject.isEmpty){
-        if(jsonObject.size()!=compareJson.size()){
-          //删除字段
-          myAccumulator.add("removeFiledAcc")
+        //累加器影响的行数
+        if(jsonObject.isEmpty){
+          //记录删除
+          myAccumulator.add("deleteRowAcc")
         }
-        val keys = compareJson.keySet()
-        val difKeysNum = jsonObject.keySet().toArray(new Array[String](0)).filter(key=>{
-          !keys.contains(key)
-        }).size
-        if(difKeysNum >0){
-          myAccumulator.add("renameFiledAcc")
-          // renameFiledAcc.add(1)
-        }
-      }else{
-        //记录删除
-        myAccumulator.add("deleteRowAcc")
       }
-      (path, Some(jsonObject))
 
+      (path, Some(jsonObject))
     }).filter(e => !(e._2.isEmpty)).map(item => {
       //统计输出json数据量
       //      jsonRowAcc.add(1)
@@ -639,7 +594,7 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
   def shutdown(): Unit = {
     //sparkSession.close()
   }
-  case class MyBroadcast(rowBlackFilterMap:Map[String,Map[String,String]],fieldBlackFilterMap:Map[String,List[String]],renameMap:Map[String,Map[String,String]],baseInfoRenameMap:Map[String,Map[String,String]])
+  case class MyBroadcast(rowBlackFilterMap:Map[String,Map[String,String]])
 
   def isValid(s:String)={
     val regex = """[a-zA-Z0-9-_>]*"""

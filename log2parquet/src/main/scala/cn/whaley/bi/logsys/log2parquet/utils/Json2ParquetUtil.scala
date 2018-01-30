@@ -44,7 +44,7 @@ object Json2ParquetUtil {
             fs.mkdirs(new Path(tmpDir))
         }
         /*********  写json文件阶段 ************/
-        logRdd.repartition(50).foreachPartition(iter => {
+        logRdd.repartition(80).foreachPartition(iter => {
             val partId = UUID.randomUUID().toString
             println(s"process partition $partId")
             val conf = new Configuration()

@@ -149,9 +149,6 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 logType
             }
 
-            /*if(realLogType == null){
-                realLogType = "default"
-            }*/
             val appId = jsonObj.getString("appId")
             appId match {
                 case LogKeys.WUI_20_APPID =>{
@@ -202,9 +199,7 @@ case class MetaDataUtils(metadataServer: String, readTimeOut: Int = 100000) {
                 }
                 case _ => ""
             }
-           /* if(realLogType == null){
-              realLogType = "default"
-            }*/
+
            if(isInValidLogType(realLogType)){
              return  ("",scala.collection.mutable.HashMap.empty[String,String])
            }

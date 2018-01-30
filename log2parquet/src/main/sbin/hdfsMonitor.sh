@@ -63,10 +63,14 @@ do
           fi
         done
 
-         if (( $flag != 1 )) ;then
-          echo "${startTime} fail ... startCn -> ${startCn},  endCn->${endCn}"
-          exit 1
+         if (( startCn != 14 )) ;then
+                  curl -d '{"sub":"hdfs 文件监控", "content":"时间 ${startTime} 。start 文件数:${startCn} , end 文件数:${endCn}","sendto":"peng.tao@whaley.cn,guo.hao@whaley.cn,lian.kai@whaley.cn"}' -H "Content-Type: application/json" -X POST http://10.19.15.127:5006/mail/api/v1.0/send
          fi
+
+        # if (( $flag != 1 )) ;then
+        #  echo "${startTime} fail ... startCn -> ${startCn},  endCn->${endCn}"
+        #  exit 1
+        # fi
 
         startTime=`date -d "${startDate} ${startHour} -1 hour" +"%Y%m%d%H"`
 done

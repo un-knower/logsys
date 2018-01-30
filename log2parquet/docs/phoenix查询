@@ -7,7 +7,7 @@ cd /opt/phoenix/bin
 
 
 cd /opt/phoenix/bin;
-./sqlline-thin.py http://bigdata-cmpt-128-1:8765
+./sqlline-thin.py http://phoenixserver.whaleybigdata.com:8765
 
 2.命令行例子
 !describe METADATA.APPLOG_SPECIAL_FIELD_DESC

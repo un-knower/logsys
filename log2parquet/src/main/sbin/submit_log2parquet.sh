@@ -101,10 +101,10 @@ done
 #    jarFiles="$jarFiles,/data/apps/azkaban/share/libs/phoenix-4.10.0-HBase-1.2-thin-client-without-hadoop.jar"
 #fi
 
-ts=`date +%Y%m%d_%H%M%S`
+ts=`date +%Y%m%d-%H%M%S`
 set -x
 $spark_home/bin/spark-submit -v \
---name ${app_name:-$MainClass}_$ts_guohao \
+--name guohao_log2parquet_${app_name:-$MainClass}_$ts \
 --master ${spark_master} \
 --executor-memory $spark_executor_memory \
 --driver-memory $spark_driver_memory \
