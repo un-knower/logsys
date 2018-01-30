@@ -15,7 +15,8 @@ create table metadata.logtab_field_desc(
     ,updateTime timestamp --记录更新时间
     ,CONSTRAINT pk PRIMARY KEY (dbName,tabName,fieldName,seq)
 )  ;
-CREATE INDEX idx_logtab_field_desc_taskId ON metadata.logtab_field_desc(taskId);
+//该版本index有bug,尚未恢复    Unable to find cached index metadata 。。。。。。  Index update failed
+##CREATE INDEX idx_logtab_field_desc_taskId ON metadata.logtab_field_desc(taskId);
 CREATE SEQUENCE metadata.seq_logtab_field_desc;
 
 
@@ -195,6 +196,7 @@ create table metadata.applog_key_field_desc(
 ;
 
 --日志特殊字段描述表
+drop table if exists metadata.applog_special_field_desc;
 create table metadata.applog_special_field_desc(
     id varchar(100) not null --唯一性ID [key]
     ,tabNameReg varchar(100) --表名正则匹配表达式
