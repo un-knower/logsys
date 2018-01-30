@@ -84,12 +84,11 @@ object Start4 {
 
 
 
-/*    if(finalPathSchema.size == 0){
+    if(finalPathSchema.size == 0){
       println(s"finalPathSchema length is 0")
       System.exit(-1)
     }
     println(s"finalPathSchema.size ${finalPathSchema.size}")
-    System.exit(-1)*/
 
     val executor = Executors.newFixedThreadPool(Math.min(100,finalPathSchema.size))
     val futures = finalPathSchema.map(f=>{

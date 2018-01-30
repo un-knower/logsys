@@ -31,14 +31,14 @@ object Start {
     val sparkConf = new SparkConf()
     //区分大小写，方能处理SSID，ssid同时存在于一条记录的情况
     sparkConf.set("spark.sql.caseSensitive", "true")
-    sparkConf.setMaster("local[2]")
+//    sparkConf.setMaster("local[2]")
     val sparkSession: SparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
 
-    val tablePattern = "log_medusa_main3x_play"
-    val partitionPattern = "%20171121%"
+//    val tablePattern = "log_medusa_main3x_play"
+//    val partitionPattern = "%20171121%"
 
-//    val tablePattern = args(0)
-//    val partitionPattern = args(1)
+    val tablePattern = args(0)
+    val partitionPattern = args(1)
 
     println(s"tablePattern is ${tablePattern}")
     println(s"partitionPattern is ${partitionPattern}")
@@ -70,7 +70,6 @@ object Start {
     finalPathSchema.foreach(f=>{
       println(f)
     })
-    System.exit(-1)
     if(finalPathSchema.size == 0){
       println("no match patch ... ")
       System.exit(-1)
@@ -149,6 +148,7 @@ object Start {
         val df = sparkSession.read.parquet(inputPath)
         //1.写临时的输出目录
         df.selectExpr(fieldSchema:_*).coalesce(partitionNum).write.mode(SaveMode.Overwrite).parquet(tmpOutPath)
+//        df.selectExpr(fieldSchema:_*).write.mode(SaveMode.Overwrite).parquet(tmpOutPath)
         //2.move input数据到 tmpInputPath
 //        val tmpInputPathParent = tmpInputPath.substring(0,tmpInputPath.lastIndexOf("/"))
         fs.rename(new Path(inputPath),new Path(tmpInputPath))

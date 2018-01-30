@@ -25,9 +25,10 @@ object ParquetSchema {
 
 
     for (stuctField <- df.schema.fields) {
-//      val name = stuctField.name
+      val name = stuctField.name
       val dataType = stuctField.dataType
-      buildFormattedString(dataType)
+      println(s"name -> ${name} \n  dataType -> ${dataType}")
+//      buildFormattedString(dataType)
     }
 
   }
