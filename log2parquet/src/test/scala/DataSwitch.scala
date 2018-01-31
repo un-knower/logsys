@@ -38,7 +38,6 @@ class DataSwitch {
       json.put(key,jSONArray)
     }catch {
       case e:Exception=>{
-        e.printStackTrace()
         json.remove(key)
       }
     }
@@ -146,7 +145,6 @@ class DataSwitch {
       }
     }catch {
       case e:Exception=>{
-        e.printStackTrace()
         json.put(key,0)
       }
     }
@@ -163,7 +161,6 @@ class DataSwitch {
         }
     }catch {
       case e:Exception=>{
-        e.printStackTrace()
         json.put(key,0)
       }
     }
@@ -179,7 +176,6 @@ class DataSwitch {
       }
     }catch {
       case e:Exception=>{
-        e.printStackTrace()
         json.put(key,0.0)
       }
     }

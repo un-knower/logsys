@@ -56,7 +56,6 @@ class FormatLogValueProcessingUnits extends LogProcessorTraitV2 with LogTrait {
       }
     }catch {
       case e:Exception=>{
-        e.printStackTrace()
         json.put(key,0)
       }
     }
@@ -77,7 +76,6 @@ class FormatLogValueProcessingUnits extends LogProcessorTraitV2 with LogTrait {
       }
     }catch {
       case e:Exception=>{
-        e.printStackTrace()
         json.put(key,0.0)
       }
     }

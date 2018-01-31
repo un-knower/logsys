@@ -665,7 +665,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       json.put(key,value)
     }catch {
       case e:Exception=>{
-        e.printStackTrace()
         json.remove(key)
       }
     }
@@ -687,7 +686,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }
     }catch {
       case e:Exception=>{
-        e.printStackTrace()
         json.remove(key)
       }
     }
@@ -799,7 +797,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       case e:Exception=>{
         fieldTypeSwitchMyAcc.add(s"table:${tableName}:${key}->long exception")
         fieldTypeSwitchMyAcc.add(s"field:${key}->long exception")
-        e.printStackTrace()
         json.remove(key)
       }
     }
@@ -815,7 +812,6 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       json.put(key,value.toDouble)
     }catch {
       case e:Exception=>{
-        e.printStackTrace()
         json.remove(key)
       }
     }
