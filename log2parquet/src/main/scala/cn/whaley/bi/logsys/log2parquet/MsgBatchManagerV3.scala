@@ -761,7 +761,13 @@ class MsgBatchManagerV3 extends InitialTrait with NameTrait with LogTrait with j
       }else{
         val newJsonArray = new JSONArray()
         for( i<- 0 to ( jSONArray.size()-1 )){
-          val jsonObject = jSONArray.getJSONObject(i)
+          //修正 jsonArray中数据类型为string
+          val js = jSONArray.get(i)
+          val jsonObject = if(js.isInstanceOf[JSONObject]){
+            js.asInstanceOf[JSONObject]
+          }else{
+            JSON.parseObject(js.toString)
+          }
           val keys = jsonObject.keySet().toList
           keys.foreach(key=>{
             jsonObject.put(key,jsonObject.getString(key))
