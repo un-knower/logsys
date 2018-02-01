@@ -373,3 +373,4 @@ upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ru
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('373','ALL','videoduration','Long','2','field',false,now(),now());
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('374','log_whaleytv_main_launcher_module_view','videolist','ArrayStruct','7','table',false,now(),now());
 upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('375','log_whaleytv_main_launcher_module_view','focuslist','ArrayStruct','7','table',false,now(),now());
+upsert into METADATA.LOG_FIELD_TYPE_INFO(id,name,fieldName,fieldType,typeFlag,ruleLevel,isDeleted,createTime,updateTime) values('376','ALL','programduration','Long','2','field',false,now(),now());
