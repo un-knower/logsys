@@ -24,11 +24,21 @@
 
     <!-- org.springframework.jdbc.datasource.DriverManagerDataSource [非连接池数据源实现]-->
 
+    <!--phoenix 数据源-->
+<!--
     <bean id="metadataDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
         <property name="driverClassName" value="${phoenix-jdbc.driverClassName}"/>
         <property name="url" value="${phoenix-jdbc.url}"/>
         <property name="username" value="${phoenix-jdbc.username}"/>
         <property name="password" value="${phoenix-jdbc.password}"/>
+    </bean>
+-->
+    <!--mysql 数据源-->
+    <bean id="metadataDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${mysql-jdbc.driverClassName}"/>
+        <property name="url" value="${mysql-jdbc.url}"/>
+        <property name="username" value="${mysql-jdbc.username}"/>
+        <property name="password" value="${mysql-jdbc.password}"/>
     </bean>
 
     <!--

@@ -1,7 +1,6 @@
 package cn.whaley.bi.logsys.metadata.repository;
 
 import cn.whaley.bi.logsys.metadata.entity.BaseTableEntity;
-import cn.whaley.bi.logsys.metadata.entity.SeqEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
@@ -102,15 +101,43 @@ public class MetadataBaseRepo<T extends BaseTableEntity> {
         List<Object[]> params = new ArrayList<>();
         for (T entity : entities) {
             //填充自增序列值
-            if (entity instanceof SeqEntity && ((SeqEntity) entity).getSeq() == null) {
+          /*  if (entity instanceof SeqEntity && ((SeqEntity) entity).getSeq() == null) {
                 Integer seq = this.getNextSeq(((SeqEntity) entity).getSeqName());
                 ((SeqEntity) entity).setSeq(seq);
-            }
+            }*/
             Object[] rowParams = this.mapper.getFieldValues(entity).toArray();
             params.add(rowParams);
         }
         int[] values = jdbcTemplate.batchUpdate(sql, params);
         return Arrays.stream(values).sum();
+    }
+
+    /**
+     * 通用的删除方法
+     * @param wheres
+     * @return
+     */
+    @Transactional(readOnly = false)
+    public Integer delete( Map<String, Object> wheres) {
+
+        String tabName = this.mapper.tab_name;
+
+        String whereClause = wheres.keySet().stream().map(item -> item + " = ? ").collect(Collectors.joining(" and "));
+
+        Collection<String> allField = new ArrayList<>();
+        allField.addAll(wheres.keySet());
+
+        List<Object[]> batchParams = new ArrayList<>();
+        Object[] rowParams = allField.stream()
+                .map(field -> {
+                    Object value =  wheres.get(field) ;
+                    return value;
+                }).collect(Collectors.toList()).toArray();
+        batchParams.add(rowParams);
+        String updateSql = buildDeleteSQL(tabName,whereClause);
+        int[] values = jdbcTemplate.batchUpdate(updateSql,batchParams);
+        return Arrays.stream(values).sum();
+
     }
 
     /**
@@ -123,6 +150,38 @@ public class MetadataBaseRepo<T extends BaseTableEntity> {
      */
     @Transactional(readOnly = false)
     public Integer update(Set<String> keys, Map<String, Object> updates, Map<String, Object> wheres) {
+
+        String tabName = this.mapper.tab_name;
+
+        String setClause = updates.keySet().stream().map(item -> item + " = ? ").collect(Collectors.joining(" , "));
+        String whereClause = wheres.keySet().stream().map(item -> item + " = ? ").collect(Collectors.joining(" and "));
+
+        Collection<String> allField = new ArrayList<>();
+        allField.addAll(updates.keySet());
+        allField.addAll(wheres.keySet());
+
+        List<Object[]> batchParams = new ArrayList<>();
+        Object[] rowParams = allField.stream()
+                .map(field -> {
+                    Object value = updates.containsKey(field) ? wheres.get(field) : updates.get(field);
+                    return value;
+                }).collect(Collectors.toList()).toArray();
+        batchParams.add(rowParams);
+        String updateSql = buildUpdateSQL(tabName,setClause,whereClause);
+        int[] values = jdbcTemplate.batchUpdate(updateSql,batchParams);
+        return Arrays.stream(values).sum();
+
+    }
+
+
+    /**
+     * 备份
+     * @param keys
+     * @param updates
+     * @param wheres
+     * @return
+     */
+    public Integer update2(Set<String> keys, Map<String, Object> updates, Map<String, Object> wheres) {
 
         String tabName = this.mapper.tab_name;
 
@@ -161,9 +220,18 @@ public class MetadataBaseRepo<T extends BaseTableEntity> {
      * @return
      */
     String buildInsertSQL(String tabName, Collection<String> colName) {
-        String sql = "upsert into " + tabName + " (" + colName.stream().collect(Collectors.joining(",")) + ")"
+        String sql = "insert into " + tabName + " (" + colName.stream().collect(Collectors.joining(",")) + ")"
                 + " values(" + StringUtils.repeat("?", ",", colName.size()) + ")";
-        ;
+        return sql;
+    }
+
+    String buildUpdateSQL(String tabName, String setClause,String whereClause) {
+        String sql = "update  " + tabName + " set "+setClause +" where "+whereClause;
+        return sql;
+    }
+
+    String buildDeleteSQL(String tabName,String whereClause) {
+        String sql = "delete from " + tabName + " where "+whereClause;
         return sql;
     }
 
