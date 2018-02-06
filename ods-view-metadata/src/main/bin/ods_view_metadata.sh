@@ -23,8 +23,4 @@ fi
 javaXmx=${javaXmx:-4096m}
 javaXms=${javaXms:-1024m}
 set -x
-java -Xmx${javaXmx} -Xms${javaXms} -server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC \
- -XX:+CMSClassUnloadingEnabled -XX:+CMSScavengeBeforeRemark \
- -XX:+DisableExplicitGC -Djava.awt.headless=true \
- -classpath $classpath  \
- cn.whaley.bi.logsys.metadata.Application $@
+ scala  -cp $classpath  cn.whaley.bi.logsys.metadata.Application $@

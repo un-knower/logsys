@@ -211,7 +211,7 @@ public class EntityMapper<T> implements RowMapper<T> {
             fieldNames = new HashSet<>();
             int count = rs.getMetaData().getColumnCount();
             for (int i = 1; i <= count; i++) {
-                fieldNames.add(rs.getMetaData().getColumnName(i));
+                fieldNames.add(rs.getMetaData().getColumnName(i).toLowerCase());
             }
         }
 
@@ -220,8 +220,7 @@ public class EntityMapper<T> implements RowMapper<T> {
             String fieldName = field.getKey();
             Class<?> fieldType = field.getValue();
             Method m = fieldSetMap.get(fieldName);
-
-            String rsFieldName = fieldName.toUpperCase();
+            String rsFieldName = fieldName.toLowerCase();
             if (!fieldNames.contains(rsFieldName)) {
                 continue;
             }
@@ -244,7 +243,7 @@ public class EntityMapper<T> implements RowMapper<T> {
                 if (!(fieldType.isInstance(value))) {
                     value = Double.parseDouble(value.toString());
                 }
-            } else if (fieldType.getName().endsWith("java.lang.Boolean")) {
+            } else if (fieldType.getName().endsWith("boolean")) {
                 if (!(fieldType.isInstance(value))) {
                     value = Boolean.parseBoolean(value.toString());
                 }

@@ -33,6 +33,17 @@ public class LogTabDDLRepo extends MetadataBaseRepo<LogTabDDLEntity> {
     }
 
 
+    //备份
+    public Integer deleteByTaskId2(String taskId) {
+        Map<String, Object> wheres = new HashMap<>();
+        wheres.put("taskId", taskId);
+        wheres.put("isDeleted", false);
+
+        return delete( wheres);
+
+    }
+
+
     @Transactional(readOnly = false)
     public Integer deleteByTaskId(String taskId) {
 

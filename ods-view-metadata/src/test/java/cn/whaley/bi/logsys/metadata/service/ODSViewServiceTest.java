@@ -108,4 +108,14 @@ public class ODSViewServiceTest {
         LOG.info(JSON.toJSONString(entities));
     }
 
+
+    @Test
+    public void testAppId() {
+        List<AppLogKeyFieldDescEntity> entities = service.getAppLogKeyFieldDescRepo().findAll();
+        entities.stream().forEach(entity->{
+            System.out.println(entity.toString());
+        });
+        LOG.info("entities:" + entities.size());
+    }
+
 }
