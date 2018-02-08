@@ -218,7 +218,7 @@ public class ODSViewService {
     public Integer executeSql(String taskId) {
         Integer ret = 0;
         List<LogTabDDLEntity> ddlEntities = logTabDDLRepo.queryByTaskId(taskId, false);
-
+        String[] users = {"app-bigdata@whaley.cn"};
         if(ddlEntities.size()> 0){
             List<LogTabDDLEntity> filterEntity = ddlEntities.stream().filter(entity -> {
                 return !entity.getDdlText().contains("DROP TABLE");
@@ -228,7 +228,12 @@ public class ODSViewService {
                 LogTabDDLEntity entity = filterEntity.get(i);
                 String dbName = entity.getDbName();
                 String tabName = entity.getTabName();
-                cn.whaley.bigdata.dw.HiveUtil.generateTblProperties(dbName,tabName);
+                try{
+                    cn.whaley.bigdata.dw.HiveUtil.generateTblProperties(dbName,tabName);
+                }catch (Exception e){
+                    SendMail.post(e.getMessage(), "[ods-view-metadata][刷新tblProperties失败]", users);
+                }
+
                 ret=ret+1;
             }
         }
