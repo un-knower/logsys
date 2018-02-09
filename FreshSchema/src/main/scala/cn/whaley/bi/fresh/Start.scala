@@ -31,14 +31,14 @@ object Start {
     val sparkConf = new SparkConf()
     //区分大小写，方能处理SSID，ssid同时存在于一条记录的情况
     sparkConf.set("spark.sql.caseSensitive", "true")
-//    sparkConf.setMaster("local[2]")
+    sparkConf.setMaster("local[2]")
     val sparkSession: SparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
 
-//    val tablePattern = "log_medusa_main3x_play"
-//    val partitionPattern = "%20171121%"
+    val tablePattern = "log_medusa_main3x_play"
+    val partitionPattern = "%20180101%"
 
-    val tablePattern = args(0)
-    val partitionPattern = args(1)
+//    val tablePattern = args(0)
+//    val partitionPattern = args(1)
 
     println(s"tablePattern is ${tablePattern}")
     println(s"partitionPattern is ${partitionPattern}")
@@ -48,21 +48,31 @@ object Start {
       val path = pathSchema.path
       val hiveColSchema = pathSchema.col
       val parquetSchema = getSchema(path)
+
       val selectSql = parquetSchema.map(f=>{
         val fieldName = f.fieldName
         val fieldType = f.fieldType
         val colType = hiveColSchema.getOrElseUpdate(fieldName.toLowerCase,null)
-        if(colType == null || colType.contains("struct") || colType.contains("array") || colType.equalsIgnoreCase(fieldType)){
-//          if(colType == null || fieldType.equalsIgnoreCase("struct") || fieldType.equalsIgnoreCase("array") || fieldType.equalsIgnoreCase(colType)){
-            //parquet独有字段 或者和hive schema 字段类型一致
+        if(  colType == null){
+          //parquet独有字段 删除
+          null
+        }
+        else if( colType.contains("struct") || colType.contains("array") || colType.equalsIgnoreCase(fieldType)){
+          // 和hive schema 字段类型一致
           fieldName
-        }else{
+        }
+        else{
           //字段类型不一致，需要转型
           s" CAST( ${fieldName} as ${colType}) "
         }
-      }).toList
+      })
+        .filter(fieldName=>{
+        fieldName != null
+      })
+        .toList
       (path ,selectSql)
-    }).filter(f=>{
+    })
+      .filter(f=>{
       val selectSql = f._2.toString()
       selectSql.contains("CAST(")
     })
@@ -74,6 +84,7 @@ object Start {
       println("no match patch ... ")
       System.exit(-1)
     }
+    System.exit(-1)
     val executor = Executors.newFixedThreadPool(Math.min(100,finalPathSchema.size))
     val futures = finalPathSchema.map(f=>{
       val inputPath = f._1

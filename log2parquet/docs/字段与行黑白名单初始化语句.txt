@@ -3980,9 +3980,16 @@ upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,special
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5097','log_medusa_main3x_homeaccess','rename','accessarea_r',10,'accessarea ',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5098','log_medusa_main3x_play','fieldFilter','11',10,'^495M$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5099','whaleytv','fieldFilter','00',10,'^tencentDuration$',false,now(),now());
-
-
-
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5100','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^200$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5101','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^206$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5102','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^304$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5103','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^403$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5104','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^412$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5105','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^416$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5106','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^499$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5107','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^500$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5108','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^502$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5109','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^504$',false,now(),now());
 
 
 

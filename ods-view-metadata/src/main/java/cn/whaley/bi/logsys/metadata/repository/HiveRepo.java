@@ -295,6 +295,7 @@ public class HiveRepo {
                         for (LogTabDDLEntity ddlEntity : tabDDLEntities) {
                             try {
                                 ddlEntity.setCommitTime(new Date());
+                                LOG.info("ddl..."+ddlEntity.getDdlText());
                                 jdbcTemplate.execute(ddlEntity.getDdlText());
                                 ddlEntity.setCommitCode(1);
                                 ddlEntity.setCommitMsg("SUCCESS");
