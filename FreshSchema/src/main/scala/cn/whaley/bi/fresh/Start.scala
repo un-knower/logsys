@@ -34,8 +34,8 @@ object Start {
 //    sparkConf.setMaster("local[2]")
     val sparkSession: SparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
 
-//    val tablePattern = "log_medusa_main3x_play"
-//    val partitionPattern = "%20180101%"
+//    val tablePattern = "log_medusa_main3x_medusa_p2pvod_httpstatus"
+//    val partitionPattern = "%20180212%"
 
     val tablePattern = args(0)
     val partitionPattern = args(1)
@@ -51,13 +51,7 @@ object Start {
 
       val selectSql = parquetSchema.map(f=>{
         var fieldName = f.fieldName
-        //纯数字字段
-        val flag = isDigit(fieldName)
-        fieldName = if(flag){
-          s"`$fieldName`"
-        }else{
-          fieldName
-        }
+
         val fieldType = f.fieldType
         val colType = hiveColSchema.getOrElseUpdate(fieldName.toLowerCase,null)
         if(  colType == null){
@@ -66,10 +60,11 @@ object Start {
         }
         else if( colType.contains("struct") || colType.contains("array") || colType.equalsIgnoreCase(fieldType)){
           // 和hive schema 字段类型一致
-          fieldName
+          getFieldName(fieldName)
         }
         else{
           //字段类型不一致，需要转型
+          fieldName = getFieldName(fieldName)
           s" CAST( ${fieldName} as ${colType}) "
         }
       })
@@ -91,7 +86,7 @@ object Start {
       println("no match patch ... ")
       System.exit(-1)
     }
-    System.exit(-1)
+//    System.exit(-1)
     val executor = Executors.newFixedThreadPool(Math.min(100,finalPathSchema.size))
     val futures = finalPathSchema.map(f=>{
       val inputPath = f._1
@@ -113,6 +108,16 @@ object Start {
 
   }
 
+
+  def getFieldName(fieldName:String): String ={
+    //纯数字字段
+    val flag = isDigit(fieldName)
+    if(flag){
+      s"`$fieldName`"
+    }else{
+      fieldName
+    }
+  }
 
   def isDigit(s:String)={
     val regex = "^([0-9]+)$"
