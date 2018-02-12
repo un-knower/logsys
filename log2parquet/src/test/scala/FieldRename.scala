@@ -12,9 +12,9 @@ object FieldRename {
   def main(args: Array[String]): Unit = {
 
 
-    var fields = List("locationIndex_r","locationIndex","accessLocation","accesslocation")
-    val productCode = "whaleytv"
-    val tableName = "log_whaleytv_main_launcher"
+    var fields = List("locationIndex_r","locationIndex","accessLocation","accesslocation","500","200","208")
+    val productCode = "medusa"
+    val tableName = "log_medusa_main3x_medusa_p2pvod_httpstatus"
 
     val metaDataUtils = new MetaDataUtils("http://odsviewmd.whaleybigdata.com", 100000)
     val appLogSecialEntities = metaDataUtils.queryAppLogSpecialFieldDescConf()
@@ -126,6 +126,15 @@ object FieldRename {
       }
     })
 
+    fields = fields.toStream.map(field=>{
+      val flag = isDigit(field)
+      if(flag){
+        s"`$field`"
+      }else{
+        field
+      }
+    }).toList
+
     println(s"sql ... "+fields)
     (fields,flag)
   }
@@ -147,7 +156,10 @@ object FieldRename {
 
 
 
-
+  def isDigit(s:String)={
+    val regex = "^([0-9]+)$"
+    s.matches(regex)
+  }
 
 
 

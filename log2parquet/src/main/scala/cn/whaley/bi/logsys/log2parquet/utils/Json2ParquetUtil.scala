@@ -279,6 +279,15 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
             fields = fields.::(s"(case when `$newName` is null or `$newName` == '' then `$oldName` else `$newName` end ) as `$newName`")
           }
         })
+        fields = fields.toStream.map(field=>{
+            val flag = isDigit(field)
+            if(flag){
+                s"`$field`"
+            }else{
+                field
+            }
+        }).toList
+
         (fields,flag)
     }
 
@@ -295,6 +304,10 @@ private class ProcessCallable(inputSize: Long, inputPath: String, outputPath: St
             fields.filter(field => conf._2.r.findFirstMatchIn(field).isDefined).map(field => (field, conf._4))
         }).toMap
         renameMap
+    }
+    def isDigit(s:String)={
+        val regex = "^([0-9]+)$"
+        s.matches(regex)
     }
 
 }
