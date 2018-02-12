@@ -31,14 +31,14 @@ object Start {
     val sparkConf = new SparkConf()
     //区分大小写，方能处理SSID，ssid同时存在于一条记录的情况
     sparkConf.set("spark.sql.caseSensitive", "true")
-    sparkConf.setMaster("local[2]")
+//    sparkConf.setMaster("local[2]")
     val sparkSession: SparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
 
-    val tablePattern = "log_medusa_main3x_play"
-    val partitionPattern = "%20180101%"
+//    val tablePattern = "log_medusa_main3x_play"
+//    val partitionPattern = "%20180101%"
 
-//    val tablePattern = args(0)
-//    val partitionPattern = args(1)
+    val tablePattern = args(0)
+    val partitionPattern = args(1)
 
     println(s"tablePattern is ${tablePattern}")
     println(s"partitionPattern is ${partitionPattern}")
@@ -50,7 +50,14 @@ object Start {
       val parquetSchema = getSchema(path)
 
       val selectSql = parquetSchema.map(f=>{
-        val fieldName = f.fieldName
+        var fieldName = f.fieldName
+        //纯数字字段
+        val flag = isDigit(fieldName)
+        fieldName = if(flag){
+          s"`$fieldName`"
+        }else{
+          fieldName
+        }
         val fieldType = f.fieldType
         val colType = hiveColSchema.getOrElseUpdate(fieldName.toLowerCase,null)
         if(  colType == null){
@@ -107,6 +114,12 @@ object Start {
   }
 
 
+  def isDigit(s:String)={
+    val regex = "^([0-9]+)$"
+    s.matches(regex)
+  }
+
+
 
   /**
     * 解析 parquet schema
@@ -134,6 +147,8 @@ object Start {
       }
       fieldSchema
   }
+
+
 
   def getSchema2(sparkSession: SparkSession,path:String): Unit ={
     val df = sparkSession.read.parquet(path)
