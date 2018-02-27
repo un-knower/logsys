@@ -177,12 +177,11 @@ public class ODSViewService {
         Integer ret = 0;
         List<LogTabDDLEntity> ddlEntities = logTabDDLRepo.queryByTaskId(taskId, false);
 
-        //过滤执行add column 语句
+       /* //过滤执行add column 语句
         ddlEntities = ddlEntities.stream().filter(ddlEntitiy->{
             return !ddlEntitiy.getDdlText().contains("ADD COLUMNS");
         }).collect(Collectors.toList());
-
-
+*/
         if (ddlEntities.size() > 0) {
             ret += hiveRepo.executeDDL(ddlEntities);
             ddlEntities.forEach(entity -> {
