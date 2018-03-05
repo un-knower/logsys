@@ -26,6 +26,8 @@ import scala.collection.mutable.ListBuffer
 object Start5 {
   def main(args: Array[String]): Unit = {
 
+    val retainFields = Array("method","urlPath","remoteIp","host","hour",
+      "forwardedIp","product","log_msgId","params","tags")
     val config = new Configuration()
     config.setBoolean("fs.hdfs.impl.disable.cache", true)
     val fs = FileSystem.get(config)
@@ -36,8 +38,8 @@ object Start5 {
 //    sparkConf.setMaster("local[2]")
     val sparkSession: SparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
 
-//    val tablePattern = "log_eagle_main_live%"
-//    val partitionPattern = "%20171107%"
+//    val tablePattern = "log_medusa_main3x_homeview"
+//    val partitionPattern = "%20170214%"
 
     val tablePattern = args(0)
     val partitionPattern = args(1)
@@ -60,8 +62,8 @@ object Start5 {
         val fieldName = f.fieldName
         parquetFields.append(fieldName)
         val colType = hiveColSchema.getOrElseUpdate(fieldName.toLowerCase,null)
-        if( colType == null){
-          //parquet独有字段 删除
+        if( colType == null && !retainFields.contains(fieldName) ){
+          //parquet独有字段 删除 ,部分字段保留
           deleteField.append(fieldName)
         }else{
           selectField.append(fieldName)
@@ -95,17 +97,21 @@ object Start5 {
     })*/
     val filterSchema = outPutSchemas.filter(f=>f._3.size !=0 )
     println("filterSchema size is "+filterSchema.size)
- /*   filterSchema.foreach(f=>{
-      println(s" path ... ${f._1}")
-      println(s" deleteField ... ${f._3}")
-      println(s" selectField ... ${f._4}")
+    filterSchema.foreach(f=>{
+      print(s" path ... ${f._1}")
+      print(s" || deleteField ... ${f._3}")
+      println(s" || selectField ... ${f._4}")
       println("-----------------------")
-    })*/
+    })
+
+    if(filterSchema.size <=0){
+      System.exit(-1)
+    }
+
+//    System.exit(-1)
 
 
-
-
-    val executor = Executors.newFixedThreadPool(Math.min(100,filterSchema.size))
+    val executor = Executors.newFixedThreadPool(Math.min(50,filterSchema.size))
     val futures = filterSchema.map(f=>{
       val inputPath = f._1
       val fieldSchema = f._4
