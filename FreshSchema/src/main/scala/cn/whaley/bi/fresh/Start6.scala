@@ -24,20 +24,21 @@ import scala.collection.mutable.ListBuffer
 
 object Start6 {
   def main(args: Array[String]): Unit = {
-
+    val retainFields = Array("method","urlPath","remoteIp","host","hour",
+      "forwardedIp","product","log_msgId","params","tags","logVersion")
     val config = new Configuration()
     config.setBoolean("fs.hdfs.impl.disable.cache", true)
 
     val sparkConf = new SparkConf()
     //区分大小写，方能处理SSID，ssid同时存在于一条记录的情况
     sparkConf.set("spark.sql.caseSensitive", "true")
-    sparkConf.setMaster("local[2]")
-    val tablePattern = "log_eagle_main_live%"
-    val partitionPattern = "%201710%"
-        val fileName = "eagle.txt"
-//    val tablePattern = args(0)
-//    val partitionPattern = args(1)
-//    val fileName = args(2)
+//    sparkConf.setMaster("local[2]")
+//    val tablePattern = "log_eagle_main_live%"
+//    val partitionPattern = "%201710%"
+//        val fileName = "eagle.txt"
+    val tablePattern = args(0)
+    val partitionPattern = args(1)
+    val fileName = args(2)
 
     println(s"tablePattern is ${tablePattern}")
     println(s"partitionPattern is ${partitionPattern}")
@@ -58,8 +59,8 @@ object Start6 {
         val fieldName = f.fieldName
         parquetFields.append(fieldName)
         val colType = hiveColSchema.getOrElseUpdate(fieldName.toLowerCase,null)
-        if( colType == null){
-          //parquet独有字段 删除
+        if( colType == null && !retainFields.contains(fieldName)){
+          //parquet独有字段 删除 ,部分字段保留
           deleteField.append(fieldName)
         }else{
           selectField.append(fieldName)
@@ -86,7 +87,7 @@ object Start6 {
 
     val replaceSchema = outPutSchemas.filter(f=>f._2.size !=0 )
     println("replaceSchema size is "+replaceSchema.size)
-    val out1 = new PrintWriter(s"f://${fileName}")
+    val out1 = new PrintWriter(s"${fileName}")
     replaceSchema.foreach(f=>{
       println(s" path ... ${f._1}")
       println(s" replaceFile ... ${f._2}")

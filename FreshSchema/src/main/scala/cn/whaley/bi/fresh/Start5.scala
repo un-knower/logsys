@@ -27,7 +27,7 @@ object Start5 {
   def main(args: Array[String]): Unit = {
 
     val retainFields = Array("method","urlPath","remoteIp","host","hour",
-      "forwardedIp","product","log_msgId","params","tags")
+      "forwardedIp","product","log_msgId","params","tags","logVersion")
     val config = new Configuration()
     config.setBoolean("fs.hdfs.impl.disable.cache", true)
     val fs = FileSystem.get(config)

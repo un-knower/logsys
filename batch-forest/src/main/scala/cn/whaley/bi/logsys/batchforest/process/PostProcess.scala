@@ -26,11 +26,7 @@ object PostProcess extends NameTrait with LogTrait{
     val appId = msgBody.getString("appId")
 
     //针对crash日志处理
-    if(body.containsKey("STACK_TRACE") &&(
-      "boikgpokn78sb95kjhfrendo8dc5mlsr".equalsIgnoreCase(appId) ||
-        "boikgpokn78sb95ktmsc1bnkechpgj9l".equalsIgnoreCase(appId)||
-        "boikgpokn78sb95k7id7n8ebqmihnjmg".equalsIgnoreCase(appId)
-      )){
+    if(body.containsKey("STACK_TRACE") && LogFields.crashAppId.contains(appId)){
       myAccumulator.add("handleCrashRecord")
       val stackTraceStr = body.getString("STACK_TRACE")
       val stackTraceMd5 = DigestUtils.md5Hex(stackTraceStr)

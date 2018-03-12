@@ -20,8 +20,13 @@ object CrashProcess extends NameTrait with LogTrait{
     msgBody.put("logType","crashlog")
     val appId = msgBody.getString("appId")
     val result = appId match {
-      //whaley main crash 日志不做处理
+      //whaley main crash 日志不做MD5校验处理
       case "boikgpokn78sb95kjhfrendo8dc5mlsr" => {
+        myAccumulator.add("handleCrashNoMd5Record")
+        handleCrashField(message)(myAccumulator)
+      }
+      //bi日志上传crach日志不做MD5校验处理
+      case "boikgpokn78sb95ktmsc1bnk63fdh9g6" => {
         myAccumulator.add("handleCrashNoMd5Record")
         handleCrashField(message)(myAccumulator)
       }
