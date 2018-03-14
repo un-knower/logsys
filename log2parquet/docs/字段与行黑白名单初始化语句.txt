@@ -3990,6 +3990,9 @@ upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,special
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5107','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^500$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5108','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^502$',false,now(),now());
 upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5109','log_medusa_main3x_medusa_p2pvod_httpstatus','fieldFilter','00',10,'^504$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5110','whaleytv','fieldFilter','11',10,'^appPackage$',false,now(),now());
+upsert into METADATA.APPLOG_SPECIAL_FIELD_DESC(id,logPathReg,specialType,specialValue,specialOrder,fieldNameReg,isDeleted,createTime,updateTime) values('ff5111','log_medusa_main3x_medusa_p2pvod_runtimestate','fieldFilter','01',10,'^shareDlSize$',false,now(),now());
+
 
 
 
